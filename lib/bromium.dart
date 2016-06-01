@@ -10,6 +10,9 @@ import 'dart:typed_data';
 import 'dart:web_gl' as gl;
 
 import 'package:vector_math/vector_math.dart';
+import 'package:color/color.dart';
 
+part 'src/domain.dart';
+part 'src/particles.dart';
 part 'src/engine.dart';
 part 'src/renderer.dart';

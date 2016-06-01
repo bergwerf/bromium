@@ -157,13 +157,13 @@ void main(void) {
   void _initBuffers() {
     _particleVertexBuffer = _gl.createBuffer();
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
-    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
-        engine.particlePosition, gl.RenderingContext.DYNAMIC_DRAW);
+    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER, engine.particlePosition,
+        gl.RenderingContext.DYNAMIC_DRAW);
 
     _particleColorBuffer = _gl.createBuffer();
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
-        engine.particleColor, gl.RenderingContext.STATIC_DRAW);
+    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER, engine.particleColor,
+        gl.RenderingContext.DYNAMIC_DRAW);
   }
 
   void _setMatrixUniforms() {
@@ -175,9 +175,14 @@ void main(void) {
   void render(double time) {
     // Update particles vertex buffer.
     engine.step();
+
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
     _gl.bufferSubData(
         gl.RenderingContext.ARRAY_BUFFER, 0, engine.particlePosition);
+
+    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
+    _gl.bufferSubData(
+        gl.RenderingContext.ARRAY_BUFFER, 0, engine.particleColor);
 
     // Clear view.
     _gl.viewport(0, 0, _viewportWidth, _viewportHeight);

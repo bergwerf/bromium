@@ -5,35 +5,72 @@
 part of bromium;
 
 class BromiumEngine {
+  // Particle buffer that is rendered
   Uint16List particleType;
+  Uint16List particleBound;
   Float32List particlePosition;
   Float32List particleColor;
 
-  BromiumEngine() {
-    // Create 1.000.000 particles.
-    int count = 1000000;
+  /// Particle information
+  Map<String, ParticleInfo> particles = new Map<String, ParticleInfo>();
+
+  /// Constructor
+  BromiumEngine();
+
+  /// Add new particle.
+  void addParticle(String label, double radius, Color color,
+      {List<String> compound: const []}) {
+    if (!particles.containsKey(label)) {
+      particles[label] = new ParticleInfo(radius, color);
+    }
+  }
+
+  /// Add a new composite particle.
+  void addCompound(String a, String b, String c, double radius, double bind,
+      double unbind, Color color) {}
+
+  /// Clear all old particles and allocate new ones.
+  void allocateParticles(List<ParticleSet> sets) {
+    // Compute total count.
+    int count = 0;
+    sets.forEach((ParticleSet s) {
+      count += s.count;
+    });
+
+    // Allocate new data buffers.
     particleType = new Uint16List(count);
     particlePosition = new Float32List(count * 3);
     particleColor = new Float32List(count * 4);
 
+    // Create new random number generator.
     var rng = new Random();
-    for (int i = 0, j = 0, k = 0; i < count; i++, j += 3, k += 4) {
-      // Give all particles a random position.
-      particlePosition[j] = (rng.nextDouble() - .5) * 10;
-      particlePosition[j + 1] = (rng.nextDouble() - .5) * 10;
-      particlePosition[j + 2] = 0.0;
 
-      // Color all particles white.
-      particleColor[k] = particlePosition[j] > 0 ? 0.0 : 1.0;
-      particleColor[k + 1] = 0.0;
-      particleColor[k + 2] = particlePosition[j] > 0 ? 1.0 : 0.0;
-      particleColor[k + 3] = 1.0;
+    // Loop through all particle sets.
+    for (int i = 0, p = 0; i < sets.length; i++) {
+      // Get the particle info for this set.
+      var info = particles[sets[i].label];
+
+      // Assign coordinates and color to each particle.
+      for (int j = 0; j < sets[i].count; j++, p++) {
+        // Assign a random position within the domain.
+        sets[i]
+            .domain
+            .computeRandomPoint(rng)
+            .copyIntoArray(particlePosition, p * 3);
+
+        // Assign color.
+        for (int c = 0; c < 4; c++) {
+          // RGBA
+          particleColor[p * 4 + c] = info.glcolor[c];
+        }
+      }
     }
   }
 
+  /// Simulate one step in the particle simulation.
   void step() {
     var rng = new Random();
-    for (int i = 0; i < particlePosition.length; i++) {
+    for (var i = 0; i < particlePosition.length; i++) {
       // Give all particles a random displacement.
       particlePosition[i] += (rng.nextDouble() - .5) * 0.1;
     }
