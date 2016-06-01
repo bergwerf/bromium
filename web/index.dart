@@ -19,9 +19,9 @@ void main() {
       'C', 'A', 'B', 0.02, 0.5, 0.001, RgbColor.namedColors['green']);
 
   engine.allocateParticles([
-    new ParticleSet('A', 500000,
+    new ParticleSet('A', 5000,
         new BoxDomain(new Vector3(.0, .0, .0), new Vector3(1.0, 1.0, 1.0))),
-    new ParticleSet('B', 500000,
+    new ParticleSet('B', 5000,
         new BoxDomain(new Vector3(.0, .0, .0), new Vector3(-1.0, 1.0, 1.0)))
   ]);
 

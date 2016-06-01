@@ -5,6 +5,9 @@
 part of bromium;
 
 class ParticleInfo {
+  /// Particle index
+  int index;
+
   /// Particle bounding box radius
   double radius;
 
@@ -12,7 +15,7 @@ class ParticleInfo {
   List<double> glcolor = new List<double>(4);
 
   /// Constructor
-  ParticleInfo(this.radius, Color color) {
+  ParticleInfo(this.index, this.radius, Color color) {
     var rgb = color.toRgbColor();
     glcolor[0] = rgb.r / 255;
     glcolor[1] = rgb.g / 255;
