@@ -46,10 +46,20 @@ class KineticsAlgorithmBenchmark extends BenchmarkBase {
 }
 
 void main() {
-  new KineticsAlgorithmBenchmark('AVL tree; N=100', alvTreeKinetics, 100)
+  // Benchmark nestedMapKinetics
+  new KineticsAlgorithmBenchmark('Nested map; N=100', nestedMapKinetics, 100)
       .report();
-  new KineticsAlgorithmBenchmark('AVL tree; N=1000', alvTreeKinetics, 1000)
+  new KineticsAlgorithmBenchmark('Nested map; N=1000', nestedMapKinetics, 1000)
       .report();
-  new KineticsAlgorithmBenchmark('AVL tree; N=10000', alvTreeKinetics, 10000)
+  new KineticsAlgorithmBenchmark(
+          'Nested map; N=10000', nestedMapKinetics, 10000)
+      .report();
+
+  // Benchmark avlTreeKinetics
+  new KineticsAlgorithmBenchmark('AVL tree; N=100', avlTreeKinetics, 100)
+      .report();
+  new KineticsAlgorithmBenchmark('AVL tree; N=1000', avlTreeKinetics, 1000)
+      .report();
+  new KineticsAlgorithmBenchmark('AVL tree; N=10000', avlTreeKinetics, 10000)
       .report();
 }
