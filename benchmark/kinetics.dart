@@ -55,6 +55,15 @@ void main() {
           'Nested map; N=10000', nestedMapKinetics, 10000)
       .report();
 
+  // Benchmark nestedMapKinetics
+  new KineticsAlgorithmBenchmark('String map; N=100', stringMapKinetics, 100)
+      .report();
+  new KineticsAlgorithmBenchmark('String map; N=1000', stringMapKinetics, 1000)
+      .report();
+  new KineticsAlgorithmBenchmark(
+          'String map; N=10000', stringMapKinetics, 10000)
+      .report();
+
   // Benchmark avlTreeKinetics
   new KineticsAlgorithmBenchmark('AVL tree; N=100', avlTreeKinetics, 100)
       .report();
