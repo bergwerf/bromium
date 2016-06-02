@@ -2,19 +2,27 @@
 // Use of this source code is governed by an AGPL-3.0-style license
 // that can be found in the LICENSE file.
 
-part of bromium;
+part of bromium_webgl_renderer;
 
+/// Mouse data for user interaction.
 class MouseData {
+  /// Zoom value
   double z;
+
+  /// A mouse button is pressed
   bool down = false;
+
+  /// Previous x and y coordinates
   int lastX = 0, lastY = 0;
-  Matrix4 rotationMatrix;
-  MouseData(this.z) {
-    rotationMatrix = new Matrix4.identity();
-  }
+
+  /// Rotation matrix applied to WebGL camera.
+  Matrix4 rotationMatrix = new Matrix4.identity();
+
+  /// Constructor
+  MouseData(this.z);
 }
 
-class BromiumRenderer {
+class BromiumWebGLRenderer {
   /// Backend engine that is used to retrieve the particle information.
   BromiumEngine engine;
 
@@ -43,7 +51,7 @@ class BromiumRenderer {
   MouseData _mouse;
 
   /// Constructor
-  BromiumRenderer(this.engine, this.canvas) {
+  BromiumWebGLRenderer(this.engine, this.canvas) {
     _mouse = new MouseData(-10.0);
     _viewportWidth = canvas.width;
     _viewportHeight = canvas.height;
@@ -157,12 +165,12 @@ void main(void) {
   void _initBuffers() {
     _particleVertexBuffer = _gl.createBuffer();
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
-    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER, engine.particlePosition,
-        gl.RenderingContext.DYNAMIC_DRAW);
+    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
+        engine.data.particlePosition, gl.RenderingContext.DYNAMIC_DRAW);
 
     _particleColorBuffer = _gl.createBuffer();
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER, engine.particleColor,
+    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER, engine.data.particleColor,
         gl.RenderingContext.DYNAMIC_DRAW);
   }
 
@@ -178,11 +186,11 @@ void main(void) {
 
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
     _gl.bufferSubData(
-        gl.RenderingContext.ARRAY_BUFFER, 0, engine.particlePosition);
+        gl.RenderingContext.ARRAY_BUFFER, 0, engine.data.particlePosition);
 
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
     _gl.bufferSubData(
-        gl.RenderingContext.ARRAY_BUFFER, 0, engine.particleColor);
+        gl.RenderingContext.ARRAY_BUFFER, 0, engine.data.particleColor);
 
     // Clear view.
     _gl.viewport(0, 0, _viewportWidth, _viewportHeight);
@@ -208,7 +216,7 @@ void main(void) {
 
     _setMatrixUniforms();
     _gl.drawArrays(gl.RenderingContext.POINTS, 0,
-        engine.particleType.length); // triangles, start at 0, total 3
+        engine.data.particleType.length); // triangles, start at 0, total 3
 
     // Schedule next frame.
     this._requestFrame();

@@ -5,6 +5,7 @@
 import 'dart:html';
 
 import 'package:bromium/bromium.dart';
+import 'package:bromium/webgl_renderer.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:color/color.dart';
 
@@ -26,6 +27,6 @@ void main() {
   ]);
 
   // Bootstrap WebGL renderer.
-  var renderer = new BromiumRenderer(engine, canvas);
+  var renderer = new BromiumWebGLRenderer(engine, canvas);
   renderer.start();
 }

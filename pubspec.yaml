@@ -7,5 +7,8 @@ environment:
   sdk:        '>=1.8.0 <2.0.0'
 dependencies:
   browser:      ^0.10.0+2
+  quiver:       ^0.22.0
   vector_math:  ^2.0.3
   color:        ^2.0.0
+dev_dependencies:
+  benchmark_harness: ^1.0.4

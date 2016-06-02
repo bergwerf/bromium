@@ -5,6 +5,7 @@
 part of bromium;
 
 /// A particle domain for the BromiumEngine
+// IGNORE: one_member_abstracts
 abstract class Domain {
   Vector3 computeRandomPoint(Random rng);
 }
