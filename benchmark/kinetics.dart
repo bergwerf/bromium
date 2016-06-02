@@ -50,6 +50,6 @@ void main() {
       .report();
   new KineticsAlgorithmBenchmark('AVL tree; N=1000', alvTreeKinetics, 1000)
       .report();
-  new KineticsAlgorithmBenchmark('AVL tree; N=10000', alvTreeKinetics, 1000)
+  new KineticsAlgorithmBenchmark('AVL tree; N=10000', alvTreeKinetics, 10000)
       .report();
 }
