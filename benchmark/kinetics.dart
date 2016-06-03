@@ -54,5 +54,6 @@ void benchmarkKineticsAlgorithm(String name, BromiumKineticsAlgorithm fn) {
 void main() {
   benchmarkKineticsAlgorithm('Nested map', nestedMapKinetics);
   benchmarkKineticsAlgorithm('String map', stringMapKinetics);
+  benchmarkKineticsAlgorithm('Myhash map', myhashMapKinetics);
   benchmarkKineticsAlgorithm('AVL tree', avlTreeKinetics);
 }

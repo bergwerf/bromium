@@ -17,5 +17,6 @@ part 'src/data.dart';
 part 'src/kinetics/base.dart';
 part 'src/kinetics/nested_map.dart';
 part 'src/kinetics/string_map.dart';
+part 'src/kinetics/myhash_map.dart';
 part 'src/kinetics/avl_tree.dart';
 part 'src/engine.dart';

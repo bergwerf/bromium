@@ -12,22 +12,17 @@ String createStringKey(int x, int y, int z, int type) {
 /// An [BromiumKineticsAlgorithm] implementation using a string map.
 void stringMapKinetics(BromiumEngineData data) {
   // Voxel data structures
-  var voxel = new List<List<double>>(data.particleType.length);
+  var voxel = new Float32List(data.particleType.length * 3);
   var tree = new Map<String, List<int>>();
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
-    voxel[i] = [
-      data.particlePosition[j + 0] / 0.01,
-      data.particlePosition[j + 1] / 0.01,
-      data.particlePosition[j + 2] / 0.01
-    ];
+    for (var d = 0; d < 3; d++) {
+      voxel[j + d] = data.particlePosition[j + d] / 0.01;
+    }
 
-    var vx = voxel[i][0].round();
-    var vy = voxel[i][1].round();
-    var vz = voxel[i][2].round();
-
-    var key = createStringKey(vx, vy, vz, data.particleType[i]);
+    var key = createStringKey(voxel[j + 0].round(), voxel[j + 1].round(),
+        voxel[j + 2].round(), data.particleType[i]);
 
     tree.putIfAbsent(key, () => new List<int>());
     tree[key].add(i);
@@ -40,12 +35,12 @@ void stringMapKinetics(BromiumEngineData data) {
     if (data.particleType[i] == aIdx) {
       // Append all voxels.
       var nearParticles = new List<int>();
-      var vxf = voxel[i][0].floor();
-      var vxc = voxel[i][0].ceil();
-      var vyf = voxel[i][1].floor();
-      var vyc = voxel[i][1].ceil();
-      var vzf = voxel[i][2].floor();
-      var vzc = voxel[i][2].ceil();
+      var vxf = voxel[j + 0].floor();
+      var vxc = voxel[j + 0].ceil();
+      var vyf = voxel[j + 1].floor();
+      var vyc = voxel[j + 1].ceil();
+      var vzf = voxel[j + 2].floor();
+      var vzc = voxel[j + 2].ceil();
       var nearVx = [
         [vxf, vyf, vzf],
         [vxf, vyf, vzc],

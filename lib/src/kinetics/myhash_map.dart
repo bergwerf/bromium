@@ -4,11 +4,30 @@
 
 part of bromium;
 
-/// An [BromiumKineticsAlgorithm] implementation using a nested dart:core map.
-void nestedMapKinetics(BromiumEngineData data) {
+/// 32bit key hash algorithm for [hash32BitMapKinetics].
+int create32BitKey(int x, int y, int z, int type) {
+  // 00000000000000000000011111111000
+  const dimensionMask = 0x000007F8;
+
+  // 00000000000000000000000000111111
+  const typeMask = 0x000000FF;
+
+  // Optimization: https://www.dartlang.org/articles/numeric-computation/#optimally-shifting-to-the-left
+  const maxSmi = 0x3FFFFFFF;
+
+  return ((x & dimensionMask) << 19 & maxSmi) |
+      ((y & dimensionMask) << 11 & maxSmi) |
+      ((x & dimensionMask) << 3 & maxSmi) |
+      (type & typeMask);
+}
+
+/// An [BromiumKineticsAlgorithm] implementation using 32bit map keys in a
+/// single level map. The 32 bit keys are generated using a custom hash
+/// algorithm.
+void myhashMapKinetics(BromiumEngineData data) {
   // Voxel data structures
   var voxel = new Float32List(data.particleType.length * 3);
-  var tree = new Map<int, Map<int, Map<int, Map<int, List<int>>>>>();
+  var tree = new Map<int, List<int>>();
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
@@ -20,11 +39,10 @@ void nestedMapKinetics(BromiumEngineData data) {
     var vy = voxel[j + 1].round();
     var vz = voxel[j + 2].round();
 
-    tree.putIfAbsent(vx, () => new Map<int, Map<int, Map<int, List<int>>>>());
-    tree[vx].putIfAbsent(vy, () => new Map<int, Map<int, List<int>>>());
-    tree[vx][vy].putIfAbsent(vz, () => new Map<int, List<int>>());
-    tree[vx][vy][vz].putIfAbsent(data.particleType[i], () => new List<int>());
-    tree[vx][vy][vz][data.particleType[i]].add(i);
+    var key = create32BitKey(vx, vy, vz, data.particleType[i]);
+
+    tree.putIfAbsent(key, () => new List<int>());
+    tree[key].add(i);
   }
 
   int aIdx = data.particleLabels.indexOf('A');
@@ -52,12 +70,10 @@ void nestedMapKinetics(BromiumEngineData data) {
       ];
 
       for (var v = 0; v < nearVx.length; v++) {
-        if (tree.containsKey(nearVx[v][0]) &&
-            tree[nearVx[v][0]].containsKey(nearVx[v][1]) &&
-            tree[nearVx[v][0]][nearVx[v][1]].containsKey(nearVx[v][2]) &&
-            tree[nearVx[v][0]][nearVx[v][1]][nearVx[v][2]].containsKey(bIdx)) {
-          nearParticles
-              .addAll(tree[nearVx[v][0]][nearVx[v][1]][nearVx[v][2]][bIdx]);
+        var key =
+            create32BitKey(nearVx[v][0], nearVx[v][1], nearVx[v][2], bIdx);
+        if (tree.containsKey(key)) {
+          nearParticles.addAll(tree[key]);
         }
       }
 

@@ -34,23 +34,20 @@ class AvlTreeVoxel {
 
 /// An [BromiumKineticsAlgorithm] implementation using an AVL binary tree.
 void avlTreeKinetics(BromiumEngineData data) {
-  var voxel = new List<List<double>>(data.particleType.length);
+  var voxel = new Float32List(data.particleType.length * 3);
   var tree = new AvlTreeSet<AvlTreeVoxel>(comparator: AvlTreeVoxel.comparator);
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
-    voxel[i] = [
-      data.particlePosition[j + 0] / 0.01,
-      data.particlePosition[j + 1] / 0.01,
-      data.particlePosition[j + 2] / 0.01
-    ];
+    for (var d = 0; d < 3; d++) {
+      voxel[j + d] = data.particlePosition[j + d] / 0.01;
+    }
 
-    var voxelX = voxel[i][0].round();
-    var voxelY = voxel[i][1].round();
-    var voxelZ = voxel[i][2].round();
+    var vx = voxel[j + 0].round();
+    var vy = voxel[j + 1].round();
+    var vz = voxel[j + 2].round();
 
-    var thisVoxel =
-        new AvlTreeVoxel(voxelX, voxelY, voxelZ, data.particleType[i]);
+    var thisVoxel = new AvlTreeVoxel(vx, vy, vz, data.particleType[i]);
     var ref = tree.lookup(thisVoxel);
     if (ref == null) {
       thisVoxel.particles.add(i);
@@ -67,12 +64,12 @@ void avlTreeKinetics(BromiumEngineData data) {
     if (data.particleType[i] == aIdx) {
       // Append all voxels.
       var nearParticles = new List<int>();
-      var vxf = voxel[i][0].floor();
-      var vxc = voxel[i][0].ceil();
-      var vyf = voxel[i][1].floor();
-      var vyc = voxel[i][1].ceil();
-      var vzf = voxel[i][2].floor();
-      var vzc = voxel[i][2].ceil();
+      var vxf = voxel[j + 0].floor();
+      var vxc = voxel[j + 0].ceil();
+      var vyf = voxel[j + 1].floor();
+      var vyc = voxel[j + 1].ceil();
+      var vzf = voxel[j + 2].floor();
+      var vzc = voxel[j + 2].ceil();
       var nearVx = [
         [vxf, vyf, vzf],
         [vxf, vyf, vzc],
