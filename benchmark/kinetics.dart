@@ -45,30 +45,14 @@ class KineticsAlgorithmBenchmark extends BenchmarkBase {
   void teardown() {}
 }
 
+void benchmarkKineticsAlgorithm(String name, BromiumKineticsAlgorithm fn) {
+  new KineticsAlgorithmBenchmark('$name; N=100', fn, 100).report();
+  new KineticsAlgorithmBenchmark('$name; N=1000', fn, 1000).report();
+  new KineticsAlgorithmBenchmark('$name; N=10000', fn, 10000).report();
+}
+
 void main() {
-  // Benchmark nestedMapKinetics
-  new KineticsAlgorithmBenchmark('Nested map; N=100', nestedMapKinetics, 100)
-      .report();
-  new KineticsAlgorithmBenchmark('Nested map; N=1000', nestedMapKinetics, 1000)
-      .report();
-  new KineticsAlgorithmBenchmark(
-          'Nested map; N=10000', nestedMapKinetics, 10000)
-      .report();
-
-  // Benchmark nestedMapKinetics
-  new KineticsAlgorithmBenchmark('String map; N=100', stringMapKinetics, 100)
-      .report();
-  new KineticsAlgorithmBenchmark('String map; N=1000', stringMapKinetics, 1000)
-      .report();
-  new KineticsAlgorithmBenchmark(
-          'String map; N=10000', stringMapKinetics, 10000)
-      .report();
-
-  // Benchmark avlTreeKinetics
-  new KineticsAlgorithmBenchmark('AVL tree; N=100', avlTreeKinetics, 100)
-      .report();
-  new KineticsAlgorithmBenchmark('AVL tree; N=1000', avlTreeKinetics, 1000)
-      .report();
-  new KineticsAlgorithmBenchmark('AVL tree; N=10000', avlTreeKinetics, 10000)
-      .report();
+  benchmarkKineticsAlgorithm('Nested map', nestedMapKinetics);
+  benchmarkKineticsAlgorithm('String map', stringMapKinetics);
+  benchmarkKineticsAlgorithm('AVL tree', avlTreeKinetics);
 }
