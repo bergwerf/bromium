@@ -4,27 +4,17 @@
 
 part of bromium;
 
-/// 32bit key hash algorithm for [hash32BitMapKinetics].
-int create32BitKey(int x, int y, int z, int type) {
-  // 00000000000000000000011111111000
-  const dimensionMask = 0x000007F8;
-
-  // 00000000000000000000000000111111
-  const typeMask = 0x000000FF;
-
-  // Optimization: https://www.dartlang.org/articles/numeric-computation/#optimally-shifting-to-the-left
-  const maxSmi = 0x3FFFFFFF;
-
-  return ((x & dimensionMask) << 19 & maxSmi) |
-      ((y & dimensionMask) << 11 & maxSmi) |
-      ((x & dimensionMask) << 3 & maxSmi) |
-      (type & typeMask);
+/// MFHF for [mphfMapKinetics].
+int mphfVoxelAddress(int x, int y, int z, int type, int ntypes) {
+  return (ntypes + 1000 + 1000) * (x + 500) +
+      (ntypes + 1000) * (y + 500) +
+      ntypes * (z + 500) +
+      type;
 }
 
-/// An [BromiumKineticsAlgorithm] implementation using 32bit map keys in a
-/// single level map. The 32 bit keys are generated using a custom hash
-/// algorithm.
-void myhashMapKinetics(BromiumEngineData data) {
+/// An [BromiumKineticsAlgorithm] implementation using a Minimal Perfect Hash
+/// Function that maps all voxel addressses to a unique 64bit integer.
+void mphfMapKinetics(BromiumEngineData data) {
   // Voxel data structures
   var voxel = new Float32List(data.particleType.length * 3);
   var tree = new Map<int, List<int>>();
@@ -39,7 +29,7 @@ void myhashMapKinetics(BromiumEngineData data) {
     var vy = voxel[j + 1].round();
     var vz = voxel[j + 2].round();
 
-    var key = create32BitKey(vx, vy, vz, data.particleType[i]);
+    var key = mphfVoxelAddress(vx, vy, vz, data.particleType[i], 2);
 
     tree.putIfAbsent(key, () => new List<int>());
     tree[key].add(i);
@@ -71,7 +61,7 @@ void myhashMapKinetics(BromiumEngineData data) {
 
       for (var v = 0; v < nearVx.length; v++) {
         var key =
-            create32BitKey(nearVx[v][0], nearVx[v][1], nearVx[v][2], bIdx);
+            mphfVoxelAddress(nearVx[v][0], nearVx[v][1], nearVx[v][2], bIdx, 2);
         if (tree.containsKey(key)) {
           nearParticles.addAll(tree[key]);
         }

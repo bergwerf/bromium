@@ -78,6 +78,6 @@ class BromiumEngine {
   /// Simulate one step in the particle simulation.
   void step() {
     applyBrownianMotion();
-    stringMapKinetics(data);
+    mphfMapKinetics(data);
   }
 }
