@@ -7,6 +7,11 @@ import 'package:bromium/bromium.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:benchmark_harness/benchmark_harness.dart';
 
+import 'kinetics/mphf_map.dart' as mphf_map;
+import 'kinetics/nested_map.dart' as nested_map;
+import 'kinetics/string_map.dart' as string_map;
+import 'kinetics/avl_tree.dart' as avl_tree;
+
 /// [BromiumKineticsAlgorithm] benchmarking
 class KineticsAlgorithmBenchmark extends BenchmarkBase {
   /// [BromiumEngine] instance to generate particle data.
@@ -52,8 +57,8 @@ void benchmarkKineticsAlgorithm(String name, BromiumKineticsAlgorithm fn) {
 }
 
 void main() {
-  benchmarkKineticsAlgorithm('Nested map', nestedMapKinetics);
-  benchmarkKineticsAlgorithm('String map', stringMapKinetics);
-  benchmarkKineticsAlgorithm('MPHF map', mphfMapKinetics);
-  benchmarkKineticsAlgorithm('AVL tree', avlTreeKinetics);
+  benchmarkKineticsAlgorithm('MPHF map', mphf_map.mphfMapKinetics);
+  benchmarkKineticsAlgorithm('Nested map', nested_map.nestedMapKinetics);
+  benchmarkKineticsAlgorithm('String map', string_map.stringMapKinetics);
+  benchmarkKineticsAlgorithm('AVL tree', avl_tree.avlTreeKinetics);
 }

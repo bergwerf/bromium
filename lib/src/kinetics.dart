@@ -4,11 +4,23 @@
 
 part of bromium;
 
-/// An [BromiumKineticsAlgorithm] implementation using a nested dart:core map.
-void nestedMapKinetics(BromiumEngineData data) {
+/// Generic interface for building a kinetics algorithm.
+typedef void BromiumKineticsAlgorithm(BromiumEngineData data);
+
+/// MFHF for [mphfMapKinetics].
+int mphfVoxelAddress(int x, int y, int z, int type, int ntypes) {
+  return (ntypes * 1000 * 1000) * (x + 500) +
+      (ntypes * 1000) * (y + 500) +
+      ntypes * (z + 500) +
+      type;
+}
+
+/// An [BromiumKineticsAlgorithm] implementation using a Minimal Perfect Hash
+/// Function that maps all voxel addressses to a unique 64bit integer.
+void mphfMapKinetics(BromiumEngineData data) {
   // Voxel data structures
   var voxel = new Float32List(data.particleType.length * 3);
-  var tree = new Map<int, Map<int, Map<int, Map<int, List<int>>>>>();
+  var tree = new Map<int, List<int>>();
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
@@ -20,11 +32,10 @@ void nestedMapKinetics(BromiumEngineData data) {
     var vy = voxel[j + 1].round();
     var vz = voxel[j + 2].round();
 
-    tree.putIfAbsent(vx, () => new Map<int, Map<int, Map<int, List<int>>>>());
-    tree[vx].putIfAbsent(vy, () => new Map<int, Map<int, List<int>>>());
-    tree[vx][vy].putIfAbsent(vz, () => new Map<int, List<int>>());
-    tree[vx][vy][vz].putIfAbsent(data.particleType[i], () => new List<int>());
-    tree[vx][vy][vz][data.particleType[i]].add(i);
+    var key = mphfVoxelAddress(vx, vy, vz, data.particleType[i], 2);
+
+    tree.putIfAbsent(key, () => new List<int>());
+    tree[key].add(i);
   }
 
   int aIdx = data.particleLabels.indexOf('A');
@@ -52,12 +63,10 @@ void nestedMapKinetics(BromiumEngineData data) {
       ];
 
       for (var v = 0; v < nearVx.length; v++) {
-        if (tree.containsKey(nearVx[v][0]) &&
-            tree[nearVx[v][0]].containsKey(nearVx[v][1]) &&
-            tree[nearVx[v][0]][nearVx[v][1]].containsKey(nearVx[v][2]) &&
-            tree[nearVx[v][0]][nearVx[v][1]][nearVx[v][2]].containsKey(bIdx)) {
-          nearParticles
-              .addAll(tree[nearVx[v][0]][nearVx[v][1]][nearVx[v][2]][bIdx]);
+        var key =
+            mphfVoxelAddress(nearVx[v][0], nearVx[v][1], nearVx[v][2], bIdx, 2);
+        if (tree.containsKey(key)) {
+          nearParticles.addAll(tree[key]);
         }
       }
 

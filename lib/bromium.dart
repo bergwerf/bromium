@@ -7,16 +7,11 @@ library bromium;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:quiver/collection.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:color/color.dart';
 
 part 'src/domain.dart';
 part 'src/particles.dart';
 part 'src/data.dart';
-part 'src/kinetics/base.dart';
-part 'src/kinetics/nested_map.dart';
-part 'src/kinetics/string_map.dart';
-part 'src/kinetics/mphf_map.dart';
-part 'src/kinetics/avl_tree.dart';
+part 'src/kinetics.dart';
 part 'src/engine.dart';

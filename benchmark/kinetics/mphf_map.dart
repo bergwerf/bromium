@@ -2,12 +2,14 @@
 // Use of this source code is governed by an AGPL-3.0-style license
 // that can be found in the LICENSE file.
 
-part of bromium;
+import 'dart:typed_data';
+
+import 'package:bromium/bromium.dart';
 
 /// MFHF for [mphfMapKinetics].
 int mphfVoxelAddress(int x, int y, int z, int type, int ntypes) {
-  return (ntypes + 1000 + 1000) * (x + 500) +
-      (ntypes + 1000) * (y + 500) +
+  return (ntypes * 1000 * 1000) * (x + 500) +
+      (ntypes * 1000) * (y + 500) +
       ntypes * (z + 500) +
       type;
 }

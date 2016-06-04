@@ -2,40 +2,15 @@
 // Use of this source code is governed by an AGPL-3.0-style license
 // that can be found in the LICENSE file.
 
-part of bromium;
+import 'dart:typed_data';
 
-class AvlTreeVoxel {
-  /// Voxel x, y, z coordinates and the particle type
-  int x, y, z, type;
+import 'package:bromium/bromium.dart';
 
-  /// Particle indices in this voxel
-  List<int> particles = new List<int>();
-
-  /// Constructor
-  AvlTreeVoxel(this.x, this.y, this.z, this.type);
-
-  /// Comperator
-  static int comparator(AvlTreeVoxel a, AvlTreeVoxel b) {
-    if (a.x == b.x) {
-      if (a.y == b.y) {
-        if (a.z == b.z) {
-          return a.type.compareTo(b.type);
-        } else {
-          return a.z.compareTo(b.z);
-        }
-      } else {
-        return a.y.compareTo(b.y);
-      }
-    } else {
-      return a.x.compareTo(b.x);
-    }
-  }
-}
-
-/// An [BromiumKineticsAlgorithm] implementation using an AVL binary tree.
-void avlTreeKinetics(BromiumEngineData data) {
+/// An [BromiumKineticsAlgorithm] implementation using a nested dart:core map.
+void nestedMapKinetics(BromiumEngineData data) {
+  // Voxel data structures
   var voxel = new Float32List(data.particleType.length * 3);
-  var tree = new AvlTreeSet<AvlTreeVoxel>(comparator: AvlTreeVoxel.comparator);
+  var tree = new Map<int, Map<int, Map<int, Map<int, List<int>>>>>();
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
@@ -47,14 +22,11 @@ void avlTreeKinetics(BromiumEngineData data) {
     var vy = voxel[j + 1].round();
     var vz = voxel[j + 2].round();
 
-    var thisVoxel = new AvlTreeVoxel(vx, vy, vz, data.particleType[i]);
-    var ref = tree.lookup(thisVoxel);
-    if (ref == null) {
-      thisVoxel.particles.add(i);
-      tree.add(thisVoxel);
-    } else {
-      ref.particles.add(i);
-    }
+    tree.putIfAbsent(vx, () => new Map<int, Map<int, Map<int, List<int>>>>());
+    tree[vx].putIfAbsent(vy, () => new Map<int, Map<int, List<int>>>());
+    tree[vx][vy].putIfAbsent(vz, () => new Map<int, List<int>>());
+    tree[vx][vy][vz].putIfAbsent(data.particleType[i], () => new List<int>());
+    tree[vx][vy][vz][data.particleType[i]].add(i);
   }
 
   int aIdx = data.particleLabels.indexOf('A');
@@ -82,11 +54,12 @@ void avlTreeKinetics(BromiumEngineData data) {
       ];
 
       for (var v = 0; v < nearVx.length; v++) {
-        var thisVoxel =
-            new AvlTreeVoxel(nearVx[v][0], nearVx[v][1], nearVx[v][2], bIdx);
-        var ref = tree.lookup(thisVoxel);
-        if (ref != null) {
-          nearParticles.addAll(ref.particles);
+        if (tree.containsKey(nearVx[v][0]) &&
+            tree[nearVx[v][0]].containsKey(nearVx[v][1]) &&
+            tree[nearVx[v][0]][nearVx[v][1]].containsKey(nearVx[v][2]) &&
+            tree[nearVx[v][0]][nearVx[v][1]][nearVx[v][2]].containsKey(bIdx)) {
+          nearParticles
+              .addAll(tree[nearVx[v][0]][nearVx[v][1]][nearVx[v][2]][bIdx]);
         }
       }
 
