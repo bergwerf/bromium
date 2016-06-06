@@ -12,19 +12,20 @@ import 'package:color/color.dart';
 void main() {
   var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
 
-  // Create engine and load some presets.
+  // Create engine and allocate some particles.
   var engine = new BromiumEngine();
-  engine.addParticle('A', 0.01, RgbColor.namedColors['red']);
-  engine.addParticle('B', 0.01, RgbColor.namedColors['blue']);
-  engine.addCompound(
-      'C', 'A', 'B', 0.02, 0.5, 0.001, RgbColor.namedColors['green']);
+  var particles = new ParticleDict()
+    ..addParticle('A', 0.01, RgbColor.namedColors['red'])
+    ..addParticle('B', 0.01, RgbColor.namedColors['blue']);
 
-  engine.allocateParticles([
-    new ParticleSet('A', 5000,
+  var scene = [
+    new ParticleSet('A', 10000,
         new BoxDomain(new Vector3(.0, .0, .0), new Vector3(1.0, 1.0, 1.0))),
-    new ParticleSet('B', 5000,
-        new BoxDomain(new Vector3(.0, .0, .0), new Vector3(-1.0, 1.0, 1.0)))
-  ]);
+    new ParticleSet('B', 10000,
+        new BoxDomain(new Vector3(1.0, .0, .0), new Vector3(2.0, 1.0, 1.0)))
+  ];
+
+  engine.allocateParticles(particles, scene);
 
   // Bootstrap WebGL renderer.
   var renderer = new BromiumWebGLRenderer(engine, canvas);

@@ -52,7 +52,7 @@ class BromiumWebGLRenderer {
 
   /// Constructor
   BromiumWebGLRenderer(this.engine, this.canvas) {
-    _mouse = new MouseData(-10.0);
+    _mouse = new MouseData(-1000.0);
     _viewportWidth = canvas.width;
     _viewportHeight = canvas.height;
     _gl = canvas.getContext('experimental-webgl');
@@ -81,17 +81,19 @@ class BromiumWebGLRenderer {
       if (!_mouse.down) return;
 
       // Apply rotation to rotationMatrix.
-      var martix = new Matrix4.identity();
-      martix.rotateY((event.client.x - _mouse.lastX) / 100);
-      martix.rotateX((event.client.y - _mouse.lastY) / 100);
-      _mouse.rotationMatrix.multiply(martix);
+      var matrix = new Matrix4.identity();
+      matrix.rotateY((event.client.x - _mouse.lastX) / 100);
+      matrix.rotateX((event.client.y - _mouse.lastY) / 100);
+      matrix.multiply(_mouse.rotationMatrix);
+      _mouse.rotationMatrix = matrix;
 
       _mouse.lastX = event.client.x;
       _mouse.lastY = event.client.y;
     });
 
     canvas.onMouseWheel.listen((WheelEvent event) {
-      _mouse.z += event.deltaY > 0 ? 1 : -1;
+      var speed = engine.data.useIntegers ? engine.data.voxelsPerUnit : 1;
+      _mouse.z += event.deltaY > 0 ? speed : -speed;
     });
   }
 
@@ -164,33 +166,40 @@ void main(void) {
 
   void _initBuffers() {
     _particleVertexBuffer = _gl.createBuffer();
-    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
-    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
-        engine.data.particlePosition, gl.RenderingContext.DYNAMIC_DRAW);
-
     _particleColorBuffer = _gl.createBuffer();
-    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-    _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER, engine.data.particleColor,
-        gl.RenderingContext.DYNAMIC_DRAW);
-  }
-
-  void _setMatrixUniforms() {
-    Float32List tmpList = new Float32List(16);
-    _viewMatrix.copyIntoArray(tmpList);
-    _gl.uniformMatrix4fv(_uViewMatrix, false, tmpList);
   }
 
   void render(double time) {
-    // Update particles vertex buffer.
+    // Run a simulation cycle.
     engine.step();
 
+    // Check if the vertex and color buffers can be updated directly or have to
+    // be reallocated (due to a simulation reset with a different number of
+    // particles).
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
-    _gl.bufferSubData(
-        gl.RenderingContext.ARRAY_BUFFER, 0, engine.data.particlePosition);
+    int size = _gl.getBufferParameter(
+        gl.RenderingContext.ARRAY_BUFFER, gl.BUFFER_SIZE);
+    if (size == engine.data.particleType.length) {
+      // Substitute new data, if the vertex buffer did not change the color
+      // buffer should not have changed either.
+      _gl.bufferSubData(gl.RenderingContext.ARRAY_BUFFER, 0,
+          engine.data.particleVertexBuffer);
 
-    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-    _gl.bufferSubData(
-        gl.RenderingContext.ARRAY_BUFFER, 0, engine.data.particleColor);
+      // Substitute color data.
+      _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
+      _gl.bufferSubData(
+          gl.RenderingContext.ARRAY_BUFFER, 0, engine.data.particleColor);
+    } else {
+      // Reallocate buffers, if the vertex buffer did change the color buffer
+      // must have changed as well.
+      _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
+          engine.data.particleVertexBuffer, gl.RenderingContext.DYNAMIC_DRAW);
+
+      // Reallocate color buffer.
+      _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
+      _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
+          engine.data.particleColor, gl.RenderingContext.DYNAMIC_DRAW);
+    }
 
     // Clear view.
     _gl.viewport(0, 0, _viewportWidth, _viewportHeight);
@@ -200,21 +209,26 @@ void main(void) {
     // Field of view is 45deg, width-to-height ratio,
     // hide things closer than 0.1 or further than 100.
     _viewMatrix = makePerspectiveMatrix(
-        radians(45.0), _viewportWidth / _viewportHeight, 0.1, 100.0);
+        radians(45.0), _viewportWidth / _viewportHeight, 0.1, 10000.0);
     _viewMatrix.translate(new Vector3(0.0, 0.0, _mouse.z));
     _viewMatrix.multiply(_mouse.rotationMatrix);
 
     // Bind particle positions.
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
     _gl.vertexAttribPointer(
-        _aVertexPosition, 3, gl.RenderingContext.FLOAT, false, 0, 0);
+        _aVertexPosition, 3, engine.data.particleVertexBufferType, false, 0, 0);
 
     // Bind particle colors.
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
     _gl.vertexAttribPointer(
-        _aVertexColor, 4, gl.RenderingContext.FLOAT, false, 0, 0);
+        _aVertexColor, 4, gl.RenderingContext.UNSIGNED_BYTE, false, 0, 0);
 
-    _setMatrixUniforms();
+    // Apply view matrix.
+    Float32List viewMatrix = new Float32List(16);
+    _viewMatrix.copyIntoArray(viewMatrix);
+    _gl.uniformMatrix4fv(_uViewMatrix, false, viewMatrix);
+
+    // Draw particles.
     _gl.drawArrays(gl.RenderingContext.POINTS, 0,
         engine.data.particleType.length); // triangles, start at 0, total 3
 
