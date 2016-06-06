@@ -52,7 +52,9 @@ class BromiumWebGLRenderer {
 
   /// Constructor
   BromiumWebGLRenderer(this.engine, this.canvas) {
-    _mouse = new MouseData(-1000.0);
+    // TODO: use better default Z calculation.
+    _mouse = new MouseData(
+        engine.data.useIntegers ? -10.0 * engine.data.voxelsPerUnit : -10.0);
     _viewportWidth = canvas.width;
     _viewportHeight = canvas.height;
     _gl = canvas.getContext('experimental-webgl');

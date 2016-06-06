@@ -7,16 +7,16 @@ part of bromium;
 /// Information of one particle in [ParticleDict]
 class ParticleInfo {
   /// Particle index
-  int index;
+  final int index;
 
-  /// Particle bounding box radius
-  double radius;
+  /// Sub particles
+  final List<String> subParticles;
 
   /// Particle color
   List<int> glcolor = new List<int>(4);
 
   /// Constructor
-  ParticleInfo(this.index, this.radius, Color color) {
+  ParticleInfo(this.index, this.subParticles, Color color) {
     var rgb = color.toRgbColor();
     glcolor[0] = rgb.r;
     glcolor[1] = rgb.g;
@@ -34,12 +34,12 @@ class ParticleDict {
   List<String> indices = new List<String>();
 
   /// Add new particle.
-  void addParticle(String label, double radius, Color color,
+  void addParticle(String label, List<String> subParticles, Color color,
       {List<String> compound: const []}) {
     if (!info.containsKey(label)) {
       int i = indices.length;
       indices.add(label);
-      info[label] = new ParticleInfo(i, radius, color);
+      info[label] = new ParticleInfo(i, subParticles, color);
     }
   }
 }

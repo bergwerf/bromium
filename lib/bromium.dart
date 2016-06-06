@@ -14,5 +14,6 @@ import 'package:color/color.dart';
 part 'src/domain.dart';
 part 'src/particles.dart';
 part 'src/data.dart';
-part 'src/kinetics.dart';
+part 'src/kinetics/data.dart';
+part 'src/kinetics/compute.dart';
 part 'src/engine.dart';

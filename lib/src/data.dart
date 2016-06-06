@@ -33,29 +33,50 @@ class BromiumData {
   final Uint16List particleUint16Position;
 
   /// Bind reaction data
+  final List<_BindReaction> bindReactions;
+
+  /// Particle bond data
+  ///
+  /// When particle A + B -> C. One of the two particles becomes the C particle,
+  /// and the other one is deactivated. However, when C -> A + B again, this
+  /// particle has to be reactivated. This way the particle data buffer does not
+  /// have to be resized during the simulation. This list will store to which
+  /// particle (index) the inactive particles are connected (-1 for not
+  /// connected), so they can be found again later for reuse.
+  final Int32List particleBonds;
 
   /// Color of each particle as a WebGL buffer
   final Uint8List particleColor;
 
-  /// Constructor
-  factory BromiumData(bool useIntegers, int voxelsPerUnit, int count) {
-    return new BromiumData._create(
-        useIntegers,
-        voxelsPerUnit,
-        new Uint16List(count),
-        new Float32List(useIntegers ? 0 : count * 3),
-        new Uint16List(useIntegers ? count * 3 : 0),
-        new Uint8List(count * 4));
-  }
+  /// Configured colors for each particle type
+  final Uint8List particleColorSettings;
 
-  /// Private final constructor
-  BromiumData._create(
+  /// Final constructor
+  BromiumData(
       this.useIntegers,
       this.voxelsPerUnit,
       this.particleType,
       this.particleFloatPosition,
       this.particleUint16Position,
-      this.particleColor);
+      this.particleColor,
+      this.particleColorSettings,
+      this.particleBonds,
+      this.bindReactions);
+
+  /// Allocate only constructor
+  factory BromiumData.allocate(bool useIntegers, int voxelsPerUnit, int ntypes,
+      int count, List<_BindReaction> bindReactions) {
+    return new BromiumData(
+        useIntegers,
+        voxelsPerUnit,
+        new Uint16List(count),
+        new Float32List(useIntegers ? 0 : count * 3),
+        new Uint16List(useIntegers ? count * 3 : 0),
+        new Uint8List(count * 4),
+        new Uint8List(ntypes * 4),
+        new Int32List(count),
+        bindReactions);
+  }
 
   /// Getter to get the particle vertex buffer based on [useIntegers].
   TypedData get particleVertexBuffer =>
