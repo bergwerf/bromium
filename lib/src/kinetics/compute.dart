@@ -73,6 +73,8 @@ void mphfMapKinetics(BromiumData data) {
           nearParticles.addAll(tree[key]);
         }
 
+        // Caution: what to do in case of a A + A -> B reaction?!
+
         // Note: filter using actual separation distance in a float context.
 
         // If there are near particles, apply a bind reaction.
@@ -80,6 +82,9 @@ void mphfMapKinetics(BromiumData data) {
           var other = nearParticles.first;
 
           // 1. Remove the other particle from the simulation.
+
+          // Suggestion: swap inactive particles to the back of the buffer and
+          // do not draw that part of the buffer in glDrawArrays.
 
           // Set position to (0, 0, 0).
           for (var d = 0; d < 3; d++) {
