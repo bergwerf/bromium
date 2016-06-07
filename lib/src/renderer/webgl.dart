@@ -211,9 +211,22 @@ void main(void) {
     // Field of view is 45deg, width-to-height ratio,
     // hide things closer than 0.1 or further than 100.
     _viewMatrix = makePerspectiveMatrix(
-        radians(45.0), _viewportWidth / _viewportHeight, 0.1, 10000.0);
+        radians(45.0),
+        _viewportWidth / _viewportHeight,
+        0.1,
+        engine.data.useIntegers ? 100.0 * engine.data.voxelsPerUnit : 100.0);
     _viewMatrix.translate(new Vector3(0.0, 0.0, _mouse.z));
     _viewMatrix.multiply(_mouse.rotationMatrix);
+
+    // Translate from (0, 0) to the center of voxel space (square box with
+    // size: voxelSpaceSize)
+    if (engine.data.useIntegers) {
+      _viewMatrix.translate(new Vector3(
+          -voxelSpaceSizeHalf, -voxelSpaceSizeHalf, -voxelSpaceSizeHalf));
+    } else {
+      var center = voxelSpaceSizeHalf / engine.data.voxelsPerUnit;
+      _viewMatrix.translate(new Vector3(-center, -center, -center));
+    }
 
     // Bind particle positions.
     _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);

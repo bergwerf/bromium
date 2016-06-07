@@ -34,12 +34,25 @@ class ParticleDict {
   List<String> indices = new List<String>();
 
   /// Add new particle.
-  void addParticle(String label, List<String> subParticles, Color color,
+  bool addParticle(String label, List<String> subParticles, Color color,
       {List<String> compound: const []}) {
-    if (!info.containsKey(label)) {
+    // Check if all subParticles are already defined.
+    bool subParticlesValid = true;
+    for (var p in subParticles) {
+      if (!info.containsKey(p)) {
+        subParticlesValid = false;
+        break;
+      }
+    }
+
+    // If all subParticles are valid, it is impossible to insert cycles.
+    if (!info.containsKey(label) && subParticlesValid) {
       int i = indices.length;
       indices.add(label);
       info[label] = new ParticleInfo(i, subParticles, color);
+      return true;
+    } else {
+      return false;
     }
   }
 }

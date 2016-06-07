@@ -23,12 +23,12 @@ void main() {
     new ParticleSet('A', 10000,
         new BoxDomain(new Vector3(.0, .0, .0), new Vector3(1.0, 1.0, 1.0))),
     new ParticleSet('B', 10000,
-        new BoxDomain(new Vector3(1.0, .0, .0), new Vector3(2.0, 1.0, 1.0)))
+        new BoxDomain(new Vector3(.0, .0, .0), new Vector3(-1.0, 1.0, 1.0)))
   ];
 
   var bindReactions = [new BindReaction('A', 'B', 'C', 0.02)];
 
-  engine.allocateParticles(particles, scene, bindReactions, useIntegers: false);
+  engine.allocateParticles(particles, scene, bindReactions, useIntegers: true);
 
   // Bootstrap WebGL renderer.
   var renderer = new BromiumWebGLRenderer(engine, canvas);

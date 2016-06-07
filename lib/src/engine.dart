@@ -67,10 +67,13 @@ class BromiumEngine {
         for (var d = 0; d < 3; d++) {
           // XYZ
           if (data.useIntegers) {
+            // TODO: performance tests with [voxelSpaceSize]
             data.particleUint16Position[p * 3 + d] =
-                (randPoint[d] * data.voxelsPerUnit).round();
+                (randPoint[d] * data.voxelsPerUnit + voxelSpaceSizeHalf)
+                    .round();
           } else {
-            data.particleFloatPosition[p * 3 + d] = randPoint[d];
+            data.particleFloatPosition[p * 3 + d] =
+                randPoint[d] + voxelSpaceSizeHalf / data.voxelsPerUnit;
           }
         }
 

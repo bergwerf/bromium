@@ -17,8 +17,10 @@ typedef void BromiumKineticsAlgorithm(BromiumData data);
 ///               = 32767
 ///
 const voxelSpaceSize = 65536;
+const voxelSpaceSizeHalf = voxelSpaceSize / 2;
 
 /// MFHF for [mphfMapKinetics].
+/// If [voxelSpaceSize] is updated this function should be updated as well.
 ///
 /// Unsimplified:
 ///
