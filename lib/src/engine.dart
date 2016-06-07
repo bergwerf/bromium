@@ -16,9 +16,10 @@ class BromiumEngine {
       List<BindReaction> bindReactions,
       {bool useIntegers: true, int voxelsPerUnit: 100}) {
     // Compute total count.
-    int count = 0;
+    int count = 0, inactiveCount = 0;
     sets.forEach((ParticleSet s) {
-      count += s.count; // * particles.computeParticleSize(s.label);
+      count += s.count;
+      inactiveCount += s.count * (particles.computeParticleSize(s.label) - 1);
     });
 
     // Generate internal bind reactions data.
@@ -35,7 +36,7 @@ class BromiumEngine {
 
     // Allocate new data buffers.
     data = new BromiumData.allocate(useIntegers, voxelsPerUnit,
-        particles.indices.length, count, internalBindReactions);
+        particles.indices.length, count + inactiveCount, internalBindReactions);
 
     // Copy particle color settings.
     particles.info.forEach((_, ParticleInfo info) {
@@ -47,10 +48,6 @@ class BromiumEngine {
 
     // Create new random number generator.
     var rng = new Random();
-
-    // Back offset for storing inactive particles to make composite particles
-    // complete (inactive particles are stored at the back).
-    int backOffset = 0;
 
     // Loop through all particle sets.
     for (var i = 0, p = 0; i < sets.length; i++) {
@@ -82,12 +79,12 @@ class BromiumEngine {
           // RGBA
           data.particleColor[p * 4 + c] = info.glcolor[c];
         }
-
-        // Allocate inactive particles if this is a composite particle.
-
-        // Assign bound particles.
-        data.particleBonds[p] = -1;
       }
+    }
+
+    // Set all inactive particles to inactive.
+    for (var i = 0; i < inactiveCount; i++) {
+      data.particleType[count + i] = -1;
     }
   }
 
@@ -95,8 +92,9 @@ class BromiumEngine {
   /// Note: add domain overflow protection.
   void applyBrownianMotion() {
     var rng = new Random();
-    for (var i = 0; i < data.particleBonds.length; i++) {
-      if (data.particleBonds[i] == -1) {
+    for (var i = 0; i < data.particleType.length; i++) {
+      // If the particleType is -1 the particle is inactive.
+      if (data.particleType[i] != -1) {
         if (data.useIntegers) {
           for (var c = 0; c < 3; c++) {
             // Give all values a random displacement.

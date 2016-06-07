@@ -24,7 +24,11 @@ class BromiumData {
   final int voxelsPerUnit;
 
   /// Type index of each particle
-  final Uint16List particleType;
+  ///
+  /// To inactivate a particle the type is set to -1. Inactive particles should
+  /// all be placed at the end of this list so the vertex buffer can be directly
+  /// used by glDrawArrays.
+  final Int16List particleType;
 
   /// Position of each particle as a WebGL buffer
   final Float32List particleFloatPosition;
@@ -32,18 +36,12 @@ class BromiumData {
   /// Unsigned 16bit integer variant of [particlePosition]
   final Uint16List particleUint16Position;
 
+  /// Length of the inactive tail of the particle vertex buffer in number of
+  /// particles.
+  int inactiveCount = 0;
+
   /// Bind reaction data
   final List<_BindReaction> bindReactions;
-
-  /// Particle bond data
-  ///
-  /// When particle A + B -> C. One of the two particles becomes the C particle,
-  /// and the other one is deactivated. However, when C -> A + B again, this
-  /// particle has to be reactivated. This way the particle data buffer does not
-  /// have to be resized during the simulation. This list will store to which
-  /// particle (index) the inactive particles are connected (-1 for not
-  /// connected), so they can be found again later for reuse.
-  final Int32List particleBonds;
 
   /// Color of each particle as a WebGL buffer
   final Uint8List particleColor;
@@ -60,7 +58,6 @@ class BromiumData {
       this.particleUint16Position,
       this.particleColor,
       this.particleColorSettings,
-      this.particleBonds,
       this.bindReactions);
 
   /// Allocate only constructor
@@ -69,12 +66,11 @@ class BromiumData {
     return new BromiumData(
         useIntegers,
         voxelsPerUnit,
-        new Uint16List(count),
+        new Int16List(count),
         new Float32List(useIntegers ? 0 : count * 3),
         new Uint16List(useIntegers ? count * 3 : 0),
         new Uint8List(count * 4),
         new Uint8List(ntypes * 4),
-        new Int32List(count),
         bindReactions);
   }
 
@@ -86,4 +82,83 @@ class BromiumData {
   int get particleVertexBufferType => useIntegers
       ? gl.RenderingContext.UNSIGNED_SHORT
       : gl.RenderingContext.FLOAT;
+
+  /// Bind a particle
+  ///
+  /// This will effectively swap particle b to the front of the inactive part
+  /// of the particle vertex buffer and change particle a to compositeType.
+  ///
+  /// [a]: first particle
+  /// [b]: second particle
+  /// [compositeType]: type of the new particle (will be assigned to a)
+  void bindParticles(int a, int b, int compositeType) {
+    // Copy the last active particle into this particle.
+    editParticle(b, particleType[lastActiveParticleIdx]);
+
+    // Inactivate the last active particle.
+    inactivateParticle();
+
+    // Set particle a to compositeType.
+    editParticle(a, compositeType);
+  }
+
+  /// Unbind particle
+  ///
+  /// This will effectively activate the front of the inactive part of the
+  /// particle vextex buffer and change it into [typeB] while the given
+  /// particle is changed into [typeA]. An error is thrown if no inactive
+  /// particle exists.
+  void unbindParticles(int i, int typeA, int typeB) {
+    // Set the given particle to typeA.
+    editParticle(i, typeA);
+
+    // Set the first inactive particle.
+    int particleB = activateParticle(typeB);
+
+    // Copy the location of the given particle to the typeB particle.
+    for (var d = 0; d < 3; d++) {
+      if (useIntegers) {
+        particleUint16Position[particleB * 3 + d] =
+            particleUint16Position[i * 3 + d];
+      } else {
+        particleFloatPosition[particleB * 3 + d] =
+            particleFloatPosition[i * 3 + d];
+      }
+    }
+  }
+
+  /// Compute index of the last active particle (before the tail of inactive
+  /// particles).
+  int get lastActiveParticleIdx => particleType.length - 1 - inactiveCount;
+
+  /// Compute index of the first inactive particle (front of the tail of
+  /// inactive particles).
+  int get firstInactiveParticleIdx => particleType.length - inactiveCount;
+
+  /// Inactivate a particle.
+  void inactivateParticle() {
+    particleType[lastActiveParticleIdx] = -1;
+    inactiveCount++;
+  }
+
+  /// Activate a particle.
+  int activateParticle(int type) {
+    int i = firstInactiveParticleIdx;
+    editParticle(i, type);
+    inactiveCount--;
+    return i;
+  }
+
+  /// Change a particle.
+  ///
+  /// This will effectively update the color and type of the selected particle.
+  void editParticle(int i, int type) {
+    // Set type.
+    particleType[i] = type;
+
+    // Copy color.
+    for (var c = 0; c < 4; c++) {
+      particleColor[i * 4 + c] = particleColorSettings[type * 4 + c];
+    }
+  }
 }

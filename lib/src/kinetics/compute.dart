@@ -81,40 +81,7 @@ void mphfMapKinetics(BromiumData data) {
 
         // If there are near particles, apply a bind reaction.
         if (nearParticles.length > 0) {
-          var other = nearParticles.first;
-
-          // 1. Remove the other particle from the simulation.
-
-          // Suggestion: swap inactive particles to the back of the buffer and
-          // do not draw that part of the buffer in glDrawArrays.
-
-          // Set position to (0, 0, 0).
-          for (var d = 0; d < 3; d++) {
-            if (data.useIntegers) {
-              data.particleUint16Position[other * 3 + d] = 0;
-            } else {
-              data.particleFloatPosition[other * 3 + d] = 0.0;
-            }
-          }
-
-          // Set color to (0, 0, 0, 0).
-          for (var c = 0; c < 4; c++) {
-            data.particleColor[other * 4 + c] = 0;
-          }
-
-          // Bind the particle to the target particle.
-          data.particleBonds[other] = i;
-
-          // 2. Change the target particle to the binding product.
-
-          // Set the particle type to the new type.
-          data.particleType[i] = r.particleC;
-
-          // Set the particle color to the new color.
-          for (var c = 0; c < 4; c++) {
-            data.particleColor[i * 4 + c] =
-                data.particleColorSettings[r.particleC * 4 + c];
-          }
+          data.bindParticles(i, nearParticles.first, r.particleC);
         }
       }
     }

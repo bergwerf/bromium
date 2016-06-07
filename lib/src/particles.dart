@@ -33,6 +33,23 @@ class ParticleDict {
   /// Particle label index
   List<String> indices = new List<String>();
 
+  /// Calculate how many unsplittable parts the given particle contains.
+  int computeParticleSize(String label) {
+    if (info.containsKey(label)) {
+      if (info[label].subParticles.isNotEmpty) {
+        int size = 0;
+        for (var p in info[label].subParticles) {
+          size += computeParticleSize(p);
+        }
+        return size;
+      } else {
+        return 1;
+      }
+    } else {
+      return 0;
+    }
+  }
+
   /// Add new particle.
   bool addParticle(String label, List<String> subParticles, Color color,
       {List<String> compound: const []}) {
