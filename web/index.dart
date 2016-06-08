@@ -15,9 +15,9 @@ void main() {
   // Create engine and allocate some particles.
   var engine = new BromiumEngine();
   var particles = new ParticleDict()
-    ..addParticle('A', [], RgbColor.namedColors['red'])
-    ..addParticle('B', [], RgbColor.namedColors['blue'])
-    ..addParticle('C', ['B', 'A'], RgbColor.namedColors['white']);
+    ..addParticle('A', 0.050, [], RgbColor.namedColors['red'])
+    ..addParticle('B', 0.050, [], RgbColor.namedColors['blue'])
+    ..addParticle('C', 0.025, ['B', 'A'], RgbColor.namedColors['white']);
 
   var scene = [
     new ParticleSet('A', 10000,
@@ -29,7 +29,7 @@ void main() {
   var bindReactions = [new BindReaction('A', 'B', 'C', 0.01)];
 
   engine.allocateParticles(particles, scene, bindReactions,
-      useIntegers: true, voxelsPerUnit: 100);
+      useIntegers: true, voxelsPerUnit: 50);
 
   // Bootstrap WebGL renderer.
   var renderer = new BromiumWebGLRenderer(engine, canvas);

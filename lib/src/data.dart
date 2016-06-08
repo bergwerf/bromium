@@ -9,6 +9,24 @@ part of bromium;
 const _glFloat = 0x1406;
 const _glUnsignedShort = 0x1403;
 
+/// Random walk step size data.
+class _RandomWalkStep {
+  /// Exact step size (2 * radius)
+  double size;
+
+  /// Step size rounded to an odd integer.
+  int oddSize;
+
+  /// oddSize - sub = number between -n and n where n is the step radius.
+  int sub;
+
+  /// Constructor
+  _RandomWalkStep(double r, int voxelsPerUnit)
+      : size = r * 2,
+        oddSize = (r * voxelsPerUnit).round() * 2 + 1,
+        sub = (r * voxelsPerUnit).round();
+}
+
 /// Separate class for all data that is used for the simulation computations.
 ///
 /// Optimized according to:
@@ -40,6 +58,9 @@ class BromiumData {
   /// used by glDrawArrays.
   final Int16List particleType;
 
+  /// Random walk step size per type
+  final List<_RandomWalkStep> randomWalkStep;
+
   /// Position of each particle as a WebGL buffer
   final Float32List particleFloatPosition;
 
@@ -65,6 +86,7 @@ class BromiumData {
       this.voxelsPerUnit,
       this.ntypes,
       this.particleType,
+      this.randomWalkStep,
       this.particleFloatPosition,
       this.particleUint16Position,
       this.particleColor,
@@ -79,6 +101,7 @@ class BromiumData {
         voxelsPerUnit,
         ntypes,
         new Int16List(count),
+        new List<_RandomWalkStep>(ntypes),
         new Float32List(useIntegers ? 0 : count * 3),
         new Uint16List(useIntegers ? count * 3 : 0),
         new Uint8List(count * 4),
@@ -92,6 +115,32 @@ class BromiumData {
 
   /// Getter to get the GL datatype of [particleVextexBuffer].
   int get particleVertexBufferType => useIntegers ? _glUnsignedShort : _glFloat;
+
+  /// Compute distance between two particles in units.
+  double distanceBetween(int a, int b) {
+    if (useIntegers) {
+      var ax = particleUint16Position[a * 3 + 0];
+      var ay = particleUint16Position[a * 3 + 1];
+      var az = particleUint16Position[a * 3 + 2];
+      var bx = particleUint16Position[b * 3 + 0];
+      var by = particleUint16Position[b * 3 + 1];
+      var bz = particleUint16Position[b * 3 + 2];
+      return sqrt((ax - bx) * (ax - bx) +
+              (ay - by) * (ay - by) +
+              (az - bz) * (az - bz)) /
+          voxelsPerUnit;
+    } else {
+      var ax = particleFloatPosition[a * 3 + 0];
+      var ay = particleFloatPosition[a * 3 + 1];
+      var az = particleFloatPosition[a * 3 + 2];
+      var bx = particleFloatPosition[b * 3 + 0];
+      var by = particleFloatPosition[b * 3 + 1];
+      var bz = particleFloatPosition[b * 3 + 2];
+      return sqrt((ax - bx) * (ax - bx) +
+          (ay - by) * (ay - by) +
+          (az - bz) * (az - bz));
+    }
+  }
 
   /// Bind a particle
   ///

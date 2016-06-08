@@ -9,6 +9,9 @@ class ParticleInfo {
   /// Particle index
   final int index;
 
+  /// Random walk step max size.
+  final double motionSpeed;
+
   /// Sub particles
   final List<String> subParticles;
 
@@ -16,7 +19,7 @@ class ParticleInfo {
   List<int> glcolor = new List<int>(4);
 
   /// Constructor
-  ParticleInfo(this.index, this.subParticles, Color color) {
+  ParticleInfo(this.index, this.motionSpeed, this.subParticles, Color color) {
     var rgb = color.toRgbColor();
     glcolor[0] = rgb.r;
     glcolor[1] = rgb.g;
@@ -51,7 +54,8 @@ class ParticleDict {
   }
 
   /// Add new particle.
-  bool addParticle(String label, List<String> subParticles, Color color,
+  bool addParticle(
+      String label, double motionSpeed, List<String> subParticles, Color color,
       {List<String> compound: const []}) {
     // Check if all subParticles are already defined.
     bool subParticlesValid = true;
@@ -66,7 +70,7 @@ class ParticleDict {
     if (!info.containsKey(label) && subParticlesValid) {
       int i = indices.length;
       indices.add(label);
-      info[label] = new ParticleInfo(i, subParticles, color);
+      info[label] = new ParticleInfo(i, motionSpeed, subParticles, color);
       return true;
     } else {
       return false;

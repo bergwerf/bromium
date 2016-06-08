@@ -38,8 +38,12 @@ class BromiumEngine {
     data = new BromiumData.allocate(useIntegers, voxelsPerUnit,
         particles.indices.length, count + inactiveCount, internalBindReactions);
 
-    // Copy particle color settings.
+    // Copy particle color settings and particle motion speed.
     particles.info.forEach((_, ParticleInfo info) {
+      // Compute motion radius.
+      data.randomWalkStep[info.index] =
+          new _RandomWalkStep(info.motionSpeed, data.voxelsPerUnit);
+
       for (var c = 0; c < 4; c++) {
         // RGBA
         data.particleColorSettings[info.index * 4 + c] = info.glcolor[c];
@@ -94,19 +98,22 @@ class BromiumEngine {
     var rng = new Random();
     for (var i = 0; i < data.particleType.length; i++) {
       // If the particleType is -1 the particle is inactive.
-      if (data.particleType[i] != -1) {
+      var type = data.particleType[i];
+      if (type != -1) {
         if (data.useIntegers) {
           for (var c = 0; c < 3; c++) {
             // Give all values a random displacement.
             // Note that nextInt(11) generates an integer from 0 to 10.
-            data.particleUint16Position[i * 3 + c] += rng.nextInt(11) - 5;
+            data.particleUint16Position[i * 3 + c] +=
+                rng.nextInt(data.randomWalkStep[type].oddSize) -
+                    data.randomWalkStep[type].sub;
           }
         } else {
           // Use decimal displacement.
           for (var c = 0; c < 3; c++) {
             // Give all values a random displacement.
             data.particleFloatPosition[i * 3 + c] +=
-                (rng.nextDouble() - .5) * 0.1;
+                (rng.nextDouble() - .5) * data.randomWalkStep[type].size;
           }
         }
       }
