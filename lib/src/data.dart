@@ -72,13 +72,20 @@ class BromiumData {
   int inactiveCount = 0;
 
   /// Bind reaction data
-  final List<_BindReaction> bindReactions;
+  final List<BindReaction> bindReactions;
 
   /// Color of each particle as a WebGL buffer
   final Uint8List particleColor;
 
   /// Configured colors for each particle type
   final Uint8List particleColorSettings;
+
+  /// All membranes in the simulation
+  final List<Membrane> membranes;
+
+  /// TODO: store parent membrane of each particle and only do reactions when
+  /// the particle has the same parent membrane.
+  Int16List particleParentMembrane;
 
   /// Final constructor
   BromiumData(
@@ -91,11 +98,12 @@ class BromiumData {
       this.particleUint16Position,
       this.particleColor,
       this.particleColorSettings,
-      this.bindReactions);
+      this.bindReactions,
+      this.membranes);
 
   /// Allocate only constructor
   factory BromiumData.allocate(bool useIntegers, int voxelsPerUnit, int ntypes,
-      int count, List<_BindReaction> bindReactions) {
+      int count, List<BindReaction> bindReactions, List<Membrane> membranes) {
     return new BromiumData(
         useIntegers,
         voxelsPerUnit,
@@ -106,7 +114,8 @@ class BromiumData {
         new Uint16List(useIntegers ? count * 3 : 0),
         new Uint8List(count * 4),
         new Uint8List(ntypes * 4),
-        bindReactions);
+        bindReactions,
+        membranes);
   }
 
   /// Getter to get the particle vertex buffer based on [useIntegers].

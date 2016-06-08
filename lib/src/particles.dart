@@ -6,20 +6,24 @@ part of bromium;
 
 /// Information of one particle in [ParticleDict]
 class ParticleInfo {
+  /// String label associated to this particle.
+  final String label;
+
   /// Particle index
   final int index;
 
   /// Random walk step max size.
   final double motionSpeed;
 
-  /// Sub particles
-  final List<String> subParticles;
+  /// Sub particles by their index.
+  final List<int> subParticles;
 
   /// Particle color
   List<int> glcolor = new List<int>(4);
 
   /// Constructor
-  ParticleInfo(this.index, this.motionSpeed, this.subParticles, Color color) {
+  ParticleInfo(this.label, this.index, this.motionSpeed, this.subParticles,
+      Color color) {
     var rgb = color.toRgbColor();
     glcolor[0] = rgb.r;
     glcolor[1] = rgb.g;
@@ -36,8 +40,14 @@ class ParticleDict {
   /// Particle label index
   List<String> indices = new List<String>();
 
+  /// Get particle index by their label.
+  int operator [](String label) {
+    return indices.indexOf(label);
+  }
+
   /// Calculate how many unsplittable parts the given particle contains.
-  int computeParticleSize(String label) {
+  int computeParticleSize(int type) {
+    var label = indices[type];
     if (info.containsKey(label)) {
       if (info[label].subParticles.isNotEmpty) {
         int size = 0;
@@ -68,9 +78,14 @@ class ParticleDict {
 
     // If all subParticles are valid, it is impossible to insert cycles.
     if (!info.containsKey(label) && subParticlesValid) {
-      int i = indices.length;
       indices.add(label);
-      info[label] = new ParticleInfo(i, motionSpeed, subParticles, color);
+      info[label] = new ParticleInfo(
+          label,
+          indices.length - 1,
+          motionSpeed,
+          new List<int>.generate(
+              subParticles.length, (int i) => indices.indexOf(subParticles[i])),
+          color);
       return true;
     } else {
       return false;
@@ -81,8 +96,8 @@ class ParticleDict {
 /// Collection of particles of the same type in a domain.
 /// Used in [BromiumEngine.allocateParticles].
 class ParticleSet {
-  /// Label of the particles in this set
-  String label;
+  /// Particle type
+  int type;
 
   /// Number of particles in this set
   int count;
@@ -91,5 +106,5 @@ class ParticleSet {
   Domain domain;
 
   /// Constructor
-  ParticleSet(this.label, this.count, this.domain);
+  ParticleSet(this.type, this.count, this.domain);
 }

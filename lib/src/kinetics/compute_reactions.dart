@@ -35,7 +35,7 @@ int mphfVoxelAddress(int x, int y, int z, int type, int ntypes) {
 
 /// An [BromiumKineticsAlgorithm] implementation using a Minimal Perfect Hash
 /// Function that maps all voxel addressses to a unique 64bit integer.
-void mphfMapKinetics(BromiumData data) {
+void _computeKinetics(BromiumData data) {
   // Temporary data structures
   var voxels = data.useIntegers
       ? data.particleUint16Position
@@ -82,8 +82,12 @@ void mphfMapKinetics(BromiumData data) {
                 continue;
               }
 
-              // Check distance.
-              if (data.distanceBetween(i, p) < r.distance) {
+              // Check distance in case of floating point data.
+              //
+              // Distances do not matter for integer data buffers because they
+              // do not produce a more accurate measurement than the voxel
+              // buffers already do.
+              if (data.useIntegers || data.distanceBetween(i, p) < r.distance) {
                 data.bindParticles(i, p, r.particleC);
                 break OUTER;
               }

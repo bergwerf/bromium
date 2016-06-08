@@ -20,15 +20,24 @@ void main() {
     ..addParticle('C', 0.025, ['B', 'A'], RgbColor.namedColors['white']);
 
   var scene = [
-    new ParticleSet('A', 10000,
-        new BoxDomain(new Vector3(.0, .0, .0), new Vector3(1.0, 1.0, 1.0))),
-    new ParticleSet('B', 10000,
-        new BoxDomain(new Vector3(.0, .0, .0), new Vector3(-1.0, 1.0, 1.0)))
+    new ParticleSet(particles['A'], 10000,
+        new CuboidDomain(new Vector3(.0, .0, .0), new Vector3(1.0, 1.0, 1.0))),
+    new ParticleSet(particles['B'], 10000,
+        new CuboidDomain(new Vector3(.0, .0, .0), new Vector3(-1.0, 1.0, 1.0)))
   ];
 
-  var bindReactions = [new BindReaction('A', 'B', 'C', 0.01)];
+  var bindReactions = [
+    new BindReaction(particles['A'], particles['B'], particles['C'], 0.02)
+  ];
 
-  engine.allocateParticles(particles, scene, bindReactions,
+  var membranes = [
+    new Membrane(
+        new CuboidDomain(new Vector3(1.0, .0, .0), new Vector3(2.0, 1.0, 1.0)),
+        [particles['C']],
+        [])
+  ];
+
+  engine.allocateParticles(particles, scene, bindReactions, membranes,
       useIntegers: true, voxelsPerUnit: 50);
 
   // Bootstrap WebGL renderer.

@@ -13,30 +13,31 @@ class BromiumEngine {
 
   /// Clear all old particles and allocate new ones.
   void allocateParticles(ParticleDict particles, List<ParticleSet> sets,
-      List<BindReaction> bindReactions,
+      List<BindReaction> bindReactions, List<Membrane> membranes,
       {bool useIntegers: true, int voxelsPerUnit: 100}) {
+    // Sanity check bind reactions.
+    // TODO
+
     // Compute total count.
     int count = 0, inactiveCount = 0;
     sets.forEach((ParticleSet s) {
       count += s.count;
-      inactiveCount += s.count * (particles.computeParticleSize(s.label) - 1);
+      inactiveCount += s.count * (particles.computeParticleSize(s.type) - 1);
     });
 
-    // Generate internal bind reactions data.
-    var internalBindReactions = new List<_BindReaction>(bindReactions.length);
+    // Generate voxel groups.
     for (var i = 0; i < bindReactions.length; i++) {
-      var r = bindReactions[i];
-      internalBindReactions[i] = new _BindReaction(
-          particles.info[r.particleA].index,
-          particles.info[r.particleB].index,
-          particles.info[r.particleC].index,
-          r.distance,
-          computeSphericalVoxelGroup(r.distance, voxelsPerUnit));
+      bindReactions[i].initVoxelGroup(voxelsPerUnit);
     }
 
     // Allocate new data buffers.
-    data = new BromiumData.allocate(useIntegers, voxelsPerUnit,
-        particles.indices.length, count + inactiveCount, internalBindReactions);
+    data = new BromiumData.allocate(
+        useIntegers,
+        voxelsPerUnit,
+        particles.indices.length,
+        count + inactiveCount,
+        bindReactions,
+        membranes);
 
     // Copy particle color settings and particle motion speed.
     particles.info.forEach((_, ParticleInfo info) {
@@ -55,13 +56,10 @@ class BromiumEngine {
 
     // Loop through all particle sets.
     for (var i = 0, p = 0; i < sets.length; i++) {
-      // Get the particle info for this set.
-      var info = particles.info[sets[i].label];
-
       // Assign coordinates and color to each particle.
       for (var j = 0; j < sets[i].count; j++, p++) {
         // Assign particle type.
-        data.particleType[p] = info.index;
+        data.particleType[p] = sets[i].type;
 
         // Assign a random position within the domain.
         var randPoint = sets[i].domain.computeRandomPoint(rng);
@@ -79,9 +77,10 @@ class BromiumEngine {
         }
 
         // Assign color.
+        var glcolor = particles.info[particles.indices[sets[i].type]].glcolor;
         for (var c = 0; c < 4; c++) {
           // RGBA
-          data.particleColor[p * 4 + c] = info.glcolor[c];
+          data.particleColor[p * 4 + c] = glcolor[c];
         }
       }
     }
@@ -92,42 +91,14 @@ class BromiumEngine {
     }
   }
 
-  /// Simulate one step of brownian motion.
-  /// Note: add domain overflow protection.
-  void applyBrownianMotion() {
-    var rng = new Random();
-    for (var i = 0; i < data.particleType.length; i++) {
-      // If the particleType is -1 the particle is inactive.
-      var type = data.particleType[i];
-      if (type != -1) {
-        if (data.useIntegers) {
-          for (var c = 0; c < 3; c++) {
-            // Give all values a random displacement.
-            // Note that nextInt(11) generates an integer from 0 to 10.
-            data.particleUint16Position[i * 3 + c] +=
-                rng.nextInt(data.randomWalkStep[type].oddSize) -
-                    data.randomWalkStep[type].sub;
-          }
-        } else {
-          // Use decimal displacement.
-          for (var c = 0; c < 3; c++) {
-            // Give all values a random displacement.
-            data.particleFloatPosition[i * 3 + c] +=
-                (rng.nextDouble() - .5) * data.randomWalkStep[type].size;
-          }
-        }
-      }
-    }
-  }
-
   /// Simulate one step in the particle simulation.
   void step() {
-    applyBrownianMotion();
+    _computeMotion(data);
 
     // Potential optimization: do not run kinetics computations if no reactions
     // are given (for example in a diffusion only animation with no or static
     // membranes). Note that the voxel tree structure is also required for
     // dynamic membranes.
-    mphfMapKinetics(data);
+    _computeKinetics(data);
   }
 }
