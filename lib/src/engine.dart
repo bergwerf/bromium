@@ -31,7 +31,7 @@ class BromiumEngine {
           particles.info[r.particleB].index,
           particles.info[r.particleC].index,
           r.distance,
-          (r.distance * voxelsPerUnit).ceil());
+          computeSphericalVoxelGroup(r.distance, voxelsPerUnit));
     }
 
     // Allocate new data buffers.

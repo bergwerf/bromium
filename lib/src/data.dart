@@ -4,6 +4,11 @@
 
 part of bromium;
 
+// Some webgl constants so that we do not have to depend on dart:web_gl and we
+// can run the engine in the stand-alone Dart VM.
+const _glFloat = 0x1406;
+const _glUnsignedShort = 0x1403;
+
 /// Separate class for all data that is used for the simulation computations.
 ///
 /// Optimized according to:
@@ -22,6 +27,11 @@ class BromiumData {
   /// If you are using integers everything is scaled by this so the particle
   /// position is the same as the voxel address.
   final int voxelsPerUnit;
+
+  /// Number of particle types
+  ///
+  /// Used to optimize [mphfVoxelAddress].
+  final int ntypes;
 
   /// Type index of each particle
   ///
@@ -53,6 +63,7 @@ class BromiumData {
   BromiumData(
       this.useIntegers,
       this.voxelsPerUnit,
+      this.ntypes,
       this.particleType,
       this.particleFloatPosition,
       this.particleUint16Position,
@@ -66,6 +77,7 @@ class BromiumData {
     return new BromiumData(
         useIntegers,
         voxelsPerUnit,
+        ntypes,
         new Int16List(count),
         new Float32List(useIntegers ? 0 : count * 3),
         new Uint16List(useIntegers ? count * 3 : 0),
@@ -79,9 +91,7 @@ class BromiumData {
       useIntegers ? particleUint16Position : particleFloatPosition;
 
   /// Getter to get the GL datatype of [particleVextexBuffer].
-  int get particleVertexBufferType => useIntegers
-      ? gl.RenderingContext.UNSIGNED_SHORT
-      : gl.RenderingContext.FLOAT;
+  int get particleVertexBufferType => useIntegers ? _glUnsignedShort : _glFloat;
 
   /// Bind a particle
   ///
@@ -92,11 +102,8 @@ class BromiumData {
   /// [b]: second particle
   /// [compositeType]: type of the new particle (will be assigned to a)
   void bindParticles(int a, int b, int compositeType) {
-    // Copy the last active particle into this particle.
-    editParticle(b, particleType[lastActiveParticleIdx]);
-
-    // Inactivate the last active particle.
-    inactivateParticle();
+    // Inactivate b.
+    inactivateParticle(b);
 
     // Set particle a to compositeType.
     editParticle(a, compositeType);
@@ -136,7 +143,11 @@ class BromiumData {
   int get firstInactiveParticleIdx => particleType.length - inactiveCount;
 
   /// Inactivate a particle.
-  void inactivateParticle() {
+  void inactivateParticle(int i) {
+    // Copy the last active particle into this particle.
+    editParticle(i, particleType[lastActiveParticleIdx]);
+
+    // Inactivate the last active particle.
     particleType[lastActiveParticleIdx] = -1;
     inactiveCount++;
   }

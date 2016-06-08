@@ -46,16 +46,17 @@ void mphfMapKinetics(BromiumData data) {
   if (!data.useIntegers) {
     for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
       for (var d = 0; d < 3; d++) {
+        // Note that you should use floor to find the voxel.
         voxels[j + d] =
-            (data.particleFloatPosition[j + d] * data.voxelsPerUnit).round();
+            (data.particleFloatPosition[j + d] * data.voxelsPerUnit).floor();
       }
     }
   }
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
-    var key = mphfVoxelAddress(
-        voxels[j], voxels[j + 1], voxels[j + 2], data.particleType[i], 2);
+    var key = mphfVoxelAddress(voxels[j], voxels[j + 1], voxels[j + 2],
+        data.particleType[i], data.ntypes);
     tree.putIfAbsent(key, () => new List<int>());
     tree[key].add(i);
   }
@@ -66,13 +67,20 @@ void mphfMapKinetics(BromiumData data) {
 
       // Check if this particle is the A particle in this bind reaction.
       if (data.particleType[i] == r.particleA) {
-        // If so, collect nearby particles.
-        // Note: use pre-calculated voxel groups (spherical shape).
-        var nearParticles = new List<int>();
-        var key = mphfVoxelAddress(
-            voxels[j], voxels[j + 1], voxels[j + 2], r.particleB, 2);
-        if (tree.containsKey(key)) {
-          nearParticles.addAll(tree[key]);
+        // If so, collect nearby particles by iterating through the voxel group.
+        //var nearParticles = new List<int>();
+        for (var v = 0; v < r.nearVoxelGroup.length; v += 3) {
+          var vx = voxels[j + 0] + r.nearVoxelGroup[v + 0];
+          var vy = voxels[j + 1] + r.nearVoxelGroup[v + 1];
+          var vz = voxels[j + 2] + r.nearVoxelGroup[v + 2];
+          var key = mphfVoxelAddress(vx, vy, vz, r.particleB, data.ntypes);
+          if (tree.containsKey(key)) {
+            //nearParticles.addAll(tree[key]);
+
+            // For faster processing; take the first hit and terminate.
+            data.bindParticles(i, tree[key].first, r.particleC);
+            break;
+          }
         }
 
         // Caution: what to do in case of a A + A -> B reaction?!
@@ -80,9 +88,9 @@ void mphfMapKinetics(BromiumData data) {
         // Note: filter using actual separation distance in a float context.
 
         // If there are near particles, apply a bind reaction.
-        if (nearParticles.length > 0) {
+        /*if (nearParticles.length > 0) {
           data.bindParticles(i, nearParticles.first, r.particleC);
-        }
+        }*/
       }
     }
   }

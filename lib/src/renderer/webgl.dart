@@ -245,7 +245,7 @@ void main(void) {
 
     // Draw particles.
     _gl.drawArrays(gl.RenderingContext.POINTS, 0,
-        engine.data.particleType.length); // triangles, start at 0, total 3
+        engine.data.particleType.length - engine.data.inactiveCount);
 
     // Schedule next frame.
     this._requestFrame();

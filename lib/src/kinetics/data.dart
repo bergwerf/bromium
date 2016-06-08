@@ -36,10 +36,10 @@ class _BindReaction {
   /// Exact reaction distance
   final double distance;
 
-  /// Reaction voxel distance
-  final int voxelDistance;
+  /// Voxel group that should be used to collect nearby particles.
+  final Int16List nearVoxelGroup;
 
   /// Constructor
   _BindReaction(this.particleA, this.particleB, this.particleC, this.distance,
-      this.voxelDistance);
+      this.nearVoxelGroup);
 }
