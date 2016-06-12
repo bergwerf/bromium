@@ -4,104 +4,109 @@
 
 part of bromium_webgl_renderer;
 
-/// Mouse data for user interaction.
-class MouseData {
-  /// Zoom value
-  double z;
-
-  /// A mouse button is pressed
-  bool down = false;
-
-  /// Previous x and y coordinates
-  int lastX = 0, lastY = 0;
-
-  /// Rotation matrix applied to WebGL camera.
-  Matrix4 rotationMatrix = new Matrix4.identity();
-
-  /// Constructor
-  MouseData(this.z);
-}
-
 class BromiumWebGLRenderer {
   /// Backend engine that is used to retrieve the particle information.
-  BromiumEngine engine;
+  BromiumEngine _engine;
 
-  /// Output canvas.
-  CanvasElement canvas;
+  /// Output canvas
+  CanvasElement _canvas;
 
-  // WebGL specific
+  /// Vertex and color buffers for the particle system.
+  _Buffer _particleSystem;
+
+  // Vertex and color buffers for each membrane (faces and wireframe).
+  List<Tuple2<_Buffer, _Buffer>> _membranes =
+      new List<Tuple2<_Buffer, _Buffer>>();
+
+  /// WebGL context
   gl.RenderingContext _gl;
+
+  /// Main shader program
   gl.Program _shaderProgram;
 
-  // Graphics parameters
+  /// Viewport dimensions
   int _viewportWidth, _viewportHeight;
 
-  // Vertex and color buffers
-  gl.Buffer _particleVertexBuffer;
-  gl.Buffer _particleColorBuffer;
-
-  Matrix4 _viewMatrix;
-
+  // Shader attributes
   int _aVertexPosition;
   int _aVertexColor;
-
   gl.UniformLocation _uViewMatrix;
 
-  /// Mouse data
-  MouseData _mouse;
+  /// View matrix
+  Matrix4 _viewMatrix;
+
+  /// Scene center
+  Vector3 _center;
+
+  /// Trackball
+  _Trackball _trackball;
 
   /// Constructor
-  BromiumWebGLRenderer(this.engine, this.canvas) {
-    // TODO: use better default Z calculation.
-    _mouse = new MouseData(
-        engine.data.useIntegers ? -10.0 * engine.data.voxelsPerUnit : -10.0);
-    _viewportWidth = canvas.width;
-    _viewportHeight = canvas.height;
-    _gl = canvas.getContext('experimental-webgl');
+  BromiumWebGLRenderer(this._engine, this._canvas) {
+    _viewportWidth = _canvas.width;
+    _viewportHeight = _canvas.height;
+    _gl = _canvas.getContext('webgl');
 
-    _initShaders();
-    _initBuffers();
-
+    // Set some WebGL settings.
     _gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    _gl.enable(gl.RenderingContext.DEPTH_TEST);
+    _gl.enable(gl.CULL_FACE);
+    _gl.enable(gl.DEPTH_TEST);
+    _gl.enable(gl.BLEND);
+    _gl.cullFace(gl.FRONT);
+    _gl.depthFunc(gl.LESS);
+    _gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    canvas.onMouseDown.listen((MouseEvent event) {
-      _mouse.down = true;
-      _mouse.lastX = event.client.x;
-      _mouse.lastY = event.client.y;
-    });
+    // Load shaders.
+    _initShaders();
 
-    canvas.onMouseUp.listen((MouseEvent event) {
-      _mouse.down = false;
-    });
+    // Setup buffer for the particle system.
+    _particleSystem = new _Buffer(_gl);
 
-    canvas.onMouseOut.listen((MouseEvent event) {
-      _mouse.down = false;
-    });
+    // Setup trackball.
+    _trackball = new _Trackball(_canvas, 1.1);
+  }
 
-    canvas.onMouseMove.listen((MouseEvent event) {
-      if (!_mouse.down) return;
+  /// Resest the camera position and zooming.
+  void resetCamera(Vector3 center, double z, double depth) {
+    _trackball.z = -2.0 * z;
+    _center = center;
+    _viewMatrix = makePerspectiveMatrix(
+        radians(45.0), _viewportWidth / _viewportHeight, 0.1, depth);
+  }
 
-      // Apply rotation to rotationMatrix.
-      var matrix = new Matrix4.identity();
-      matrix.rotateY((event.client.x - _mouse.lastX) / 100);
-      matrix.rotateX((event.client.y - _mouse.lastY) / 100);
-      matrix.multiply(_mouse.rotationMatrix);
-      _mouse.rotationMatrix = matrix;
+  /// Reload membrane data from the computation engine.
+  void reloadMembranes() {
+    _engine.data.membranes.forEach((Membrane m) {
+      var faceBuffer = new _Buffer(_gl);
+      var wireBuffer = new _Buffer(_gl);
+      var faceVertices = m.domain.computePolygon();
+      var wireVertices = m.domain.computeWireframe();
+      var faceColors = new Uint8List((faceVertices.length / 3).ceil() * 4);
+      var wireColors = new Uint8List((wireVertices.length / 3).ceil() * 4);
 
-      _mouse.lastX = event.client.x;
-      _mouse.lastY = event.client.y;
-    });
+      for (var i = 0; i < faceColors.length; i += 4) {
+        faceColors[i + 0] = 255;
+        faceColors[i + 1] = 255;
+        faceColors[i + 2] = 255;
+        faceColors[i + 3] = 32;
+      }
 
-    canvas.onMouseWheel.listen((WheelEvent event) {
-      var speed = engine.data.useIntegers ? engine.data.voxelsPerUnit : 1;
-      _mouse.z += event.deltaY > 0 ? speed : -speed;
+      for (var i = 0; i < wireColors.length; i += 4) {
+        wireColors[i + 0] = 255;
+        wireColors[i + 1] = 255;
+        wireColors[i + 2] = 255;
+        wireColors[i + 3] = 255;
+      }
+
+      faceBuffer.updateFloat32(_gl, faceVertices, faceColors);
+      wireBuffer.updateFloat32(_gl, wireVertices, wireColors);
+      _membranes.add(new Tuple2<_Buffer, _Buffer>(faceBuffer, wireBuffer));
     });
   }
 
+  /// Load shader program.
   void _initShaders() {
-    // vertex shader source code. uPosition is our variable that we'll
-    // use to create animation
+    // Vertex shader
     String vsSource = '''
 attribute vec3 aVertexPosition;
 attribute vec4 aVertexColor;
@@ -117,8 +122,7 @@ void main(void) {
 }
 ''';
 
-    // fragment shader source code. uColor is our variable that we'll
-    // use to animate color
+    // Fragment shader
     String fsSource = '''
 precision mediump float;
 varying vec4 vColor;
@@ -127,17 +131,17 @@ void main(void) {
 }
 ''';
 
-    // vertex shader compilation
+    // Vertex shader compilation
     gl.Shader vs = _gl.createShader(gl.RenderingContext.VERTEX_SHADER);
     _gl.shaderSource(vs, vsSource);
     _gl.compileShader(vs);
 
-    // fragment shader compilation
+    // Fragment shader compilation
     gl.Shader fs = _gl.createShader(gl.RenderingContext.FRAGMENT_SHADER);
     _gl.shaderSource(fs, fsSource);
     _gl.compileShader(fs);
 
-    // attach shaders to a WebGL program
+    // Attach shaders to a WebGL program.
     _shaderProgram = _gl.createProgram();
     _gl.attachShader(_shaderProgram, vs);
     _gl.attachShader(_shaderProgram, fs);
@@ -157,95 +161,49 @@ void main(void) {
       print(_gl.getProgramInfoLog(_shaderProgram));
     }
 
+    // Link shader attributes.
     _aVertexPosition = _gl.getAttribLocation(_shaderProgram, "aVertexPosition");
     _gl.enableVertexAttribArray(_aVertexPosition);
-
     _aVertexColor = _gl.getAttribLocation(_shaderProgram, "aVertexColor");
     _gl.enableVertexAttribArray(_aVertexColor);
-
     _uViewMatrix = _gl.getUniformLocation(_shaderProgram, "uViewMatrix");
   }
 
-  void _initBuffers() {
-    _particleVertexBuffer = _gl.createBuffer();
-    _particleColorBuffer = _gl.createBuffer();
-  }
-
+  /// Perform one simulation cycle and render a single frame.
   void render(double time) {
     // Run a simulation cycle.
-    engine.step();
+    _engine.step();
 
-    // Check if the vertex and color buffers can be updated directly or have to
-    // be reallocated (due to a simulation reset with a different number of
-    // particles).
-    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
-    int size = _gl.getBufferParameter(
-        gl.RenderingContext.ARRAY_BUFFER, gl.BUFFER_SIZE);
-    if (size == engine.data.particleType.length) {
-      // Substitute new data, if the vertex buffer did not change the color
-      // buffer should not have changed either.
-      _gl.bufferSubData(gl.RenderingContext.ARRAY_BUFFER, 0,
-          engine.data.particleVertexBuffer);
-
-      // Substitute color data.
-      _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-      _gl.bufferSubData(
-          gl.RenderingContext.ARRAY_BUFFER, 0, engine.data.particleColor);
-    } else {
-      // Reallocate buffers, if the vertex buffer did change the color buffer
-      // must have changed as well.
-      _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
-          engine.data.particleVertexBuffer, gl.RenderingContext.DYNAMIC_DRAW);
-
-      // Reallocate color buffer.
-      _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-      _gl.bufferData(gl.RenderingContext.ARRAY_BUFFER,
-          engine.data.particleColor, gl.RenderingContext.DYNAMIC_DRAW);
-    }
+    // Update vertex buffers.
+    _particleSystem.updateUint16(
+        _gl, _engine.data.particlePosition, _engine.data.particleColor);
 
     // Clear view.
     _gl.viewport(0, 0, _viewportWidth, _viewportHeight);
-    _gl.clear(gl.RenderingContext.COLOR_BUFFER_BIT |
-        gl.RenderingContext.DEPTH_BUFFER_BIT);
+    _gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // Field of view is 45deg, width-to-height ratio,
-    // hide things closer than 0.1 or further than 100.
-    _viewMatrix = makePerspectiveMatrix(
-        radians(45.0),
-        _viewportWidth / _viewportHeight,
-        0.1,
-        engine.data.useIntegers ? 100.0 * engine.data.voxelsPerUnit : 100.0);
-    _viewMatrix.translate(new Vector3(0.0, 0.0, _mouse.z));
-    _viewMatrix.multiply(_mouse.rotationMatrix);
-
-    // Translate from (0, 0) to the center of voxel space (square box with
-    // size: voxelSpaceSize)
-    if (engine.data.useIntegers) {
-      _viewMatrix.translate(new Vector3(
-          -voxelSpaceSizeHalf, -voxelSpaceSizeHalf, -voxelSpaceSizeHalf));
-    } else {
-      var center = voxelSpaceSizeHalf / engine.data.voxelsPerUnit;
-      _viewMatrix.translate(new Vector3(-center, -center, -center));
-    }
-
-    // Bind particle positions.
-    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleVertexBuffer);
-    _gl.vertexAttribPointer(
-        _aVertexPosition, 3, engine.data.particleVertexBufferType, false, 0, 0);
-
-    // Bind particle colors.
-    _gl.bindBuffer(gl.RenderingContext.ARRAY_BUFFER, _particleColorBuffer);
-    _gl.vertexAttribPointer(
-        _aVertexColor, 4, gl.RenderingContext.UNSIGNED_BYTE, false, 0, 0);
+    // Transform view matrix.
+    var viewMatrix = _viewMatrix.clone();
+    viewMatrix.translate(0.0, 0.0, _trackball.z);
+    viewMatrix.multiply(_trackball.rotationMatrix);
+    viewMatrix.translate(_center.clone()..scale(-1.0));
 
     // Apply view matrix.
-    Float32List viewMatrix = new Float32List(16);
-    _viewMatrix.copyIntoArray(viewMatrix);
-    _gl.uniformMatrix4fv(_uViewMatrix, false, viewMatrix);
+    Float32List viewMatrixCpy = new Float32List(16);
+    viewMatrix.copyIntoArray(viewMatrixCpy);
+    _gl.uniformMatrix4fv(_uViewMatrix, false, viewMatrixCpy);
 
     // Draw particles.
-    _gl.drawArrays(gl.RenderingContext.POINTS, 0,
-        engine.data.particleType.length - engine.data.inactiveCount);
+    _particleSystem.draw(_gl, _aVertexPosition, _aVertexColor, gl.POINTS, 0,
+        _engine.data.particleType.length - _engine.data.inactiveCount);
+
+    // Draw membranes.
+    _membranes.forEach((Tuple2<_Buffer, _Buffer> b) {
+      b.item1.draw(_gl, _aVertexPosition, _aVertexColor, gl.TRIANGLES);
+      _gl.disable(gl.DEPTH_TEST);
+      b.item2.draw(_gl, _aVertexPosition, _aVertexColor, gl.LINES);
+      _gl.enable(gl.DEPTH_TEST);
+    });
 
     // Schedule next frame.
     this._requestFrame();

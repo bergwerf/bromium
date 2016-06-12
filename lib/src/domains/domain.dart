@@ -4,17 +4,36 @@
 
 part of bromium;
 
+/// Intersection type for [Domain.surfaceIntersection].
+enum DomainIntersect { noIntersect, inwardIntersect, outwardIntersect }
+
 /// A particle domain for the BromiumEngine
 abstract class Domain {
   /// Compute a random point within the domain.
   Vector3 computeRandomPoint(Random rng);
 
+  /// Generate a GL_LINES wireframe outlining this domain.
+  Float32List computeWireframe();
+
   /// Generate a GL_TRIANGLES polygon outlining this domain.
   Float32List computePolygon();
 
-  /// Check if the given point is contained in this domain.
-  bool contains(Vector3 point);
+  /// Check if the given voxel is contained in this domain.
+  bool containsVoxel(int x, int y, int z);
 
-  /// Check if the given ray intersects with the domain surface.
-  bool surfaceIntersection(Ray ray);
+  /// Check if the given step (from voxel A to voxel B) intersects with the
+  /// domain surface
+  ///
+  /// The default implementation relies on [containsVoxel] and checks if the
+  /// origin is inside the membrane before and after the motion is applied.
+  DomainIntersect surfaceIntersection(
+      int ax, int ay, int az, int bx, int by, int bz) {
+    var before = containsVoxel(ax, ay, az);
+    var after = containsVoxel(bx, by, bz);
+    return !before && after
+        ? DomainIntersect.inwardIntersect
+        : (before && !after
+            ? DomainIntersect.outwardIntersect
+            : DomainIntersect.noIntersect);
+  }
 }

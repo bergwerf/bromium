@@ -7,88 +7,58 @@ part of bromium;
 /// Generic interface for building a kinetics algorithm.
 typedef void BromiumKineticsAlgorithm(BromiumData data);
 
-/// Voxel space size (16bit unsigned int max)
-///
-///     maxUint16 = 2^16 = 65536
-///     maxInt64  = 2^63 - 1
-///     maxVoxel  = ntypes *
-///       (voxelSpaceSize^3 + voxelSpaceSize^2 * voxelSpaceSize^1 + 1)
-///     maxTypes  = floor((2^63-1) / (2^(16*3) + 2^(16*2) + 2^(16*1) + 1))
-///               = 32767
-///
-const voxelSpaceSize = 65536;
-const voxelSpaceSizeHalf = voxelSpaceSize / 2;
-
-/// MFHF for [mphfMapKinetics].
-/// If [voxelSpaceSize] is updated this function should be updated as well.
-///
-/// Unsimplified:
-///
-///     hash = (ntypes * voxelSpaceSize^2) * x +
-///            (ntypes * voxelSpaceSize^1) * y +
-///            (ntypes * voxelSpaceSize^0) * z +
-///            type
-///
-int mphfVoxelAddress(int x, int y, int z, int type, int ntypes) {
-  return ntypes * (4294967296 * x + 65536 * y + z) + type;
-}
-
 /// An [BromiumKineticsAlgorithm] implementation using a Minimal Perfect Hash
 /// Function that maps all voxel addressses to a unique 64bit integer.
 void _computeKinetics(BromiumData data) {
   // Temporary data structures
-  var voxels = data.useIntegers
-      ? data.particleUint16Position
-      : new Uint16List(data.particleType.length * 3);
+  var pos = data.particlePosition;
   var tree = new Map<int, List<int>>();
 
-  // Compute voxels (floating point only).
-  if (!data.useIntegers) {
-    for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
-      for (var d = 0; d < 3; d++) {
-        // Note that you should use floor to find the voxel.
-        voxels[j + d] =
-            (data.particleFloatPosition[j + d] * data.voxelsPerUnit).floor();
-      }
-    }
-  }
+  // Random number generator.
+  var rng = new Random();
 
   // Populate tree.
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
-    var key = mphfVoxelAddress(voxels[j], voxels[j + 1], voxels[j + 2],
-        data.particleType[i], data.ntypes);
+    var key = data.space
+        .voxelAddress(pos[j], pos[j + 1], pos[j + 2], data.particleType[i]);
     tree.putIfAbsent(key, () => new List<int>());
     tree[key].add(i);
   }
 
   for (var i = 0, j = 0; i < data.particleType.length; i++, j += 3) {
-    for (var ri = 0; ri < data.bindReactions.length; ri++) {
+    OUTER: for (var ri = 0; ri < data.bindReactions.length; ri++) {
       var r = data.bindReactions[ri];
 
       // Check if this particle is the A particle in this bind reaction.
       if (data.particleType[i] == r.particleA) {
         // If so, look for nearby particles by iterating through the voxel
         // group.
-        OUTER: for (var v = 0; v < r.nearVoxelGroup.length; v += 3) {
-          var vx = voxels[j + 0] + r.nearVoxelGroup[v + 0];
-          var vy = voxels[j + 1] + r.nearVoxelGroup[v + 1];
-          var vz = voxels[j + 2] + r.nearVoxelGroup[v + 2];
-          var key = mphfVoxelAddress(vx, vy, vz, r.particleB, data.ntypes);
-          if (tree.containsKey(key)) {
+        for (var v = 0; v < r.nearVoxelGroup.length; v += 3) {
+          var vx = pos[j + 0] + r.nearVoxelGroup[v + 0];
+          var vy = pos[j + 1] + r.nearVoxelGroup[v + 1];
+          var vz = pos[j + 2] + r.nearVoxelGroup[v + 2];
+          var pkey = data.space.voxelAddress(vx, vy, vz, r.particleB);
+          if (tree.containsKey(pkey)) {
             // Iterate through this voxel.
-            for (var p in tree[key]) {
+            for (var p in tree[pkey]) {
               // In case of an A + A -> B reaction p could be the same as i.
               if (p == i) {
                 continue;
               }
 
-              // Check distance in case of floating point data.
-              //
-              // Distances do not matter for integer data buffers because they
-              // do not produce a more accurate measurement than the voxel
-              // buffers already do.
-              if (data.useIntegers || data.distanceBetween(i, p) < r.distance) {
+              // Randomly decide to proceed the reaction.
+              if (rng.nextDouble() < r.p) {
+                // Remove particle i and p from the tree.
+                var ikey = data.space
+                    .voxelAddress(pos[j], pos[j + 1], pos[j + 2], r.particleB);
+                tree[ikey].remove(i);
+                tree[pkey].remove(p);
+
+                // Bind the particles.
                 data.bindParticles(i, p, r.particleC);
+
+                // Particle i is bound so no further reaction is possible in
+                // this cycle.
                 break OUTER;
               }
             }

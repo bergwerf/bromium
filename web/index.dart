@@ -6,41 +6,59 @@ import 'dart:html';
 
 import 'package:bromium/bromium.dart';
 import 'package:bromium/webgl_renderer.dart';
-import 'package:vector_math/vector_math.dart';
 import 'package:color/color.dart';
 
 void main() {
   var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
 
-  // Create engine and allocate some particles.
-  var engine = new BromiumEngine();
+  // Setup voxel space.
+  var space = new VoxelSpace(0.01);
+
+  // Setup particle dictionary with some particles.
   var particles = new ParticleDict()
-    ..addParticle('A', 0.050, [], RgbColor.namedColors['red'])
-    ..addParticle('B', 0.050, [], RgbColor.namedColors['blue'])
-    ..addParticle('C', 0.025, ['B', 'A'], RgbColor.namedColors['white']);
+    ..addParticle('A', space.utov(.05), [], new RgbColor.name('red'))
+    ..addParticle('B', space.utov(.05), [], new RgbColor.name('blue'))
+    ..addParticle('C', space.utov(.02), ['B', 'A'], new RgbColor.name('white'));
 
-  var scene = [
-    new ParticleSet(particles['A'], 10000,
-        new CuboidDomain(new Vector3(.0, .0, .0), new Vector3(1.0, 1.0, 1.0))),
-    new ParticleSet(particles['B'], 10000,
-        new CuboidDomain(new Vector3(.0, .0, .0), new Vector3(-1.0, 1.0, 1.0)))
+  // Define particle sets.
+  var particleSets = [
+    new ParticleSet(
+        particles.particle('A'),
+        5000,
+        new CuboidDomain(
+            space.point(1.0, 0.0, 0.0), space.point(2.0, 1.0, 1.0))),
+    new ParticleSet(
+        particles.particle('B'),
+        5000,
+        new CuboidDomain(
+            space.point(-1.0, 0.0, 0.0), space.point(-2.0, 1.0, 1.0)))
   ];
 
+  // Define bind reactions.
   var bindReactions = [
-    new BindReaction(particles['A'], particles['B'], particles['C'], 0.02)
+    new BindReaction(particles.particle('A'), particles.particle('B'),
+        particles.particle('C'), space.utov(0.005), 1.0)
   ];
 
+  // Define membranes.
   var membranes = [
     new Membrane(
-        new CuboidDomain(new Vector3(1.0, .0, .0), new Vector3(2.0, 1.0, 1.0)),
-        [particles['C']],
-        [])
+        new CuboidDomain(
+            space.point(-10.0, -10.0, -1.0), space.point(10.0, 10.0, -.01)),
+        [particles.particle('C')],
+        [particles.particle('A'), particles.particle('B')])
   ];
 
-  engine.allocateParticles(particles, scene, bindReactions, membranes,
-      useIntegers: true, voxelsPerUnit: 50);
+  // Setup simulation engine.
+  var engine = new BromiumEngine();
+  engine.allocateParticles(
+      space, particles, particleSets, bindReactions, membranes);
 
-  // Bootstrap WebGL renderer.
+  // Setup WebGL renderer.
   var renderer = new BromiumWebGLRenderer(engine, canvas);
+  var sceneDimensions = engine.computeSceneDimensions();
+  renderer.resetCamera(
+      sceneDimensions.item1, sceneDimensions.item2, space.depth);
+  renderer.reloadMembranes();
   renderer.start();
 }

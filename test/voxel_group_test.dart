@@ -11,23 +11,22 @@ import 'package:bromium/bromium.dart';
 
 void main() {
   test('computeSphericalVoxelGroup', () {
-    var voxelsPerUnit = 100;
-    var voxelSize = 1 / voxelsPerUnit;
+    var voxelSize = 1;
 
     // Should give one voxel.
-    var oneVoxel = computeSphericalVoxelGroup(voxelSize / 2, voxelsPerUnit);
+    var oneVoxel = computeSphericalVoxelGroup(voxelSize / 2);
     printSlices(oneVoxel, 3);
     expect(oneVoxel.length, equals(3));
     expect(oneVoxel[0] + oneVoxel[1] + oneVoxel[2], equals(0));
 
     // Should give extra voxel on each face.
-    var sevenVoxels = computeSphericalVoxelGroup(
-        sqrt(2 * pow(voxelSize / 2, 2)), voxelsPerUnit);
+    var sevenVoxels =
+        computeSphericalVoxelGroup(sqrt(2 * pow(voxelSize / 2, 2)));
     printSlices(sevenVoxels, 5);
     expect(sevenVoxels.length, equals(3 + 6 * 3));
 
     // Should give 3x3x3 voxels.
-    var nineVoxels = computeSphericalVoxelGroup(voxelSize * 1.5, voxelsPerUnit);
+    var nineVoxels = computeSphericalVoxelGroup(voxelSize * 1.5);
     printSlices(nineVoxels, 5);
     expect(nineVoxels.length, equals(3 * 3 * 3 * 3));
   });

@@ -7,8 +7,12 @@ library bromium;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:vector_math/vector_math.dart';
+import 'package:tuple/tuple.dart';
 import 'package:color/color.dart';
+import 'package:vector_math/vector_math.dart';
+
+// Voxel space helper
+part 'src/voxels.dart';
 
 // Domains library
 part 'src/domains/domain.dart';

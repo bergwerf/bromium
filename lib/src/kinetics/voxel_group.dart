@@ -7,10 +7,7 @@ part of bromium;
 /// Function to compute a spherical voxel group for
 /// [_BindReaction.nearVoxelGroup]. Note that the (0, 0, 0) voxel must be the
 /// center of the voxel group.
-List<int> computeSphericalVoxelGroup(double radius, int voxelsPerUnit) {
-  // Convert input to voxels (not rounded).
-  var r = radius * voxelsPerUnit;
-
+List<int> computeSphericalVoxelGroup(double r) {
   // Output voxels
   var v = new List<int>();
 

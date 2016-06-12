@@ -12,8 +12,8 @@ class ParticleInfo {
   /// Particle index
   final int index;
 
-  /// Random walk step max size.
-  final double motionSpeed;
+  /// Random walk step radius
+  final double rndWalkStepR;
 
   /// Sub particles by their index.
   final List<int> subParticles;
@@ -22,7 +22,7 @@ class ParticleInfo {
   List<int> glcolor = new List<int>(4);
 
   /// Constructor
-  ParticleInfo(this.label, this.index, this.motionSpeed, this.subParticles,
+  ParticleInfo(this.label, this.index, this.rndWalkStepR, this.subParticles,
       Color color) {
     var rgb = color.toRgbColor();
     glcolor[0] = rgb.r;
@@ -34,24 +34,23 @@ class ParticleInfo {
 
 /// Dictionary of particle types
 class ParticleDict {
-  /// Particle information
-  Map<String, ParticleInfo> info = new Map<String, ParticleInfo>();
+  /// Particle data
+  List<ParticleInfo> data = new List<ParticleInfo>();
 
-  /// Particle label index
-  List<String> indices = new List<String>();
+  /// Particles indices
+  Map<String, int> indices = new Map<String, int>();
 
   /// Get particle index by their label.
-  int operator [](String label) {
-    return indices.indexOf(label);
+  int particle(String label) {
+    return indices[label];
   }
 
   /// Calculate how many unsplittable parts the given particle contains.
   int computeParticleSize(int type) {
-    var label = indices[type];
-    if (info.containsKey(label)) {
-      if (info[label].subParticles.isNotEmpty) {
+    if (data.length > type) {
+      if (data[type].subParticles.isNotEmpty) {
         int size = 0;
-        for (var p in info[label].subParticles) {
+        for (var p in data[type].subParticles) {
           size += computeParticleSize(p);
         }
         return size;
@@ -65,31 +64,40 @@ class ParticleDict {
 
   /// Add new particle.
   bool addParticle(
-      String label, double motionSpeed, List<String> subParticles, Color color,
+      String label, double rndWalkStepR, List<String> subParticles, Color color,
       {List<String> compound: const []}) {
     // Check if all subParticles are already defined.
     bool subParticlesValid = true;
     for (var p in subParticles) {
-      if (!info.containsKey(p)) {
+      if (!indices.containsKey(p)) {
         subParticlesValid = false;
         break;
       }
     }
 
     // If all subParticles are valid, it is impossible to insert cycles.
-    if (!info.containsKey(label) && subParticlesValid) {
-      indices.add(label);
-      info[label] = new ParticleInfo(
+    if (!indices.containsKey(label) && subParticlesValid) {
+      indices[label] = data.length;
+      data.add(new ParticleInfo(
           label,
-          indices.length - 1,
-          motionSpeed,
+          indices[label],
+          rndWalkStepR,
           new List<int>.generate(
-              subParticles.length, (int i) => indices.indexOf(subParticles[i])),
-          color);
+              subParticles.length, (int i) => indices[subParticles[i]]),
+          color));
       return true;
     } else {
       return false;
     }
+  }
+
+  /// Check if the given bind reaction is valid.
+  bool isValidBindReaction(BindReaction r) {
+    // TODO: this behaviour could be more flexible in the future.
+    var sp = data[r.particleC].subParticles;
+    return sp.length == 2 &&
+        sp.contains(r.particleA) &&
+        sp.contains(r.particleB);
   }
 }
 

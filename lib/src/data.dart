@@ -4,52 +4,33 @@
 
 part of bromium;
 
-// Some webgl constants so that we do not have to depend on dart:web_gl and we
-// can run the engine in the stand-alone Dart VM.
-const _glFloat = 0x1406;
-const _glUnsignedShort = 0x1403;
-
 /// Random walk step size data.
 class _RandomWalkStep {
-  /// Exact step size (2 * radius)
-  double size;
-
   /// Step size rounded to an odd integer.
-  int oddSize;
+  final int oddSize;
 
   /// oddSize - sub = number between -n and n where n is the step radius.
-  int sub;
+  final int sub;
 
   /// Constructor
-  _RandomWalkStep(double r, int voxelsPerUnit)
-      : size = r * 2,
-        oddSize = (r * voxelsPerUnit).round() * 2 + 1,
-        sub = (r * voxelsPerUnit).round();
+  _RandomWalkStep(double r)
+      : oddSize = r.ceil() * 2 + 1,
+        sub = r.ceil();
 }
 
 /// Separate class for all data that is used for the simulation computations.
-///
-/// Optimized according to:
-/// https://www.opengl.org/wiki/Vertex_Specification_Best_Practices
 class BromiumData {
-  /// Simulate using integers
-  ///
-  /// Simulations with integers run much faster than with floating point data,
-  /// but they allow less control. This variable cannot be set during a
-  /// simulation. If integers or floating point data is used is set in the
-  /// [allocateParticles] method.
-  final bool useIntegers;
+  /// Voxel space where the simulation takes place
+  final VoxelSpace space;
 
-  /// Number of voxels in 1 unit
-  ///
-  /// If you are using integers everything is scaled by this so the particle
-  /// position is the same as the voxel address.
-  final int voxelsPerUnit;
+  /// All membranes in the simulation
+  final List<Membrane> membranes;
 
-  /// Number of particle types
-  ///
-  /// Used to optimize [mphfVoxelAddress].
-  final int ntypes;
+  /// Bind reaction data
+  final List<BindReaction> bindReactions;
+
+  /// Parameters to compute random walk displacements for each type.
+  final List<_RandomWalkStep> randomWalkStep;
 
   /// Type index of each particle
   ///
@@ -58,97 +39,67 @@ class BromiumData {
   /// used by glDrawArrays.
   final Int16List particleType;
 
-  /// Random walk step size per type
-  final List<_RandomWalkStep> randomWalkStep;
-
   /// Position of each particle as a WebGL buffer
-  final Float32List particleFloatPosition;
-
-  /// Unsigned 16bit integer variant of [particlePosition]
-  final Uint16List particleUint16Position;
-
-  /// Length of the inactive tail of the particle vertex buffer in number of
-  /// particles.
-  int inactiveCount = 0;
-
-  /// Bind reaction data
-  final List<BindReaction> bindReactions;
+  final Uint16List particlePosition;
 
   /// Color of each particle as a WebGL buffer
   final Uint8List particleColor;
 
   /// Configured colors for each particle type
-  final Uint8List particleColorSettings;
+  final Uint8List particleTypeColor;
 
-  /// All membranes in the simulation
-  final List<Membrane> membranes;
-
-  /// TODO: store parent membrane of each particle and only do reactions when
-  /// the particle has the same parent membrane.
-  Int16List particleParentMembrane;
+  /// Length of the inactive tail of the particle vertex buffer in number of
+  /// particles.
+  int inactiveCount = 0;
 
   /// Final constructor
   BromiumData(
-      this.useIntegers,
-      this.voxelsPerUnit,
-      this.ntypes,
-      this.particleType,
-      this.randomWalkStep,
-      this.particleFloatPosition,
-      this.particleUint16Position,
-      this.particleColor,
-      this.particleColorSettings,
+      // Voxel space
+      this.space,
+
+      // Membranes and reactions
+      this.membranes,
       this.bindReactions,
-      this.membranes);
+      this.randomWalkStep,
+
+      // Particle information
+      this.particleType,
+      this.particlePosition,
+      this.particleColor,
+      this.particleTypeColor);
 
   /// Allocate only constructor
-  factory BromiumData.allocate(bool useIntegers, int voxelsPerUnit, int ntypes,
-      int count, List<BindReaction> bindReactions, List<Membrane> membranes) {
+  factory BromiumData.allocate(VoxelSpace space, int ntypes, int count,
+      List<BindReaction> bindReactions, List<Membrane> membranes) {
     return new BromiumData(
-        useIntegers,
-        voxelsPerUnit,
-        ntypes,
-        new Int16List(count),
-        new List<_RandomWalkStep>(ntypes),
-        new Float32List(useIntegers ? 0 : count * 3),
-        new Uint16List(useIntegers ? count * 3 : 0),
-        new Uint8List(count * 4),
-        new Uint8List(ntypes * 4),
+        space,
+        membranes,
         bindReactions,
-        membranes);
+        new List<_RandomWalkStep>(ntypes),
+
+        // Particle type
+        new Int16List(count),
+
+        // Particle position
+        new Uint16List(count * 3),
+
+        // Particle color
+        new Uint8List(count * 4),
+
+        // Particle type color
+        new Uint8List(ntypes * 4));
   }
 
-  /// Getter to get the particle vertex buffer based on [useIntegers].
-  TypedData get particleVertexBuffer =>
-      useIntegers ? particleUint16Position : particleFloatPosition;
-
-  /// Getter to get the GL datatype of [particleVextexBuffer].
-  int get particleVertexBufferType => useIntegers ? _glUnsignedShort : _glFloat;
-
-  /// Compute distance between two particles in units.
+  /// Compute distance between two particles.
   double distanceBetween(int a, int b) {
-    if (useIntegers) {
-      var ax = particleUint16Position[a * 3 + 0];
-      var ay = particleUint16Position[a * 3 + 1];
-      var az = particleUint16Position[a * 3 + 2];
-      var bx = particleUint16Position[b * 3 + 0];
-      var by = particleUint16Position[b * 3 + 1];
-      var bz = particleUint16Position[b * 3 + 2];
-      return sqrt((ax - bx) * (ax - bx) +
-              (ay - by) * (ay - by) +
-              (az - bz) * (az - bz)) /
-          voxelsPerUnit;
-    } else {
-      var ax = particleFloatPosition[a * 3 + 0];
-      var ay = particleFloatPosition[a * 3 + 1];
-      var az = particleFloatPosition[a * 3 + 2];
-      var bx = particleFloatPosition[b * 3 + 0];
-      var by = particleFloatPosition[b * 3 + 1];
-      var bz = particleFloatPosition[b * 3 + 2];
-      return sqrt((ax - bx) * (ax - bx) +
-          (ay - by) * (ay - by) +
-          (az - bz) * (az - bz));
-    }
+    var ax = particlePosition[a * 3 + 0];
+    var ay = particlePosition[a * 3 + 1];
+    var az = particlePosition[a * 3 + 2];
+    var bx = particlePosition[b * 3 + 0];
+    var by = particlePosition[b * 3 + 1];
+    var bz = particlePosition[b * 3 + 2];
+    return sqrt(
+        (ax - bx) * (ax - bx) + (ay - by) * (ay - by) + (az - bz) * (az - bz));
   }
 
   /// Bind a particle
@@ -182,13 +133,7 @@ class BromiumData {
 
     // Copy the location of the given particle to the typeB particle.
     for (var d = 0; d < 3; d++) {
-      if (useIntegers) {
-        particleUint16Position[particleB * 3 + d] =
-            particleUint16Position[i * 3 + d];
-      } else {
-        particleFloatPosition[particleB * 3 + d] =
-            particleFloatPosition[i * 3 + d];
-      }
+      particlePosition[particleB * 3 + d] = particlePosition[i * 3 + d];
     }
   }
 
@@ -227,7 +172,7 @@ class BromiumData {
 
     // Copy color.
     for (var c = 0; c < 4; c++) {
-      particleColor[i * 4 + c] = particleColorSettings[type * 4 + c];
+      particleColor[i * 4 + c] = particleTypeColor[type * 4 + c];
     }
   }
 }

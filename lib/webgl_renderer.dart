@@ -8,7 +8,10 @@ import 'dart:html';
 import 'dart:typed_data';
 import 'dart:web_gl' as gl;
 
+import 'package:tuple/tuple.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:bromium/bromium.dart';
 
+part 'src/renderer/buffer.dart';
+part 'src/renderer/trackball.dart';
 part 'src/renderer/webgl.dart';

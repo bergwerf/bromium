@@ -18,9 +18,24 @@ class Membrane {
   /// Constructor
   Membrane(this.domain, this.inwardPermeability, this.outwardPermeability);
 
-  /// Compute if the given displacement due to random motion should be blocked
-  /// because this membrane is passed while it is not permeable in that
-  /// direction for the given particle.
+  /// An optimized version of [blockParticleMotion] for integers.
   bool blockParticleMotion(
-      int particleType, Vector3 position, Vector3 displacement) {}
+      int particleType, int ax, int ay, int az, int bx, int by, int bz) {
+    // If particleType is included in inwardPermeability and
+    // outwardPermeability, you can skip the surfaceIntersection.
+    var ip = inwardPermeability.contains(particleType);
+    var op = outwardPermeability.contains(particleType);
+    if (ip && op) {
+      return false;
+    } else {
+      switch (domain.surfaceIntersection(ax, ay, az, bx, by, bz)) {
+        case DomainIntersect.inwardIntersect:
+          return !ip;
+        case DomainIntersect.outwardIntersect:
+          return !op;
+        default:
+          return false;
+      }
+    }
+  }
 }
