@@ -60,7 +60,7 @@ class _Buffer {
         _reallocateBuffer(_gl, c, colors);
       }
     } else {
-      throw new ArgumentError('input data size is incorrect');
+      throw new ArgumentError('color and vertices data length do not match');
     }
   }
 
