@@ -8,16 +8,24 @@ class BromiumEngine {
   /// Simulation data
   BromiumData data;
 
+  /// Benchmarks
+  BromiumBenchmark benchmark;
+
   /// Constructor
-  BromiumEngine();
+  BromiumEngine() {
+    // Start benchmark helper.
+    benchmark = new BromiumBenchmark();
+  }
 
   /// Clear all old particles and allocate new ones.
-  void allocateParticles(
+  void loadSimulation(
       VoxelSpace space,
       ParticleDict particles,
       List<ParticleSet> sets,
       List<BindReaction> bindReactions,
       List<Membrane> membranes) {
+    benchmark.start('load new simulation');
+
     // Sanity check bind reactions.
     bindReactions.forEach((BindReaction r) {
       if (!particles.isValidBindReaction(r)) {
@@ -75,6 +83,8 @@ class BromiumEngine {
     for (var i = 0; i < inactiveCount; i++) {
       data.particleType[count + i] = -1;
     }
+
+    benchmark.end('load new simulation');
   }
 
   /// Compute scene center and scale.
@@ -101,7 +111,13 @@ class BromiumEngine {
 
   /// Simulate one step in the particle simulation.
   void step() {
+    benchmark.start('simulation step');
+    benchmark.start('particle motion');
     _computeMotion(data);
-    _computeKinetics(data);
+    benchmark.end('particle motion');
+    benchmark.start('particle reactions');
+    _computeReactions(data);
+    benchmark.end('particle reactions');
+    benchmark.end('simulation step');
   }
 }

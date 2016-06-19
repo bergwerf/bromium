@@ -59,7 +59,7 @@ void main() {
 
   // Setup simulation engine.
   var engine = new BromiumEngine();
-  engine.allocateParticles(
+  engine.loadSimulation(
       space, particles, particleSets, bindReactions, membranes);
 
   // Setup WebGL renderer.
@@ -69,4 +69,19 @@ void main() {
       sceneDimensions.item1, sceneDimensions.item2, space.depth);
   renderer.reloadMembranes();
   renderer.start();
+
+  // Bind #run-simulation to renderer.runSimulation = true.
+  document.querySelector('#run-simulation').onClick.listen((_) {
+    renderer.runSimulation = true;
+  });
+
+  // Bind #pause-simulation to renderer.runSimulation = false.
+  document.querySelector('#pause-simulation').onClick.listen((_) {
+    renderer.runSimulation = false;
+  });
+
+  // Bind #print-benchmark to engine.benchmark.printAllMeasurements().
+  document.querySelector('#print-benchmark').onClick.listen((_) {
+    engine.benchmark.printAllMeasurements();
+  });
 }

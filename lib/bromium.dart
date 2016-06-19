@@ -11,6 +11,9 @@ import 'package:tuple/tuple.dart';
 import 'package:color/color.dart';
 import 'package:vector_math/vector_math.dart';
 
+// Benchmark helper
+part 'src/benchmark.dart';
+
 // Voxel space helper
 part 'src/voxels.dart';
 

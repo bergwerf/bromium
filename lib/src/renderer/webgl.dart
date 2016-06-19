@@ -41,6 +41,12 @@ class BromiumWebGLRenderer {
   /// Trackball
   _Trackball _trackball;
 
+  /// Do not call [_requestFrame] in the next [render] cycle.
+  bool _blockRendering = false;
+
+  /// Update simulation in render cycle?
+  bool runSimulation = true;
+
   /// Constructor
   BromiumWebGLRenderer(this._engine, this._canvas) {
     _viewportWidth = _canvas.width;
@@ -172,11 +178,13 @@ void main(void) {
   /// Perform one simulation cycle and render a single frame.
   void render(double time) {
     // Run a simulation cycle.
-    _engine.step();
+    if (runSimulation) {
+      _engine.step();
 
-    // Update vertex buffers.
-    _particleSystem.updateUint16(
-        _gl, _engine.data.particlePosition, _engine.data.particleColor);
+      // Update vertex buffers.
+      _particleSystem.updateUint16(
+          _gl, _engine.data.particlePosition, _engine.data.particleColor);
+    }
 
     // Clear view.
     _gl.viewport(0, 0, _viewportWidth, _viewportHeight);
@@ -206,13 +214,23 @@ void main(void) {
     });
 
     // Schedule next frame.
-    this._requestFrame();
+    if (!_blockRendering) {
+      this._requestFrame();
+    }
   }
 
+  /// Start rendering
   void start() {
+    _blockRendering = false;
     this._requestFrame();
   }
 
+  /// Stop rendering
+  void stop() {
+    _blockRendering = true;
+  }
+
+  /// Schedule a new render cycle.
   void _requestFrame() {
     window.requestAnimationFrame((num time) {
       this.render(time);

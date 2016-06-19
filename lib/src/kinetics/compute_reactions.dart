@@ -9,7 +9,7 @@ typedef void BromiumKineticsAlgorithm(BromiumData data);
 
 /// An [BromiumKineticsAlgorithm] implementation using a Minimal Perfect Hash
 /// Function that maps all voxel addressses to a unique 64bit integer.
-void _computeKinetics(BromiumData data) {
+void _computeReactions(BromiumData data) {
   // Temporary data structures
   var pos = data.particlePosition;
   var tree = new Map<int, List<int>>();
