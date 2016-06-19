@@ -37,16 +37,24 @@ void main() {
   // Define bind reactions.
   var bindReactions = [
     new BindReaction(particles.particle('A'), particles.particle('B'),
-        particles.particle('C'), space.utov(0.005), 1.0)
+        particles.particle('C'), 1.0)
   ];
 
   // Define membranes.
   var membranes = [
     new Membrane(
         new CuboidDomain(
-            space.point(-10.0, -10.0, -1.0), space.point(10.0, 10.0, -.01)),
-        [particles.particle('C')],
-        [particles.particle('A'), particles.particle('B')])
+            space.point(-1.0, 0.0, 0.0), space.point(1.0, 1.0, 1.0)),
+        {
+          particles.particle('A'): 0.0,
+          particles.particle('B'): 0.0,
+          particles.particle('C'): 0.5
+        },
+        {
+          particles.particle('A'): 0.0,
+          particles.particle('B'): 0.0,
+          particles.particle('C'): 0.0
+        })
   ];
 
   // Setup simulation engine.

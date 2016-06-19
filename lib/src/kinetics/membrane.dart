@@ -9,11 +9,14 @@ class Membrane {
   /// Membrane domain volume
   Domain domain;
 
-  /// Particles that can move into the membrane.
-  List<int> inwardPermeability;
+  /// Probability of particles moving into the membrane
+  Map<int, double> inwardPermeability;
 
-  /// Particles that can move out of the membrane.
-  List<int> outwardPermeability;
+  /// Probability of particles moving out of the membrane
+  Map<int, double> outwardPermeability;
+
+  /// Random number generator to simulate permeability.
+  Random _rng = new Random();
 
   /// Constructor
   Membrane(this.domain, this.inwardPermeability, this.outwardPermeability);
@@ -23,8 +26,8 @@ class Membrane {
       int particleType, int ax, int ay, int az, int bx, int by, int bz) {
     // If particleType is included in inwardPermeability and
     // outwardPermeability, you can skip the surfaceIntersection.
-    var ip = inwardPermeability.contains(particleType);
-    var op = outwardPermeability.contains(particleType);
+    var ip = _rng.nextDouble() < inwardPermeability[particleType];
+    var op = _rng.nextDouble() < outwardPermeability[particleType];
     if (ip && op) {
       return false;
     } else {

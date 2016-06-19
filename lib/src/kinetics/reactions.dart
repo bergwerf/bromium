@@ -15,18 +15,9 @@ class BindReaction {
   /// Particle C label
   final int particleC;
 
-  /// Exact reaction distance
-  final double distance;
-
   /// Reaction probability on hit.
   final double p;
 
-  /// Voxel group that should be used to collect nearby particles.
-  Int16List nearVoxelGroup;
-
   /// Constructor
-  BindReaction(
-      this.particleA, this.particleB, this.particleC, this.distance, this.p) {
-    nearVoxelGroup = computeSphericalVoxelGroup(distance / 2);
-  }
+  BindReaction(this.particleA, this.particleB, this.particleC, this.p);
 }
