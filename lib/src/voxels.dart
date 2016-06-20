@@ -37,6 +37,11 @@ class VoxelSpace {
     return 31 * (4294967296 * x + 65536 * y + z) + type;
   }
 
+  /// Same as [voxelAddress] but without adding type information.
+  int plainVoxelAddress(int x, int y, int z) {
+    return 4294967296 * x + 65536 * y + z;
+  }
+
   /// Convert units to voxels.
   double utov(double units) => units * _voxelsPerUnit;
 

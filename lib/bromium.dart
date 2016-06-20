@@ -30,8 +30,9 @@ part 'src/data.dart';
 part 'src/kinetics/membrane.dart';
 part 'src/kinetics/reactions.dart';
 part 'src/kinetics/compute_motion.dart';
-part 'src/kinetics/compute_reactions.dart';
-part 'src/kinetics/voxel_group.dart';
+part 'src/kinetics/reactions/base.dart';
+part 'src/kinetics/reactions/intmap.dart';
+part 'src/kinetics/reactions/arraysort.dart';
 
 // Computation engine class
 part 'src/engine.dart';

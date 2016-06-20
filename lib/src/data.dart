@@ -145,6 +145,10 @@ class BromiumData {
   /// inactive particles).
   int get firstInactiveParticleIdx => particleType.length - inactiveCount;
 
+  /// Compute the number of active particles.
+  /// Alias for [firstInactiveParticleIdx].
+  int get activeParticleCount => firstInactiveParticleIdx;
+
   /// Inactivate a particle.
   void inactivateParticle(int i) {
     // Copy the last active particle into this particle.

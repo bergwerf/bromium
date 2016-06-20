@@ -116,7 +116,7 @@ class BromiumEngine {
     _computeMotion(data);
     benchmark.end('particle motion');
     benchmark.start('particle reactions');
-    _computeReactions(data);
+    computeReactionsWithArraySort(data);
     benchmark.end('particle reactions');
     benchmark.end('simulation step');
   }

@@ -4,12 +4,13 @@
 
 part of bromium;
 
-/// Generic interface for building a kinetics algorithm.
-typedef void BromiumKineticsAlgorithm(BromiumData data);
-
-/// An [BromiumKineticsAlgorithm] implementation using a Minimal Perfect Hash
-/// Function that maps all voxel addressses to a unique 64bit integer.
-void _computeReactions(BromiumData data) {
+/// A [BromiumKineticsAlgorithm] implementation that uses an integer Map to
+/// efficiently connect all particles to a voxel hash (and find nearby
+/// particles).
+///
+/// This algorithms takes about 5k/6k microseconds per cycle with 10.000
+/// particles and one bind reaction.
+void computeReactionsWithIntMap(BromiumData data) {
   // Temporary data structures
   var pos = data.particlePosition;
   var tree = new Map<int, List<int>>();
