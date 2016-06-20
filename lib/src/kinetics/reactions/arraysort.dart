@@ -55,6 +55,17 @@ void computeReactionsWithArraySort(BromiumData data) {
   // Sort addresses.
   addr.sort((_HIParticle a, _HIParticle b) => a.hash - b.hash);
 
+  // Insertion sort
+  /*for (var i = 1; i < addr.length; i++) {
+    var p = i;
+    var currentValue = addr[i];
+    while (p > 0 && addr[p - 1].hash > currentValue.hash) {
+      addr[p] = addr[p - 1];
+      p--;
+    }
+    addr[p] = currentValue;
+  }*/
+
   // Find reactions.
   var currentStreak = 0, previousVoxel = -1;
   var particleTree = new Map<int, List<int>>();

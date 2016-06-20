@@ -24,14 +24,14 @@ void main() {
   var particleSets = [
     new ParticleSet(
         particles.particle('A'),
-        20000,
+        10000,
         new CuboidDomain(
-            space.point(1.0, 0.0, 0.0), space.point(2.0, 1.0, 1.0))),
+            space.point(1.0, -1.0, -1.0), space.point(2.0, 1.0, 1.0))),
     new ParticleSet(
         particles.particle('B'),
-        20000,
+        10000,
         new CuboidDomain(
-            space.point(-1.0, 0.0, 0.0), space.point(-2.0, 1.0, 1.0)))
+            space.point(-1.0, -1.0, -1.0), space.point(-2.0, 1.0, 1.0)))
   ];
 
   // Define bind reactions.
@@ -43,8 +43,8 @@ void main() {
   // Define membranes.
   var membranes = [
     new Membrane(
-        new CuboidDomain(
-            space.point(-1.0, 0.0, 0.0), space.point(1.0, 1.0, 1.0)),
+        new EllipsoidDomain(space.point(0.0, 0.0, 0.0), space.utov(1.0),
+            space.utov(2.0), space.utov(3.0)),
         {
           particles.particle('A'): 0.0,
           particles.particle('B'): 0.0,

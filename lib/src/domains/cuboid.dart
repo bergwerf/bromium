@@ -32,6 +32,9 @@ class CuboidDomain extends Domain {
     }
   }
 
+  /// The bounding box is the same as this.
+  CuboidDomain computeBoundingBox() => this;
+
   /// Random distribution is guaranteed since the coordinate system is not
   /// deformed.
   Vector3 computeRandomPoint(Random rng) {
@@ -40,6 +43,16 @@ class CuboidDomain extends Domain {
     ret.y = this.sc.y + rng.nextDouble() * (this.lc.y - this.sc.y);
     ret.z = this.sc.z + rng.nextDouble() * (this.lc.z - this.sc.z);
     return ret;
+  }
+
+  /// Check if the given coordinates are contained in this cuboid.
+  bool contains(num x, num y, num z) {
+    return !(x < sc.x ||
+        x > lc.x ||
+        y < sc.y ||
+        y > lc.y ||
+        z < sc.z ||
+        z > lc.z);
   }
 
   /// Algorithm to compute a list of lines that make up a cuboid wireframe.
@@ -130,15 +143,5 @@ class CuboidDomain extends Domain {
       }
     }
     return vertices;
-  }
-
-  /// Checks if the given voxels lies within this box.
-  bool containsVoxel(int x, int y, int z) {
-    return !(x < sc.x ||
-        x > lc.x ||
-        y < sc.y ||
-        y > lc.y ||
-        z < sc.z ||
-        z > lc.z);
   }
 }

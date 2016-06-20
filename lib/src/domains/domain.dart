@@ -9,17 +9,41 @@ enum DomainIntersect { noIntersect, inwardIntersect, outwardIntersect }
 
 /// A particle domain for the BromiumEngine
 abstract class Domain {
+  /// Get bounding box.
+  CuboidDomain computeBoundingBox();
+
   /// Compute a random point within the domain.
-  Vector3 computeRandomPoint(Random rng);
+  Vector3 computeRandomPoint(Random rng) {
+    // The default implementation uses containsPoint and computeBoundingBox.
+    Vector3 point;
+    var bbox = computeBoundingBox();
+    do {
+      point.x = bbox.sc.x + rng.nextDouble() * (bbox.lc.x - bbox.sc.x);
+      point.y = bbox.sc.y + rng.nextDouble() * (bbox.lc.y - bbox.sc.y);
+      point.z = bbox.sc.z + rng.nextDouble() * (bbox.lc.z - bbox.sc.z);
+    } while (!containsVec(point));
+    return point;
+  }
+
+  /// Check if the given point is contained in this domain.
+  bool containsVec(Vector3 point) {
+    return contains(point.x, point.y, point.z);
+  }
+
+  /// Check if the given voxel is contained in this domain.
+  bool containsVoxel(int x, int y, int z) {
+    return contains(x, y, z);
+  }
+
+  /// Check if the given coordinates are contained in this domain.
+  /// Points that touch the domain surface are also contained.
+  bool contains(num x, num y, num z);
 
   /// Generate a GL_LINES wireframe outlining this domain.
   Float32List computeWireframe();
 
   /// Generate a GL_TRIANGLES polygon outlining this domain.
   Float32List computePolygon();
-
-  /// Check if the given voxel is contained in this domain.
-  bool containsVoxel(int x, int y, int z);
 
   /// Check if the given step (from voxel A to voxel B) intersects with the
   /// domain surface
