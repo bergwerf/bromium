@@ -10,10 +10,39 @@ class _HIParticle {
   _HIParticle(this.i, this.hash);
 }
 
+/// Internal function in [computeReactionsWithArraySort] to apply reactions.
+void _applyReactionsInParticleTree(BromiumData data, Map<int, List<int>> tree) {
+  // NOTE: this process is inefficient when the particle system is very
+  // dence. Perhaps it is possible to better predict if a voxel contains
+  // particles that can do potential reactions.
+  for (var ri = 0; ri < data.bindReactions.length; ri++) {
+    var r = data.bindReactions[ri];
+
+    // Check if the voxel contains particle A and particle B if particle
+    // A and B are distinct. Else check if the voxel contains two particle
+    // A's.
+    if ((r.particleA != r.particleB &&
+            tree.containsKey(r.particleA) &&
+            tree.containsKey(r.particleB)) ||
+        (r.particleA == r.particleB &&
+            tree.containsKey(r.particleA) &&
+            tree[r.particleA].length > 1)) {
+      // Randomly decide to proceed the reaction.
+      if (new Random().nextDouble() < r.p) {
+        // Collect particle indices.
+        var aidx = tree[r.particleA].removeLast();
+        var bidx = tree[r.particleB].removeLast();
+
+        // Bind the particles.
+        data.bindParticles(aidx, bidx, r.particleC);
+      }
+    }
+  }
+}
+
 /// A [BromiumKineticsAlgorithm] implementation that uses a sorted voxel hash
 /// array to efficiently connect nearby particles.
 void computeReactionsWithArraySort(BromiumData data) {
-  var rng = new Random();
   var pos = data.particlePosition;
   var addr = new List<_HIParticle>(data.sortCache.length);
 
@@ -35,34 +64,8 @@ void computeReactionsWithArraySort(BromiumData data) {
     if (addr[i].hash != previousVoxel) {
       if (currentStreak > 0) {
         // The previous voxel contained multiple particles which are collected
-        // in particleTree. Process these particles.
-        //
-        // NOTE: this process is inefficient when the particle system is very
-        // dence. Perhaps it is possible to better predict if a voxel contains
-        // particles that can do potential reactions.
-        for (var ri = 0; ri < data.bindReactions.length; ri++) {
-          var r = data.bindReactions[ri];
-
-          // Check if the voxel contains particle A and particle B if particle
-          // A and B are distinct. Else check if the voxel contains two particle
-          // A's.
-          if ((r.particleA != r.particleB &&
-                  particleTree.containsKey(r.particleA) &&
-                  particleTree.containsKey(r.particleB)) ||
-              (r.particleA == r.particleB &&
-                  particleTree.containsKey(r.particleA) &&
-                  particleTree[r.particleA].length > 1)) {
-            // Randomly decide to proceed the reaction.
-            if (rng.nextDouble() < r.p) {
-              // Collect particle indices.
-              var aidx = particleTree[r.particleA].removeLast();
-              var bidx = particleTree[r.particleB].removeLast();
-
-              // Bind the particles.
-              data.bindParticles(aidx, bidx, r.particleC);
-            }
-          }
-        }
+        // in particleTree.
+        _applyReactionsInParticleTree(data, particleTree);
       }
 
       // Update the previous voxel to this voxel and reset the current streak.

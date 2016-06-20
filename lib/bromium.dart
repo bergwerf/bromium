@@ -32,6 +32,7 @@ part 'src/kinetics/reactions.dart';
 part 'src/kinetics/compute_motion.dart';
 part 'src/kinetics/reactions/base.dart';
 part 'src/kinetics/reactions/intmap.dart';
+part 'src/kinetics/reactions/intset.dart';
 part 'src/kinetics/reactions/arraysort.dart';
 
 // Computation engine class
