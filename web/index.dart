@@ -24,12 +24,12 @@ void main() {
   var particleSets = [
     new ParticleSet(
         particles.particle('A'),
-        5000,
+        20000,
         new CuboidDomain(
             space.point(1.0, 0.0, 0.0), space.point(2.0, 1.0, 1.0))),
     new ParticleSet(
         particles.particle('B'),
-        5000,
+        20000,
         new CuboidDomain(
             space.point(-1.0, 0.0, 0.0), space.point(-2.0, 1.0, 1.0)))
   ];

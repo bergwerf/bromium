@@ -15,11 +15,11 @@ class _HIParticle {
 void computeReactionsWithArraySort(BromiumData data) {
   var rng = new Random();
   var pos = data.particlePosition;
-  var addr = new List<_HIParticle>(data.activeParticleCount);
+  var addr = new List<_HIParticle>(data.sortCache.length);
 
   // Compute hashes.
-  for (var i = 0, j = 0; i < data.activeParticleCount; i++, j += 3) {
-    addr[i] = new _HIParticle(
+  for (var i = 0, j = 0; i < data.sortCache.length; i++, j += 3) {
+    addr[data.sortCache[i]] = new _HIParticle(
         i, data.space.plainVoxelAddress(pos[j], pos[j + 1], pos[j + 2]));
   }
 
@@ -84,5 +84,10 @@ void computeReactionsWithArraySort(BromiumData data) {
       particleTree.putIfAbsent(currType, () => new List<int>());
       particleTree[currType].add(addr[i].i);
     }
+  }
+
+  // Update sorting cache.
+  for (var i = 0; i < addr.length; i++) {
+    data.sortCache[addr[i].i] = i;
   }
 }

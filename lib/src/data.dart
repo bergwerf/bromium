@@ -52,6 +52,9 @@ class BromiumData {
   /// particles.
   int inactiveCount = 0;
 
+  /// Cache for previous sorting order
+  final Uint32List sortCache;
+
   /// Final constructor
   BromiumData(
       // Voxel space
@@ -66,7 +69,10 @@ class BromiumData {
       this.particleType,
       this.particlePosition,
       this.particleColor,
-      this.particleTypeColor);
+      this.particleTypeColor,
+
+      // Array sort cache
+      this.sortCache);
 
   /// Allocate only constructor
   factory BromiumData.allocate(VoxelSpace space, int ntypes, int count,
@@ -87,7 +93,10 @@ class BromiumData {
         new Uint8List(count * 4),
 
         // Particle type color
-        new Uint8List(ntypes * 4));
+        new Uint8List(ntypes * 4),
+
+        // Particle order
+        new Uint32List.fromList(new List<int>.generate(count, (int i) => i)));
   }
 
   /// Compute distance between two particles.

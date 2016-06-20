@@ -122,7 +122,7 @@ uniform mat4 uViewMatrix;
 varying vec4 vColor;
 
 void main(void) {
-  gl_PointSize = 2.0;
+  gl_PointSize = 1.5;
   gl_Position = uViewMatrix * vec4(aVertexPosition, 1.0);
   vColor = aVertexColor;
 }
