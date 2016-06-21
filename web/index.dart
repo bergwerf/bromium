@@ -69,15 +69,29 @@ void main() {
       sceneDimensions.item1, sceneDimensions.item2, space.depth);
   renderer.reloadMembranes();
   renderer.start();
+  engine.restartIsolate();
 
   // Bind #run-simulation to renderer.runSimulation = true.
   document.querySelector('#run-simulation').onClick.listen((_) {
     renderer.runSimulation = true;
+    engine.resumeIsolate();
   });
 
   // Bind #pause-simulation to renderer.runSimulation = false.
   document.querySelector('#pause-simulation').onClick.listen((_) {
     renderer.runSimulation = false;
+    engine.pauseIsolate();
+  });
+
+  // Toggle isolates for simulations.
+  document.querySelector('#toggle-isolates').onClick.listen((_) {
+    if (renderer.runInIsolate) {
+      renderer.runInIsolate = false;
+      engine.killIsolate();
+    } else {
+      renderer.runInIsolate = true;
+      engine.restartIsolate();
+    }
   });
 
   // Bind #print-benchmark to engine.benchmark.printAllMeasurements().

@@ -21,8 +21,14 @@ class BromiumEngine {
   /// Simulation render isolate.
   Isolate _simIsolate;
 
-  /// Isolate communication receive port.
+  /// Isolate data receive port.
   ReceivePort _receivePort;
+
+  /// Isolate trigger send port.
+  SendPort _sendPort;
+
+  /// Run simulation on isolate.
+  bool _runIsolate = false;
 
   /// Constructor
   BromiumEngine() {
@@ -97,9 +103,6 @@ class BromiumEngine {
     _sortCache = new Uint32List.fromList(
         new List<int>.generate(data.nParticles, (int i) => i));
 
-    // Start new render isolate.
-    _startIsolate();
-
     benchmark.end('load new simulation');
   }
 
@@ -141,9 +144,54 @@ class BromiumEngine {
     benchmark.end('simulation step');
   }
 
-  /// Isolated step runnner.
-  static void _isolateRunner(
-      Tuple3<SendPort, SimulationInfo, ByteBuffer> setup) {
+  /// Kill existing rendering isolate.
+  void killIsolate() {
+    if (_simIsolate != null) {
+      _simIsolate.kill();
+      _runIsolate = false;
+    }
+  }
+
+  /// Pause isolate.
+  void pauseIsolate() {
+    _runIsolate = false;
+  }
+
+  /// Resume isolate.
+  void resumeIsolate() {
+    _runIsolate = true;
+    _sendPort.send(true);
+  }
+
+  /// Start new isolate for rendering.
+  Future restartIsolate() async {
+    killIsolate();
+
+    // Setup receive port for the new isolate.
+    _receivePort = new ReceivePort();
+    _receivePort.listen((dynamic msg) {
+      if (msg is SendPort) {
+        _sendPort = msg;
+        _sendPort.send(true); // First trigger
+      } else if (msg is ByteBuffer) {
+        if (_sendPort != null && _runIsolate) {
+          _sendPort.send(true);
+        }
+        data = new SimulationBuffer.fromByteBuffer(msg);
+      }
+    });
+
+    // Spawn new isolate.
+    _runIsolate = true;
+    _simIsolate = await Isolate.spawn(
+        _isolateRunner,
+        new Tuple3<SendPort, SimulationInfo, ByteBuffer>(
+            _receivePort.sendPort, info, data.byteBuffer));
+  }
+
+  /// Isolate simulation runner
+  static Future _isolateRunner(
+      Tuple3<SendPort, SimulationInfo, ByteBuffer> setup) async {
     // Extract setup data.
     var sendPort = setup.item1;
     var sim =
@@ -153,30 +201,12 @@ class BromiumEngine {
     var sortCache = new Uint32List.fromList(
         new List<int>.generate(sim.data.nParticles, (int i) => i));
 
-    // Continuously recompute.
-    while (true) {
+    var triggerPort = new ReceivePort();
+    sendPort.send(triggerPort.sendPort);
+    triggerPort.listen((_) {
       computeMotion(sim);
       computeReactionsWithArraySort(sim, sortCache);
       sendPort.send(sim.data.byteBuffer);
-    }
-  }
-
-  /// Start new isolate for rendering
-  Future _startIsolate() async {
-    if (_simIsolate != null) {
-      _simIsolate.kill();
-    }
-
-    // Setup receive port for the new isolate.
-    _receivePort = new ReceivePort();
-    _receivePort.listen((ByteBuffer buffer) {
-      data = new SimulationBuffer.fromByteBuffer(buffer);
     });
-
-    // Spawn new isolate.
-    _simIsolate = await Isolate.spawn(
-        _isolateRunner,
-        new Tuple3<SendPort, SimulationInfo, ByteBuffer>(
-            _receivePort.sendPort, info, data.byteBuffer));
   }
 }

@@ -44,8 +44,11 @@ class BromiumWebGLRenderer {
   /// Do not call [_requestFrame] in the next [render] cycle.
   bool _blockRendering = false;
 
-  /// Update simulation in render cycle?
+  /// Update simulation data in render cycle?
   bool runSimulation = true;
+
+  /// Use isolates for simulation computations?
+  bool runInIsolate = true;
 
   /// Constructor
   BromiumWebGLRenderer(this._engine, this._canvas) {
@@ -185,6 +188,10 @@ void main(void) {
       // Update particle system.
       _particleSystem.updateUint16(
           _gl, _engine.data.pCoords, _engine.data.pColor);
+
+      if (!runInIsolate) {
+        _engine.step();
+      }
     }
 
     // Clear view.
