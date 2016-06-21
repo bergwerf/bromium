@@ -10,28 +10,28 @@ part of bromium;
 ///
 /// This algorithms takes about 5k/6k microseconds per cycle with 10.000
 /// particles and one bind reaction.
-void computeReactionsWithIntMap(Sim sim) {
+void computeReactionsWithIntMap(Simulation sim) {
   // Temporary data structures
-  var pos = sim.data.pCoords;
+  var pos = sim.buffer.pCoords;
   var tree = new Map<int, List<int>>();
 
   // Random number generator.
   var rng = new Random();
 
   // Populate tree.
-  for (var i = 0, j = 0; i < sim.data.nParticles; i++, j += 3) {
+  for (var i = 0, j = 0; i < sim.buffer.nParticles; i++, j += 3) {
     var key = sim.info.space
-        .voxelAddress(pos[j], pos[j + 1], pos[j + 2], sim.data.pType[i]);
+        .voxelAddress(pos[j], pos[j + 1], pos[j + 2], sim.buffer.pType[i]);
     tree.putIfAbsent(key, () => new List<int>());
     tree[key].add(i);
   }
 
-  for (var i = 0, j = 0; i < sim.data.nParticles; i++, j += 3) {
+  for (var i = 0, j = 0; i < sim.buffer.nParticles; i++, j += 3) {
     OUTER: for (var ri = 0; ri < sim.info.bindReactions.length; ri++) {
       var r = sim.info.bindReactions[ri];
 
       // Check if this particle is the A particle in this bind reaction.
-      if (sim.data.pType[i] == r.particleA) {
+      if (sim.buffer.pType[i] == r.particleA) {
         // If so, look for nearby particles. It is possible to look for more
         // distant particles by iterating through multiple voxels (this was
         // previously implemented using an array of voxel offsets), but
@@ -56,7 +56,7 @@ void computeReactionsWithIntMap(Sim sim) {
               tree[pkey].remove(p);
 
               // Bind the particles.
-              bindParticles(sim, i, p, r.particleC);
+              sim.bindParticles(i, p, r.particleC);
 
               // Particle i is bound so no further reaction is possible in
               // this cycle.

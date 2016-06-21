@@ -138,8 +138,8 @@ class SimulationBuffer {
 
   /// Get membrane dimensions (array with nMembraneDims values).
   Float32List getMembraneDimensions(int membrane) {
-    return new Float32List.view(
-        _buffer, memDimOffset + membrane * nMembraneDims, nMembraneDims);
+    return new Float32List.view(_buffer,
+        memDimOffset + membrane * nMembraneDims * _f32b, nMembraneDims);
   }
 
   /// Set membrane dimensions (array with nMembraneDims values).

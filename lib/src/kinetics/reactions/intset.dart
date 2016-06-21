@@ -6,12 +6,12 @@ part of bromium;
 
 /// A [BromiumKineticsAlgorithm] implementation that uses a sorted voxel hash
 /// array to efficiently connect nearby particles.
-void computeReactionsWithIntSet(Sim sim) {
-  var pos = sim.data.pCoords;
-  var addr = new List<int>(sim.data.nParticles);
+void computeReactionsWithIntSet(Simulation sim) {
+  var pos = sim.buffer.pCoords;
+  var addr = new List<int>(sim.buffer.nParticles);
 
   // Compute hashes.
-  for (var i = 0, j = 0; i < sim.data.nParticles; i++, j += 3) {
+  for (var i = 0, j = 0; i < sim.buffer.nParticles; i++, j += 3) {
     addr[i] = sim.info.space.plainVoxelAddress(pos[j], pos[j + 1], pos[j + 2]);
   }
 
@@ -32,7 +32,7 @@ void computeReactionsWithIntSet(Sim sim) {
       for (var j = 0; j < addr.length; j++) {
         if (addr[j] == voxel) {
           // Add to particle tree.
-          var type = sim.data.pType[j];
+          var type = sim.buffer.pType[j];
           particleTree.putIfAbsent(type, () => new List<int>());
           particleTree[type].add(j);
         }

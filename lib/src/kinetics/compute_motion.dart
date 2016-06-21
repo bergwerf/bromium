@@ -5,11 +5,11 @@
 part of bromium;
 
 /// This function applies one cycle of random motion to the given [BromiumData].
-void computeMotion(Sim sim) {
+void computeMotion(Simulation sim) {
   var rng = new Random();
-  OUTER: for (var i = 0; i < sim.data.nParticles; i++) {
+  OUTER: for (var i = 0; i < sim.buffer.nParticles; i++) {
     // If the particleType is -1 the particle is inactive.
-    var type = sim.data.pType[i];
+    var type = sim.buffer.pType[i];
     if (type != -1) {
       // Compute random displacement.
       var odd = sim.info.particleInfo[type].rndWalkOdd;
@@ -25,21 +25,21 @@ void computeMotion(Sim sim) {
             rng,
             m,
             type,
-            sim.data.pCoords[i * 3 + 0],
-            sim.data.pCoords[i * 3 + 1],
-            sim.data.pCoords[i * 3 + 2],
-            sim.data.pCoords[i * 3 + 0] + motionX,
-            sim.data.pCoords[i * 3 + 1] + motionY,
-            sim.data.pCoords[i * 3 + 2] + motionZ)) {
+            sim.buffer.pCoords[i * 3 + 0],
+            sim.buffer.pCoords[i * 3 + 1],
+            sim.buffer.pCoords[i * 3 + 2],
+            sim.buffer.pCoords[i * 3 + 0] + motionX,
+            sim.buffer.pCoords[i * 3 + 1] + motionY,
+            sim.buffer.pCoords[i * 3 + 2] + motionZ)) {
           // Continue to next particle.
           continue OUTER;
         }
       }
 
       // Apply motion.
-      sim.data.pCoords[i * 3 + 0] += motionX;
-      sim.data.pCoords[i * 3 + 1] += motionY;
-      sim.data.pCoords[i * 3 + 2] += motionZ;
+      sim.buffer.pCoords[i * 3 + 0] += motionX;
+      sim.buffer.pCoords[i * 3 + 1] += motionY;
+      sim.buffer.pCoords[i * 3 + 2] += motionZ;
     }
   }
 }

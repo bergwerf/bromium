@@ -80,18 +80,22 @@ class BromiumWebGLRenderer {
     _trackball.z = -2.0 * z;
     _center = center;
     _viewMatrix = makePerspectiveMatrix(
-        radians(45.0), _viewportWidth / _viewportHeight, 0.1, depth);
+        radians(45.0),
+        _viewportWidth / _viewportHeight,
+        _engine.sim.info.space.utov(0.01),
+        depth);
   }
 
   /// Reload membrane data from the computation engine.
   void reloadMembranes() {
-    for (var m = 0; m < _engine.data.nMembranes; m++) {
+    for (var m = 0; m < _engine.sim.buffer.nMembranes; m++) {
       var faceBuffer = new _Buffer(_gl);
       var wireBuffer = new _Buffer(_gl);
 
-      var dims = _engine.data.getMembraneDimensions(m);
-      var faceVerts = computeDomainPolygon(_engine.info.membranes[m], dims);
-      var wireVerts = computeDomainWireframe(_engine.info.membranes[m], dims);
+      var dims = _engine.sim.buffer.getMembraneDimensions(m);
+      var faceVerts = computeDomainPolygon(_engine.sim.info.membranes[m], dims);
+      var wireVerts =
+          computeDomainWireframe(_engine.sim.info.membranes[m], dims);
 
       var faceColors = new Uint8List((faceVerts.length / 3).ceil() * 4);
       var wireColors = new Uint8List((wireVerts.length / 3).ceil() * 4);
@@ -100,7 +104,8 @@ class BromiumWebGLRenderer {
         faceColors[i + 0] = 255;
         faceColors[i + 1] = 255;
         faceColors[i + 2] = 255;
-        faceColors[i + 3] = 32;
+        faceColors[i + 3] =
+            _engine.sim.info.membranes[m] == DomainType.cuboid ? 0 : 64;
       }
 
       for (var i = 0; i < wireColors.length; i += 4) {
@@ -183,15 +188,13 @@ void main(void) {
 
   /// Perform one simulation cycle and render a single frame.
   void render(double time) {
-    // Run a simulation cycle.
-    if (runSimulation) {
-      // Update particle system.
-      _particleSystem.updateUint16(
-          _gl, _engine.data.pCoords, _engine.data.pColor);
+    // Update particle system.
+    _particleSystem.updateUint16(
+        _gl, _engine.sim.buffer.pCoords, _engine.sim.buffer.pColor);
 
-      if (!runInIsolate) {
-        _engine.step();
-      }
+    if (runSimulation && !runInIsolate) {
+      // Run a simulation cycle on the main thread.
+      _engine.step();
     }
 
     // Clear view.
@@ -211,7 +214,7 @@ void main(void) {
 
     // Draw particles.
     _particleSystem.draw(_gl, _aVertexPosition, _aVertexColor, gl.POINTS, 0,
-        _engine.data.activeParticleCount);
+        _engine.sim.buffer.activeParticleCount);
 
     // Draw membranes.
     _membranes.forEach((Tuple2<_Buffer, _Buffer> b) {

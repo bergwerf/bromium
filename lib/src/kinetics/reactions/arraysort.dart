@@ -11,7 +11,7 @@ class _HIParticle {
 }
 
 /// Internal function in [computeReactionsWithArraySort] to apply reactions.
-void _applyReactionsInParticleTree(Sim sim, Map<int, List<int>> tree) {
+void _applyReactionsInParticleTree(Simulation sim, Map<int, List<int>> tree) {
   // NOTE: this process is inefficient when the particle system is very
   // dence. Perhaps it is possible to better predict if a voxel contains
   // particles that can do potential reactions.
@@ -34,7 +34,7 @@ void _applyReactionsInParticleTree(Sim sim, Map<int, List<int>> tree) {
         var bidx = tree[r.particleB].removeLast();
 
         // Bind the particles.
-        bindParticles(sim, aidx, bidx, r.particleC);
+        sim.bindParticles(aidx, bidx, r.particleC);
       }
     }
   }
@@ -42,8 +42,8 @@ void _applyReactionsInParticleTree(Sim sim, Map<int, List<int>> tree) {
 
 /// A [BromiumKineticsAlgorithm] implementation that uses a sorted voxel hash
 /// array to efficiently connect nearby particles.
-void computeReactionsWithArraySort(Sim sim, Uint32List sortCache) {
-  var pos = sim.data.pCoords;
+void computeReactionsWithArraySort(Simulation sim, Uint32List sortCache) {
+  var pos = sim.buffer.pCoords;
   var addr = new List<_HIParticle>(sortCache.length);
 
   // Compute hashes.
@@ -77,13 +77,13 @@ void computeReactionsWithArraySort(Sim sim, Uint32List sortCache) {
         particleTree.clear();
 
         // Add previous particle.
-        var prevType = sim.data.pType[addr[i - 1].i];
+        var prevType = sim.buffer.pType[addr[i - 1].i];
         particleTree.putIfAbsent(prevType, () => new List<int>());
         particleTree[prevType].add(addr[i - 1].i);
       }
 
       // Add current particle.
-      var currType = sim.data.pType[addr[i].i];
+      var currType = sim.buffer.pType[addr[i].i];
       particleTree.putIfAbsent(currType, () => new List<int>());
       particleTree[currType].add(addr[i].i);
     }

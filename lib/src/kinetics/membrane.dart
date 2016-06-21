@@ -5,10 +5,10 @@
 part of bromium;
 
 /// Check if the given motion should be blocked.
-bool membraneBlockParticleMotion(Sim sim, Random rng, int membrane, int type,
+bool membraneBlockParticleMotion(Simulation sim, Random rng, int membrane, int type,
     int ax, int ay, int az, int bx, int by, int bz) {
-  var ip = rng.nextDouble() < sim.data.getInwardPermeability(membrane, type);
-  var op = rng.nextDouble() < sim.data.getOutwardPermeability(membrane, type);
+  var ip = rng.nextDouble() < sim.buffer.getInwardPermeability(membrane, type);
+  var op = rng.nextDouble() < sim.buffer.getOutwardPermeability(membrane, type);
   if (ip && op) {
     return false;
   } else {

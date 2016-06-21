@@ -43,12 +43,25 @@ void main() {
   // Define membranes.
   var membranes = [
     new Membrane(
-        new EllipsoidDomain(space.point(0.0, 0.0, 0.0), space.utov(1.0),
+        new EllipsoidDomain(space.point(0.0, 0.0, 0.0), space.utov(3.0),
             space.utov(2.0), space.utov(3.0)),
         {
           particles.particle('A'): 0.0,
           particles.particle('B'): 0.0,
-          particles.particle('C'): 0.5
+          particles.particle('C'): 0.0
+        },
+        {
+          particles.particle('A'): 0.0,
+          particles.particle('B'): 0.0,
+          particles.particle('C'): 1.0
+        }),
+    new Membrane(
+        new CuboidDomain(
+            space.point(-5.0, -5.0, -5.0), space.point(5.0, 5.0, 5.0)),
+        {
+          particles.particle('A'): 0.0,
+          particles.particle('B'): 0.0,
+          particles.particle('C'): 0.0
         },
         {
           particles.particle('A'): 0.0,
@@ -97,5 +110,6 @@ void main() {
   // Bind #print-benchmark to engine.benchmark.printAllMeasurements().
   document.querySelector('#print-benchmark').onClick.listen((_) {
     engine.benchmark.printAllMeasurements();
+    print('Number of computed cycles: ${engine.nCycles}');
   });
 }

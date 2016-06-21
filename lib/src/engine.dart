@@ -6,11 +6,8 @@ part of bromium;
 
 /// Simulation engine
 class BromiumEngine {
-  /// Simulation info
-  SimulationInfo info;
-
-  /// Simulation data
-  SimulationBuffer data;
+  /// Simulation
+  Simulation sim;
 
   /// Benchmarks
   BromiumBenchmark benchmark;
@@ -29,6 +26,12 @@ class BromiumEngine {
 
   /// Run simulation on isolate.
   bool _runIsolate = false;
+
+  /// Number of computed cycles so far.
+  int nCycles = 0;
+
+  /// Number of cycles computed per batch by the isolate runner.
+  static const nBatchCycles = 128;
 
   /// Constructor
   BromiumEngine() {
@@ -53,7 +56,7 @@ class BromiumEngine {
     });
 
     // Update simulation info.
-    info = new SimulationInfo(
+    var info = new SimulationInfo(
         space,
         particles.data,
         bindReactions,
@@ -67,17 +70,23 @@ class BromiumEngine {
     });
 
     // Allocate new simulation data.
-    data = new SimulationBuffer.fromDimensions(
+    var buffer = new SimulationBuffer.fromDimensions(
         particles.data.length, nParticles, membranes.length);
 
     // Load membrane data into simulation buffer.
     for (var i = 0; i < membranes.length; i++) {
-      data.setMembraneDimensions(i, membranes[i].domain.getDims());
-      for (var t = 0; t < data.nTypes; t++) {
-        data.setInwardPermeability(i, t, membranes[i].inwardPermeability[t]);
-        data.setOutwardPermeability(i, t, membranes[i].outwardPermeability[t]);
+      buffer.setMembraneDimensions(i, membranes[i].domain.getDims());
+      for (var t = 0; t < buffer.nTypes; t++) {
+        buffer.setInwardPermeability(i, t, membranes[i].inwardPermeability[t]);
+        buffer.setOutwardPermeability(
+            i, t, membranes[i].outwardPermeability[t]);
       }
     }
+
+    // Build simulation object.
+    // Its important to do this after loading the membrane permeability values
+    // or the Simulation.membranes will be initialized incorrectly.
+    sim = new Simulation(info, buffer);
 
     // Create new random number generator for computing random positions.
     var rng = new Random();
@@ -88,20 +97,20 @@ class BromiumEngine {
       // Assign coordinates and color to each particle.
       for (var j = 0; j < sets[i].count; j++, p++) {
         // Assign particle type, random position, and color.
-        data.pType[p] = sets[i].type;
-        setParticleCoords(data, p, sets[i].domain.computeRandomPoint(rng));
-        setParticleColor(data, p, info.particleInfo[sets[i].type].rgba);
+        sim.buffer.pType[p] = sets[i].type;
+        sim.setParticleCoords(p, sets[i].domain.computeRandomPoint(rng));
+        sim.setParticleColor(p, info.particleInfo[sets[i].type].rgba);
       }
     }
 
     // Set inactive particles.
-    for (; p < data.nParticles; p++) {
-      data.pType[p] = -1;
+    for (; p < sim.buffer.nParticles; p++) {
+      sim.buffer.pType[p] = -1;
     }
 
     // Allocate sort cache.
     _sortCache = new Uint32List.fromList(
-        new List<int>.generate(data.nParticles, (int i) => i));
+        new List<int>.generate(sim.buffer.nParticles, (int i) => i));
 
     benchmark.end('load new simulation');
   }
@@ -109,27 +118,27 @@ class BromiumEngine {
   /// Compute scene center and scale.
   Tuple2<Vector3, double> computeSceneDimensions() {
     var center = new Vector3.zero();
-    var _min = data.pCoords.first.toDouble();
+    var _min = sim.buffer.pCoords.first.toDouble();
     var _max = _min;
 
-    for (var i = 0; i < data.pCoords.length; i += 3) {
-      center.add(new Vector3(data.pCoords[i + 0].toDouble(),
-          data.pCoords[i + 1].toDouble(), data.pCoords[i + 2].toDouble()));
+    for (var i = 0; i < sim.buffer.pCoords.length; i += 3) {
+      center.add(new Vector3(
+          sim.buffer.pCoords[i + 0].toDouble(),
+          sim.buffer.pCoords[i + 1].toDouble(),
+          sim.buffer.pCoords[i + 2].toDouble()));
 
       for (var d = 0; d < 3; d++) {
-        _min = min(_min, data.pCoords[i + d]);
-        _max = max(_max, data.pCoords[i + d]);
+        _min = min(_min, sim.buffer.pCoords[i + d]);
+        _max = max(_max, sim.buffer.pCoords[i + d]);
       }
     }
-    center.scale(1 / data.nParticles);
+    center.scale(1 / sim.buffer.nParticles);
 
     return new Tuple2<Vector3, double>(center, _max - _min);
   }
 
   /// Simulate one step in the particle simulation.
   void step() {
-    var sim = new Sim(info, data);
-
     benchmark.start('simulation step');
     benchmark.start('particle motion');
 
@@ -142,6 +151,8 @@ class BromiumEngine {
 
     benchmark.end('particle reactions');
     benchmark.end('simulation step');
+
+    nCycles++;
   }
 
   /// Kill existing rendering isolate.
@@ -159,25 +170,33 @@ class BromiumEngine {
 
   /// Resume isolate.
   void resumeIsolate() {
-    _runIsolate = true;
-    _sendPort.send(true);
+    if (_simIsolate != null) {
+      nCycles = 0;
+      _runIsolate = true;
+
+      if (_sendPort != null) {
+        _sendPort.send(true);
+      }
+    }
   }
 
   /// Start new isolate for rendering.
   Future restartIsolate() async {
+    nCycles = 0;
     killIsolate();
 
     // Setup receive port for the new isolate.
     _receivePort = new ReceivePort();
     _receivePort.listen((dynamic msg) {
-      if (msg is SendPort) {
-        _sendPort = msg;
-        _sendPort.send(true); // First trigger
-      } else if (msg is ByteBuffer) {
-        if (_sendPort != null && _runIsolate) {
+      if (msg is ByteBuffer) {
+        nCycles++;
+        if (_sendPort != null && _runIsolate && nCycles % nBatchCycles == 0) {
           _sendPort.send(true);
         }
-        data = new SimulationBuffer.fromByteBuffer(msg);
+        sim.buffer = new SimulationBuffer.fromByteBuffer(msg);
+      } else if (msg is SendPort) {
+        _sendPort = msg;
+        _sendPort.send(true); // First trigger
       }
     });
 
@@ -186,7 +205,7 @@ class BromiumEngine {
     _simIsolate = await Isolate.spawn(
         _isolateRunner,
         new Tuple3<SendPort, SimulationInfo, ByteBuffer>(
-            _receivePort.sendPort, info, data.byteBuffer));
+            _receivePort.sendPort, sim.info, sim.buffer.byteBuffer));
   }
 
   /// Isolate simulation runner
@@ -194,19 +213,22 @@ class BromiumEngine {
       Tuple3<SendPort, SimulationInfo, ByteBuffer> setup) async {
     // Extract setup data.
     var sendPort = setup.item1;
-    var sim =
-        new Sim(setup.item2, new SimulationBuffer.fromByteBuffer(setup.item3));
+    var sim = new Simulation(
+        setup.item2, new SimulationBuffer.fromByteBuffer(setup.item3));
 
     // Create sort cache.
     var sortCache = new Uint32List.fromList(
-        new List<int>.generate(sim.data.nParticles, (int i) => i));
+        new List<int>.generate(sim.buffer.nParticles, (int i) => i));
 
     var triggerPort = new ReceivePort();
     sendPort.send(triggerPort.sendPort);
     triggerPort.listen((_) {
-      computeMotion(sim);
-      computeReactionsWithArraySort(sim, sortCache);
-      sendPort.send(sim.data.byteBuffer);
+      // Render 100 frames.
+      for (var i = nBatchCycles; i > 0; i--) {
+        computeMotion(sim);
+        computeReactionsWithArraySort(sim, sortCache);
+        sendPort.send(sim.buffer.byteBuffer);
+      }
     });
   }
 }

@@ -31,7 +31,7 @@ part 'src/data/bind_reaction.dart';
 part 'src/data/membrane.dart';
 part 'src/data/simulation_info.dart';
 part 'src/data/simulation_buffer.dart';
-part 'src/data/simulation_utils.dart';
+part 'src/data/simulation.dart';
 
 // Kinetics algorithms
 part 'src/kinetics/membrane.dart';
