@@ -14,32 +14,32 @@ void computeMotion(Simulation sim) {
       // Compute random displacement.
       var odd = sim.info.particleInfo[type].rndWalkOdd;
       var sub = sim.info.particleInfo[type].rndWalkSub;
-      var motionX = rng.nextInt(odd) - sub;
-      var motionY = rng.nextInt(odd) - sub;
-      var motionZ = rng.nextInt(odd) - sub;
+      var mx = rng.nextInt(odd) - sub;
+      var my = rng.nextInt(odd) - sub;
+      var mz = rng.nextInt(odd) - sub;
 
       // Check motion block due to membrane permeability.
       for (var m = 0; m < sim.info.membranes.length; m++) {
-        if (membraneBlockParticleMotion(
-            sim,
-            rng,
-            m,
-            type,
-            sim.buffer.pCoords[i * 3 + 0],
-            sim.buffer.pCoords[i * 3 + 1],
-            sim.buffer.pCoords[i * 3 + 2],
-            sim.buffer.pCoords[i * 3 + 0] + motionX,
-            sim.buffer.pCoords[i * 3 + 1] + motionY,
-            sim.buffer.pCoords[i * 3 + 2] + motionZ)) {
-          // Continue to next particle.
-          continue OUTER;
+        var ip = rng.nextDouble() < sim.buffer.getInwardPermeability(m, type);
+        var op = rng.nextDouble() < sim.buffer.getOutwardPermeability(m, type);
+        if (!(ip && op)) {
+          var x = sim.buffer.pCoords[i * 3 + 0];
+          var y = sim.buffer.pCoords[i * 3 + 1];
+          var z = sim.buffer.pCoords[i * 3 + 2];
+          var intersect = sim.membranes[m]
+              .surfaceIntersection(x, y, z, x + mx, y + my, z + mz);
+
+          if ((intersect == DomainIntersect.inwardIntersect && !ip) ||
+              (intersect == DomainIntersect.outwardIntersect && !op)) {
+            continue OUTER;
+          }
         }
       }
 
       // Apply motion.
-      sim.buffer.pCoords[i * 3 + 0] += motionX;
-      sim.buffer.pCoords[i * 3 + 1] += motionY;
-      sim.buffer.pCoords[i * 3 + 2] += motionZ;
+      sim.buffer.pCoords[i * 3 + 0] += mx;
+      sim.buffer.pCoords[i * 3 + 1] += my;
+      sim.buffer.pCoords[i * 3 + 2] += mz;
     }
   }
 }

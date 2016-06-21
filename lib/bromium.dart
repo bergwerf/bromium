@@ -34,7 +34,6 @@ part 'src/data/simulation_buffer.dart';
 part 'src/data/simulation.dart';
 
 // Kinetics algorithms
-part 'src/kinetics/membrane.dart';
 part 'src/kinetics/compute_motion.dart';
 part 'src/kinetics/reactions/base.dart';
 part 'src/kinetics/reactions/intmap.dart';
