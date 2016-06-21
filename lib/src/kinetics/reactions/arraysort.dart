@@ -11,12 +11,12 @@ class _HIParticle {
 }
 
 /// Internal function in [computeReactionsWithArraySort] to apply reactions.
-void _applyReactionsInParticleTree(BromiumData data, Map<int, List<int>> tree) {
+void _applyReactionsInParticleTree(Sim sim, Map<int, List<int>> tree) {
   // NOTE: this process is inefficient when the particle system is very
   // dence. Perhaps it is possible to better predict if a voxel contains
   // particles that can do potential reactions.
-  for (var ri = 0; ri < data.bindReactions.length; ri++) {
-    var r = data.bindReactions[ri];
+  for (var ri = 0; ri < sim.info.bindReactions.length; ri++) {
+    var r = sim.info.bindReactions[ri];
 
     // Check if the voxel contains particle A and particle B if particle
     // A and B are distinct. Else check if the voxel contains two particle
@@ -34,7 +34,7 @@ void _applyReactionsInParticleTree(BromiumData data, Map<int, List<int>> tree) {
         var bidx = tree[r.particleB].removeLast();
 
         // Bind the particles.
-        data.bindParticles(aidx, bidx, r.particleC);
+        bindParticles(sim, aidx, bidx, r.particleC);
       }
     }
   }
@@ -42,29 +42,18 @@ void _applyReactionsInParticleTree(BromiumData data, Map<int, List<int>> tree) {
 
 /// A [BromiumKineticsAlgorithm] implementation that uses a sorted voxel hash
 /// array to efficiently connect nearby particles.
-void computeReactionsWithArraySort(BromiumData data) {
-  var pos = data.particlePosition;
-  var addr = new List<_HIParticle>(data.sortCache.length);
+void computeReactionsWithArraySort(Sim sim, Uint32List sortCache) {
+  var pos = sim.data.pCoords;
+  var addr = new List<_HIParticle>(sortCache.length);
 
   // Compute hashes.
-  for (var i = 0, j = 0; i < data.sortCache.length; i++, j += 3) {
-    addr[data.sortCache[i]] = new _HIParticle(
-        i, data.space.plainVoxelAddress(pos[j], pos[j + 1], pos[j + 2]));
+  for (var i = 0, j = 0; i < sortCache.length; i++, j += 3) {
+    addr[sortCache[i]] = new _HIParticle(
+        i, sim.info.space.plainVoxelAddress(pos[j], pos[j + 1], pos[j + 2]));
   }
 
   // Sort addresses.
   addr.sort((_HIParticle a, _HIParticle b) => a.hash - b.hash);
-
-  // Insertion sort
-  /*for (var i = 1; i < addr.length; i++) {
-    var p = i;
-    var currentValue = addr[i];
-    while (p > 0 && addr[p - 1].hash > currentValue.hash) {
-      addr[p] = addr[p - 1];
-      p--;
-    }
-    addr[p] = currentValue;
-  }*/
 
   // Find reactions.
   var currentStreak = 0, previousVoxel = -1;
@@ -76,7 +65,7 @@ void computeReactionsWithArraySort(BromiumData data) {
       if (currentStreak > 0) {
         // The previous voxel contained multiple particles which are collected
         // in particleTree.
-        _applyReactionsInParticleTree(data, particleTree);
+        _applyReactionsInParticleTree(sim, particleTree);
       }
 
       // Update the previous voxel to this voxel and reset the current streak.
@@ -88,13 +77,13 @@ void computeReactionsWithArraySort(BromiumData data) {
         particleTree.clear();
 
         // Add previous particle.
-        var prevType = data.particleType[addr[i - 1].i];
+        var prevType = sim.data.pType[addr[i - 1].i];
         particleTree.putIfAbsent(prevType, () => new List<int>());
         particleTree[prevType].add(addr[i - 1].i);
       }
 
       // Add current particle.
-      var currType = data.particleType[addr[i].i];
+      var currType = sim.data.pType[addr[i].i];
       particleTree.putIfAbsent(currType, () => new List<int>());
       particleTree[currType].add(addr[i].i);
     }
@@ -102,6 +91,6 @@ void computeReactionsWithArraySort(BromiumData data) {
 
   // Update sorting cache.
   for (var i = 0; i < addr.length; i++) {
-    data.sortCache[addr[i].i] = i;
+    sortCache[addr[i].i] = i;
   }
 }

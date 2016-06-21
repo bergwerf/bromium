@@ -7,8 +7,31 @@ part of bromium;
 /// Intersection type for [Domain.surfaceIntersection].
 enum DomainIntersect { noIntersect, inwardIntersect, outwardIntersect }
 
+/// Available [Domain] types
+enum DomainType { cuboid, ellipsoid }
+
 /// A particle domain for the BromiumEngine
 abstract class Domain {
+  final DomainType type;
+
+  /// Default contsuctor
+  Domain(this.type);
+
+  /// Create [Domain] from a [DomainType] and an array of dimensions.
+  factory Domain.fromType(DomainType type, Float32List dims) {
+    switch (type) {
+      case DomainType.cuboid:
+        return new CuboidDomain.fromDims(dims);
+      case DomainType.ellipsoid:
+        return new EllipsoidDomain.fromDims(dims);
+      default:
+        return null;
+    }
+  }
+
+  /// Get dimensions as floating point array.
+  Float32List getDims();
+
   /// Get bounding box.
   CuboidDomain computeBoundingBox();
 

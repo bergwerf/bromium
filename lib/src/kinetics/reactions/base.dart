@@ -5,4 +5,5 @@
 part of bromium;
 
 /// Generic interface for building a kinetics algorithm.
-typedef void BromiumKineticsAlgorithm(BromiumData data);
+typedef void BromiumKineticsAlgorithm(
+    SimulationInfo info, SimulationBuffer data);

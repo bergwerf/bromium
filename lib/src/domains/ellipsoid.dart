@@ -13,7 +13,18 @@ class EllipsoidDomain extends Domain {
   double a, b, c;
 
   /// Constuctor
-  EllipsoidDomain(this.center, this.a, this.b, this.c);
+  EllipsoidDomain(this.center, this.a, this.b, this.c)
+      : super(DomainType.ellipsoid);
+
+  /// Construct from dimensions array.
+  factory EllipsoidDomain.fromDims(Float32List dims) {
+    return new EllipsoidDomain(
+        new Vector3.array(dims), dims[3], dims[4], dims[5]);
+  }
+
+  /// Get dimensions.
+  Float32List getDims() =>
+      new Float32List.fromList([center.x, center.y, center.z, a, b, c]);
 
   /// Compute bounding box.
   CuboidDomain computeBoundingBox() {

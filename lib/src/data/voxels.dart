@@ -6,14 +6,24 @@ part of bromium;
 
 class VoxelSpace {
   /// Number of voxels per input unit.
-  final int _voxelsPerUnit;
+  final int _vpu;
 
   /// Voxel space size
   static const int size = 65536;
   static const int sizeHalf = 32768;
 
   /// Constructor
-  VoxelSpace(double granularity) : _voxelsPerUnit = (1 / granularity).ceil();
+  VoxelSpace(double granularity) : _vpu = (1 / granularity).ceil();
+
+  /// Convert units to voxels.
+  double utov(double units) => units * _vpu;
+
+  /// Convert point coordinate to voxel coordinate
+  Vector3 point(double x, double y, double z) {
+    // Convert to voxels and translate to voxel space center.
+    return new Vector3(
+        x * _vpu + sizeHalf, y * _vpu + sizeHalf, z * _vpu + sizeHalf);
+  }
 
   /// Minmal perfect hash function that maps a voxel position and type into
   /// a 64 bit integer.
@@ -40,16 +50,6 @@ class VoxelSpace {
   /// Same as [voxelAddress] but without adding type information.
   int plainVoxelAddress(int x, int y, int z) {
     return 4294967296 * x + 65536 * y + z;
-  }
-
-  /// Convert units to voxels.
-  double utov(double units) => units * _voxelsPerUnit;
-
-  /// Convert point coordinate to voxel coordinate
-  Vector3 point(double x, double y, double z) {
-    // Convert to voxels and translate to voxel space center.
-    return new Vector3(x * _voxelsPerUnit + sizeHalf,
-        y * _voxelsPerUnit + sizeHalf, z * _voxelsPerUnit + sizeHalf);
   }
 
   /// Get the voxel space depth.

@@ -4,41 +4,22 @@
 
 part of bromium;
 
-/// Base class for membranes
-class Membrane {
-  /// Membrane domain volume
-  Domain domain;
-
-  /// Probability of particles moving into the membrane
-  Map<int, double> inwardPermeability;
-
-  /// Probability of particles moving out of the membrane
-  Map<int, double> outwardPermeability;
-
-  /// Random number generator to simulate permeability.
-  Random _rng = new Random();
-
-  /// Constructor
-  Membrane(this.domain, this.inwardPermeability, this.outwardPermeability);
-
-  /// An optimized version of [blockParticleMotion] for integers.
-  bool blockParticleMotion(
-      int particleType, int ax, int ay, int az, int bx, int by, int bz) {
-    // If particleType is included in inwardPermeability and
-    // outwardPermeability, you can skip the surfaceIntersection.
-    var ip = _rng.nextDouble() < inwardPermeability[particleType];
-    var op = _rng.nextDouble() < outwardPermeability[particleType];
-    if (ip && op) {
-      return false;
-    } else {
-      switch (domain.surfaceIntersection(ax, ay, az, bx, by, bz)) {
-        case DomainIntersect.inwardIntersect:
-          return !ip;
-        case DomainIntersect.outwardIntersect:
-          return !op;
-        default:
-          return false;
-      }
+/// Check if the given motion should be blocked.
+bool membraneBlockParticleMotion(Sim sim, Random rng, int membrane, int type,
+    int ax, int ay, int az, int bx, int by, int bz) {
+  var ip = rng.nextDouble() < sim.data.getInwardPermeability(membrane, type);
+  var op = rng.nextDouble() < sim.data.getOutwardPermeability(membrane, type);
+  if (ip && op) {
+    return false;
+  } else {
+    switch (
+        sim.membranes[membrane].surfaceIntersection(ax, ay, az, bx, by, bz)) {
+      case DomainIntersect.inwardIntersect:
+        return !ip;
+      case DomainIntersect.outwardIntersect:
+        return !op;
+      default:
+        return false;
     }
   }
 }

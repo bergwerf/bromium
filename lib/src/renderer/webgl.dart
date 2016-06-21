@@ -82,13 +82,16 @@ class BromiumWebGLRenderer {
 
   /// Reload membrane data from the computation engine.
   void reloadMembranes() {
-    _engine.data.membranes.forEach((Membrane m) {
+    for (var m = 0; m < _engine.data.nMembranes; m++) {
       var faceBuffer = new _Buffer(_gl);
       var wireBuffer = new _Buffer(_gl);
-      var faceVertices = m.domain.computePolygon();
-      var wireVertices = m.domain.computeWireframe();
-      var faceColors = new Uint8List((faceVertices.length / 3).ceil() * 4);
-      var wireColors = new Uint8List((wireVertices.length / 3).ceil() * 4);
+
+      var dims = _engine.data.getMembraneDimensions(m);
+      var faceVerts = computeDomainPolygon(_engine.info.membranes[m], dims);
+      var wireVerts = computeDomainWireframe(_engine.info.membranes[m], dims);
+
+      var faceColors = new Uint8List((faceVerts.length / 3).ceil() * 4);
+      var wireColors = new Uint8List((wireVerts.length / 3).ceil() * 4);
 
       for (var i = 0; i < faceColors.length; i += 4) {
         faceColors[i + 0] = 255;
@@ -104,10 +107,10 @@ class BromiumWebGLRenderer {
         wireColors[i + 3] = 255;
       }
 
-      faceBuffer.updateFloat32(_gl, faceVertices, faceColors);
-      wireBuffer.updateFloat32(_gl, wireVertices, wireColors);
+      faceBuffer.updateFloat32(_gl, faceVerts, faceColors);
+      wireBuffer.updateFloat32(_gl, wireVerts, wireColors);
       _membranes.add(new Tuple2<_Buffer, _Buffer>(faceBuffer, wireBuffer));
-    });
+    }
   }
 
   /// Load shader program.
@@ -179,11 +182,9 @@ void main(void) {
   void render(double time) {
     // Run a simulation cycle.
     if (runSimulation) {
-      _engine.step();
-
-      // Update vertex buffers.
+      // Update particle system.
       _particleSystem.updateUint16(
-          _gl, _engine.data.particlePosition, _engine.data.particleColor);
+          _gl, _engine.data.pCoords, _engine.data.pColor);
     }
 
     // Clear view.
@@ -203,7 +204,7 @@ void main(void) {
 
     // Draw particles.
     _particleSystem.draw(_gl, _aVertexPosition, _aVertexColor, gl.POINTS, 0,
-        _engine.data.particleType.length - _engine.data.inactiveCount);
+        _engine.data.activeParticleCount);
 
     // Draw membranes.
     _membranes.forEach((Tuple2<_Buffer, _Buffer> b) {

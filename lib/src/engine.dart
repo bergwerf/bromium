@@ -4,12 +4,25 @@
 
 part of bromium;
 
+/// Simulation engine
 class BromiumEngine {
+  /// Simulation info
+  SimulationInfo info;
+
   /// Simulation data
-  BromiumData data;
+  SimulationBuffer data;
 
   /// Benchmarks
   BromiumBenchmark benchmark;
+
+  /// Array sort reaction kinetics cache.
+  Uint32List _sortCache;
+
+  /// Simulation render isolate.
+  Isolate _simIsolate;
+
+  /// Isolate communication receive port.
+  ReceivePort _receivePort;
 
   /// Constructor
   BromiumEngine() {
@@ -33,56 +46,59 @@ class BromiumEngine {
       }
     });
 
-    // Compute total count.
-    int count = 0, inactiveCount = 0;
+    // Update simulation info.
+    info = new SimulationInfo(
+        space,
+        particles.data,
+        bindReactions,
+        new List<DomainType>.generate(
+            membranes.length, (int i) => membranes[i].domain.type));
+
+    // Compute total particle count.
+    int nParticles = 0;
     sets.forEach((ParticleSet s) {
-      count += s.count;
-      inactiveCount += s.count * (particles.computeParticleSize(s.type) - 1);
+      nParticles += s.count * particles.computeParticleSize(s.type);
     });
 
-    // Allocate new data buffers.
-    data = new BromiumData.allocate(space, particles.indices.length,
-        count + inactiveCount, bindReactions, membranes);
+    // Allocate new simulation data.
+    data = new SimulationBuffer.fromDimensions(
+        particles.data.length, nParticles, membranes.length);
 
-    // Copy particle color settings and particle motion speed.
-    particles.data.forEach((ParticleInfo info) {
-      // Compute motion radius.
-      data.randomWalkStep[info.index] = new _RandomWalkStep(info.rndWalkStepR);
-
-      for (var c = 0; c < 4; c++) {
-        // RGBA
-        data.particleTypeColor[info.index * 4 + c] = info.glcolor[c];
+    // Load membrane data into simulation buffer.
+    for (var i = 0; i < membranes.length; i++) {
+      data.setMembraneDimensions(i, membranes[i].domain.getDims());
+      for (var t = 0; t < data.nTypes; t++) {
+        data.setInwardPermeability(i, t, membranes[i].inwardPermeability[t]);
+        data.setOutwardPermeability(i, t, membranes[i].outwardPermeability[t]);
       }
-    });
+    }
 
-    // Create new random number generator.
+    // Create new random number generator for computing random positions.
     var rng = new Random();
 
     // Loop through all particle sets.
-    for (var i = 0, p = 0; i < sets.length; i++) {
+    var p = 0;
+    for (var i = 0; i < sets.length; i++) {
       // Assign coordinates and color to each particle.
       for (var j = 0; j < sets[i].count; j++, p++) {
-        // Assign particle type.
-        data.particleType[p] = sets[i].type;
-
-        // Assign a random position within the domain.
-        var randPoint = sets[i].domain.computeRandomPoint(rng);
-        for (var d = 0; d < 3; d++) {
-          data.particlePosition[p * 3 + d] = randPoint[d].round();
-        }
-
-        // Assign color.
-        var glcolor = particles.data[sets[i].type].glcolor;
-        for (var c = 0; c < 4; c++) {
-          data.particleColor[p * 4 + c] = glcolor[c];
-        }
+        // Assign particle type, random position, and color.
+        data.pType[p] = sets[i].type;
+        setParticleCoords(data, p, sets[i].domain.computeRandomPoint(rng));
+        setParticleColor(data, p, info.particleInfo[sets[i].type].rgba);
       }
     }
 
     // Set inactive particles.
-    for (var i = 0; i < inactiveCount; i++) {
-      data.particleType[count + i] = -1;
+    for (; p < data.nParticles; p++) {
+      data.pType[p] = -1;
     }
+
+    // Allocate sort cache.
+    _sortCache = new Uint32List.fromList(
+        new List<int>.generate(data.nParticles, (int i) => i));
+
+    // Start new render isolate.
+    _startIsolate();
 
     benchmark.end('load new simulation');
   }
@@ -90,34 +106,77 @@ class BromiumEngine {
   /// Compute scene center and scale.
   Tuple2<Vector3, double> computeSceneDimensions() {
     var center = new Vector3.zero();
-    var _min = data.particlePosition.first.toDouble();
+    var _min = data.pCoords.first.toDouble();
     var _max = _min;
 
-    for (var i = 0; i < data.particlePosition.length; i += 3) {
-      center.add(new Vector3(
-          data.particlePosition[i + 0].toDouble(),
-          data.particlePosition[i + 1].toDouble(),
-          data.particlePosition[i + 2].toDouble()));
+    for (var i = 0; i < data.pCoords.length; i += 3) {
+      center.add(new Vector3(data.pCoords[i + 0].toDouble(),
+          data.pCoords[i + 1].toDouble(), data.pCoords[i + 2].toDouble()));
 
       for (var d = 0; d < 3; d++) {
-        _min = min(_min, data.particlePosition[i + d]);
-        _max = max(_max, data.particlePosition[i + d]);
+        _min = min(_min, data.pCoords[i + d]);
+        _max = max(_max, data.pCoords[i + d]);
       }
     }
-    center.scale(1 / data.particleType.length);
+    center.scale(1 / data.nParticles);
 
     return new Tuple2<Vector3, double>(center, _max - _min);
   }
 
   /// Simulate one step in the particle simulation.
   void step() {
+    var sim = new Sim(info, data);
+
     benchmark.start('simulation step');
     benchmark.start('particle motion');
-    _computeMotion(data);
+
+    computeMotion(sim);
+
     benchmark.end('particle motion');
     benchmark.start('particle reactions');
-    computeReactionsWithArraySort(data);
+
+    computeReactionsWithArraySort(sim, _sortCache);
+
     benchmark.end('particle reactions');
     benchmark.end('simulation step');
+  }
+
+  /// Isolated step runnner.
+  static void _isolateRunner(
+      Tuple3<SendPort, SimulationInfo, ByteBuffer> setup) {
+    // Extract setup data.
+    var sendPort = setup.item1;
+    var sim =
+        new Sim(setup.item2, new SimulationBuffer.fromByteBuffer(setup.item3));
+
+    // Create sort cache.
+    var sortCache = new Uint32List.fromList(
+        new List<int>.generate(sim.data.nParticles, (int i) => i));
+
+    // Continuously recompute.
+    while (true) {
+      computeMotion(sim);
+      computeReactionsWithArraySort(sim, sortCache);
+      sendPort.send(sim.data.byteBuffer);
+    }
+  }
+
+  /// Start new isolate for rendering
+  Future _startIsolate() async {
+    if (_simIsolate != null) {
+      _simIsolate.kill();
+    }
+
+    // Setup receive port for the new isolate.
+    _receivePort = new ReceivePort();
+    _receivePort.listen((ByteBuffer buffer) {
+      data = new SimulationBuffer.fromByteBuffer(buffer);
+    });
+
+    // Spawn new isolate.
+    _simIsolate = await Isolate.spawn(
+        _isolateRunner,
+        new Tuple3<SendPort, SimulationInfo, ByteBuffer>(
+            _receivePort.sendPort, info, data.byteBuffer));
   }
 }

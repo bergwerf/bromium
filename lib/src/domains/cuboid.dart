@@ -13,7 +13,7 @@ class CuboidDomain extends Domain {
   Vector3 lc;
 
   /// Constuctor
-  CuboidDomain(this.sc, this.lc) {
+  CuboidDomain(this.sc, this.lc) : super(DomainType.cuboid) {
     // Do a sanity check.
     if (sc.x > lc.x) {
       var scx = sc.x;
@@ -31,6 +31,16 @@ class CuboidDomain extends Domain {
       lc.z = scz;
     }
   }
+
+  /// Construct from dimensions array.
+  factory CuboidDomain.fromDims(Float32List dims) {
+    return new CuboidDomain(
+        new Vector3.array(dims), new Vector3.array(dims, 3));
+  }
+
+  /// Get dimensions.
+  Float32List getDims() =>
+      new Float32List.fromList([sc.x, sc.y, sc.z, lc.x, lc.y, lc.z]);
 
   /// The bounding box is the same as this.
   CuboidDomain computeBoundingBox() => this;

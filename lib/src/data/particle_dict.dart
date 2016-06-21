@@ -4,34 +4,6 @@
 
 part of bromium;
 
-/// Information of one particle in [ParticleDict]
-class ParticleInfo {
-  /// String label associated to this particle.
-  final String label;
-
-  /// Particle index
-  final int index;
-
-  /// Random walk step radius
-  final double rndWalkStepR;
-
-  /// Sub particles by their index.
-  final List<int> subParticles;
-
-  /// Particle color
-  List<int> glcolor = new List<int>(4);
-
-  /// Constructor
-  ParticleInfo(this.label, this.index, this.rndWalkStepR, this.subParticles,
-      Color color) {
-    var rgb = color.toRgbColor();
-    glcolor[0] = rgb.r;
-    glcolor[1] = rgb.g;
-    glcolor[2] = rgb.b;
-    glcolor[3] = 255; // Alpha
-  }
-}
-
 /// Dictionary of particle types
 class ParticleDict {
   /// Particle data
@@ -79,11 +51,9 @@ class ParticleDict {
     if (!indices.containsKey(label) && subParticlesValid) {
       indices[label] = data.length;
       data.add(new ParticleInfo(
-          label,
-          indices[label],
-          rndWalkStepR,
           new List<int>.generate(
               subParticles.length, (int i) => indices[subParticles[i]]),
+          rndWalkStepR,
           color));
       return true;
     } else {
@@ -99,20 +69,4 @@ class ParticleDict {
         sp.contains(r.particleA) &&
         sp.contains(r.particleB);
   }
-}
-
-/// Collection of particles of the same type in a domain.
-/// Used in [BromiumEngine.allocateParticles].
-class ParticleSet {
-  /// Particle type
-  int type;
-
-  /// Number of particles in this set
-  int count;
-
-  /// Particles domain
-  Domain domain;
-
-  /// Constructor
-  ParticleSet(this.type, this.count, this.domain);
 }

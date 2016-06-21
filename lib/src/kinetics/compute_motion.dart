@@ -5,42 +5,41 @@
 part of bromium;
 
 /// This function applies one cycle of random motion to the given [BromiumData].
-void _computeMotion(BromiumData data) {
-  // IDEA: membrane collision computation might be faster by building a kind of
-  // tree data structure (i.e. do not iterate through all particles each time
-  // you compute a collision).
-
+void computeMotion(Sim sim) {
   var rng = new Random();
-  OUTER: for (var i = 0; i < data.particleType.length; i++) {
+  OUTER: for (var i = 0; i < sim.data.nParticles; i++) {
     // If the particleType is -1 the particle is inactive.
-    var type = data.particleType[i];
+    var type = sim.data.pType[i];
     if (type != -1) {
       // Compute random displacement.
-      var motionX = rng.nextInt(data.randomWalkStep[type].oddSize) -
-          data.randomWalkStep[type].sub;
-      var motionY = rng.nextInt(data.randomWalkStep[type].oddSize) -
-          data.randomWalkStep[type].sub;
-      var motionZ = rng.nextInt(data.randomWalkStep[type].oddSize) -
-          data.randomWalkStep[type].sub;
+      var odd = sim.info.particleInfo[type].rndWalkOdd;
+      var sub = sim.info.particleInfo[type].rndWalkSub;
+      var motionX = rng.nextInt(odd) - sub;
+      var motionY = rng.nextInt(odd) - sub;
+      var motionZ = rng.nextInt(odd) - sub;
 
-      // Correct displacement by processing it with every membrane.
-      for (var m = 0; m < data.membranes.length; m++) {
-        if (data.membranes[m].blockParticleMotion(
+      // Check motion block due to membrane permeability.
+      for (var m = 0; m < sim.info.membranes.length; m++) {
+        if (membraneBlockParticleMotion(
+            sim,
+            rng,
+            m,
             type,
-            data.particlePosition[i * 3 + 0],
-            data.particlePosition[i * 3 + 1],
-            data.particlePosition[i * 3 + 2],
-            data.particlePosition[i * 3 + 0] + motionX,
-            data.particlePosition[i * 3 + 1] + motionY,
-            data.particlePosition[i * 3 + 2] + motionZ)) {
+            sim.data.pCoords[i * 3 + 0],
+            sim.data.pCoords[i * 3 + 1],
+            sim.data.pCoords[i * 3 + 2],
+            sim.data.pCoords[i * 3 + 0] + motionX,
+            sim.data.pCoords[i * 3 + 1] + motionY,
+            sim.data.pCoords[i * 3 + 2] + motionZ)) {
+          // Continue to next particle.
           continue OUTER;
         }
       }
 
-      // No block; apply the motion.
-      data.particlePosition[i * 3 + 0] += motionX;
-      data.particlePosition[i * 3 + 1] += motionY;
-      data.particlePosition[i * 3 + 2] += motionZ;
+      // Apply motion.
+      sim.data.pCoords[i * 3 + 0] += motionX;
+      sim.data.pCoords[i * 3 + 1] += motionY;
+      sim.data.pCoords[i * 3 + 2] += motionZ;
     }
   }
 }

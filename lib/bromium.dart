@@ -5,6 +5,8 @@
 library bromium;
 
 import 'dart:math';
+import 'dart:async';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:tuple/tuple.dart';
@@ -14,21 +16,25 @@ import 'package:vector_math/vector_math.dart';
 // Benchmark helper
 part 'src/benchmark.dart';
 
-// Voxel space helper
-part 'src/voxels.dart';
-
 // Domains library
 part 'src/domains/domain.dart';
 part 'src/domains/cuboid.dart';
 part 'src/domains/ellipsoid.dart';
+part 'src/domains/polygons.dart';
 
-// Particle data
-part 'src/particles.dart';
-part 'src/data.dart';
+// Data structures
+part 'src/data/voxels.dart';
+part 'src/data/particle_info.dart';
+part 'src/data/particle_dict.dart';
+part 'src/data/particle_set.dart';
+part 'src/data/bind_reaction.dart';
+part 'src/data/membrane.dart';
+part 'src/data/simulation_info.dart';
+part 'src/data/simulation_buffer.dart';
+part 'src/data/simulation_utils.dart';
 
 // Kinetics algorithms
 part 'src/kinetics/membrane.dart';
-part 'src/kinetics/reactions.dart';
 part 'src/kinetics/compute_motion.dart';
 part 'src/kinetics/reactions/base.dart';
 part 'src/kinetics/reactions/intmap.dart';
