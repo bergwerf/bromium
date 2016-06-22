@@ -42,7 +42,7 @@ class SimulationBuffer {
 
   /// Membrane domain dimensions
   ///
-  /// Currenly all domains (cuboid and ellipsoid) can be described using only
+  /// Currenly all domains (box and ellipsoid) can be described using only
   /// 6 values (translation and scaling, we do not currenly support rotation).
   /// If more complex domains are added we will have to rethink this.
   Float32List membraneDimensions;

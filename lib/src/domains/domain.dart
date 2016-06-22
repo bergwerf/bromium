@@ -8,7 +8,7 @@ part of bromium;
 enum DomainIntersect { noIntersect, inwardIntersect, outwardIntersect }
 
 /// Available [Domain] types
-enum DomainType { cuboid, ellipsoid }
+enum DomainType { box, ellipsoid }
 
 /// A particle domain for the BromiumEngine
 abstract class Domain {
@@ -20,8 +20,8 @@ abstract class Domain {
   /// Create [Domain] from a [DomainType] and an array of dimensions.
   factory Domain.fromType(DomainType type, Float32List dims) {
     switch (type) {
-      case DomainType.cuboid:
-        return new CuboidDomain.fromDims(dims);
+      case DomainType.box:
+        return new BoxDomain.fromDims(dims);
       case DomainType.ellipsoid:
         return new EllipsoidDomain.fromDims(dims);
       default:
@@ -33,12 +33,12 @@ abstract class Domain {
   Float32List getDims();
 
   /// Get bounding box.
-  CuboidDomain computeBoundingBox();
+  BoxDomain computeBoundingBox();
 
   /// Compute a random point within the domain.
   Vector3 computeRandomPoint(Random rng) {
     // The default implementation uses containsPoint and computeBoundingBox.
-    Vector3 point;
+    var point = new Vector3.zero();
     var bbox = computeBoundingBox();
     do {
       point.x = bbox.sc.x + rng.nextDouble() * (bbox.lc.x - bbox.sc.x);

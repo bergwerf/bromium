@@ -4,8 +4,8 @@
 
 part of bromium;
 
-/// Cuboid domain
-class CuboidDomain extends Domain {
+/// Rectangular cuboid domain
+class BoxDomain extends Domain {
   /// Small corner
   Vector3 sc;
 
@@ -13,7 +13,7 @@ class CuboidDomain extends Domain {
   Vector3 lc;
 
   /// Constuctor
-  CuboidDomain(this.sc, this.lc) : super(DomainType.cuboid) {
+  BoxDomain(this.sc, this.lc) : super(DomainType.box) {
     // Do a sanity check.
     if (sc.x > lc.x) {
       var scx = sc.x;
@@ -33,9 +33,8 @@ class CuboidDomain extends Domain {
   }
 
   /// Construct from dimensions array.
-  factory CuboidDomain.fromDims(Float32List dims) {
-    return new CuboidDomain(
-        new Vector3.array(dims), new Vector3.array(dims, 3));
+  factory BoxDomain.fromDims(Float32List dims) {
+    return new BoxDomain(new Vector3.array(dims), new Vector3.array(dims, 3));
   }
 
   /// Get dimensions.
@@ -43,7 +42,7 @@ class CuboidDomain extends Domain {
       new Float32List.fromList([sc.x, sc.y, sc.z, lc.x, lc.y, lc.z]);
 
   /// The bounding box is the same as this.
-  CuboidDomain computeBoundingBox() => this;
+  BoxDomain computeBoundingBox() => this;
 
   /// Random distribution is guaranteed since the coordinate system is not
   /// deformed.
@@ -55,7 +54,7 @@ class CuboidDomain extends Domain {
     return ret;
   }
 
-  /// Check if the given coordinates are contained in this cuboid.
+  /// Check if the given coordinates are contained in this box.
   bool contains(num x, num y, num z) {
     return !(x < sc.x ||
         x > lc.x ||
@@ -65,7 +64,7 @@ class CuboidDomain extends Domain {
         z > lc.z);
   }
 
-  /// Algorithm to compute a list of lines that make up a cuboid wireframe.
+  /// Algorithm to compute a list of lines that make up a box wireframe.
   Float32List computeWireframe() {
     var vertices = new Float32List((4 + 4 * 4) * 2 * 3);
 
@@ -97,12 +96,12 @@ class CuboidDomain extends Domain {
     return vertices;
   }
 
-  /// Extra fancy algorithm to compute all triangles that make up a cuboid.
+  /// Extra fancy algorithm to compute all triangles that make up a box.
   Float32List computePolygon() {
     var vertices = new Float32List(3 * 3 * 2 * 2 * 3);
     var c = [sc.x, sc.y, sc.z, lc.x, lc.y, lc.z]; // corners
 
-    /// Super fancy algorithm for generating triangles of cuboids.
+    /// Super fancy algorithm for generating triangles of boxs.
     ///
     /// Variables:
     /// `a`: axis (x, y, z)

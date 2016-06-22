@@ -25,13 +25,13 @@ void main() {
     new ParticleSet(
         particles.particle('A'),
         10000,
-        new CuboidDomain(
-            space.point(1.0, -1.0, -1.0), space.point(2.0, 1.0, 1.0))),
+        new EllipsoidDomain(space.point(1.0, .0, .0), space.utov(0.5),
+            space.utov(0.5), space.utov(0.5))),
     new ParticleSet(
         particles.particle('B'),
         10000,
-        new CuboidDomain(
-            space.point(-1.0, -1.0, -1.0), space.point(-2.0, 1.0, 1.0)))
+        new EllipsoidDomain(space.point(-1.0, .0, .0), space.utov(0.5),
+            space.utov(0.5), space.utov(0.5)))
   ];
 
   // Define bind reactions.
@@ -56,7 +56,7 @@ void main() {
           particles.particle('C'): 1.0
         }),
     new Membrane(
-        new CuboidDomain(
+        new BoxDomain(
             space.point(-5.0, -5.0, -5.0), space.point(5.0, 5.0, 5.0)),
         {
           particles.particle('A'): 0.0,

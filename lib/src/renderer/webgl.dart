@@ -105,7 +105,7 @@ class BromiumWebGLRenderer {
         faceColors[i + 1] = 255;
         faceColors[i + 2] = 255;
         faceColors[i + 3] =
-            _engine.sim.info.membranes[m] == DomainType.cuboid ? 0 : 64;
+            _engine.sim.info.membranes[m] == DomainType.box ? 0 : 64;
       }
 
       for (var i = 0; i < wireColors.length; i += 4) {

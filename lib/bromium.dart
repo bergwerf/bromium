@@ -18,7 +18,7 @@ part 'src/benchmark.dart';
 
 // Domains library
 part 'src/domains/domain.dart';
-part 'src/domains/cuboid.dart';
+part 'src/domains/box.dart';
 part 'src/domains/ellipsoid.dart';
 part 'src/domains/polygons.dart';
 

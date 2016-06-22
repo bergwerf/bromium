@@ -27,9 +27,9 @@ class EllipsoidDomain extends Domain {
       new Float32List.fromList([center.x, center.y, center.z, a, b, c]);
 
   /// Compute bounding box.
-  CuboidDomain computeBoundingBox() {
+  BoxDomain computeBoundingBox() {
     var r = new Vector3(a, b, c);
-    return new CuboidDomain(center - r, center + r);
+    return new BoxDomain(center - r, center + r);
   }
 
   /// Check if the given coordinates are contained in this ellipsoid.
