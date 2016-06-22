@@ -27,6 +27,9 @@ class BromiumEngine {
   /// Run simulation on isolate.
   bool _runIsolate = false;
 
+  /// Print benchmarks in next isolate cycle batch.
+  bool _printIsolateBenchmarks = false;
+
   /// Number of computed cycles so far.
   int nCycles = 0;
 
@@ -139,7 +142,7 @@ class BromiumEngine {
 
   /// Simulate one step in the particle simulation.
   void step() {
-    benchmark.start('simulation step');
+    benchmark.start('simulation cycle');
     benchmark.start('particle motion');
 
     computeMotion(sim);
@@ -147,12 +150,17 @@ class BromiumEngine {
     benchmark.end('particle motion');
     benchmark.start('particle reactions');
 
-    computeReactionsWithArraySort(sim, _sortCache);
+    computeReactionsWithArraySort(sim, _sortCache, benchmark);
 
     benchmark.end('particle reactions');
-    benchmark.end('simulation step');
+    benchmark.end('simulation cycle');
 
     nCycles++;
+  }
+
+  /// Print all available benchmark information.
+  void printBenchmarks() {
+    _printIsolateBenchmarks = true;
   }
 
   /// Kill existing rendering isolate.
@@ -191,12 +199,19 @@ class BromiumEngine {
       if (msg is ByteBuffer) {
         nCycles++;
         if (_sendPort != null && _runIsolate && nCycles % nBatchCycles == 0) {
-          _sendPort.send(true);
+          _sendPort.send(_printIsolateBenchmarks);
+          _printIsolateBenchmarks = false;
         }
         sim.buffer = new SimulationBuffer.fromByteBuffer(msg);
+      } else if (msg is BromiumBenchmark) {
+        // Print all benchmarks (this was a response to .printBenchmarks())
+        benchmark.printAllMeasurements();
+        msg.printAllMeasurements();
+        print('Number of computed cycles: $nCycles');
       } else if (msg is SendPort) {
         _sendPort = msg;
-        _sendPort.send(true); // First trigger
+        _sendPort.send(_printIsolateBenchmarks); // First trigger
+        _printIsolateBenchmarks = false;
       }
     });
 
@@ -220,14 +235,32 @@ class BromiumEngine {
     var sortCache = new Uint32List.fromList(
         new List<int>.generate(sim.buffer.nParticles, (int i) => i));
 
+    // Some dirty benchmarking.
+    var benchmark = new BromiumBenchmark();
+
     var triggerPort = new ReceivePort();
     sendPort.send(triggerPort.sendPort);
-    triggerPort.listen((_) {
+    triggerPort.listen((bool sendBenchmark) {
       // Render 100 frames.
       for (var i = nBatchCycles; i > 0; i--) {
+        benchmark.start('isolate simulation cycle');
+        benchmark.start('isolate simulation motion');
+
         computeMotion(sim);
-        computeReactionsWithArraySort(sim, sortCache);
+
+        benchmark.end('isolate simulation motion');
+        benchmark.start('isolate simulation reactions');
+
+        computeReactionsWithArraySort(sim, sortCache, benchmark);
+
+        benchmark.end('isolate simulation reactions');
+        benchmark.end('isolate simulation cycle');
+
         sendPort.send(sim.buffer.byteBuffer);
+      }
+
+      if (sendBenchmark) {
+        sendPort.send(benchmark);
       }
     });
   }

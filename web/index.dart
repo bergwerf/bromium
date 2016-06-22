@@ -109,7 +109,6 @@ void main() {
 
   // Bind #print-benchmark to engine.benchmark.printAllMeasurements().
   document.querySelector('#print-benchmark').onClick.listen((_) {
-    engine.benchmark.printAllMeasurements();
-    print('Number of computed cycles: ${engine.nCycles}');
+    engine.printBenchmarks();
   });
 }

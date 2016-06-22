@@ -42,7 +42,8 @@ void _applyReactionsInParticleTree(Simulation sim, Map<int, List<int>> tree) {
 
 /// A [BromiumKineticsAlgorithm] implementation that uses a sorted voxel hash
 /// array to efficiently connect nearby particles.
-void computeReactionsWithArraySort(Simulation sim, Uint32List sortCache) {
+void computeReactionsWithArraySort(
+    Simulation sim, Uint32List sortCache, BromiumBenchmark benchmark) {
   var pos = sim.buffer.pCoords;
   var addr = new List<_HIParticle>(sortCache.length);
 
@@ -53,7 +54,9 @@ void computeReactionsWithArraySort(Simulation sim, Uint32List sortCache) {
   }
 
   // Sort addresses.
+  benchmark.start('array sort');
   addr.sort((_HIParticle a, _HIParticle b) => a.hash - b.hash);
+  benchmark.end('array sort');
 
   // Find reactions.
   var currentStreak = 0, previousVoxel = -1;
