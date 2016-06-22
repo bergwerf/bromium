@@ -46,8 +46,11 @@ class BromiumBenchmark {
     var avg = m.reduce((num prev, num elm) => prev + elm) / m.length;
 
     // Compute standard deviation in micro seconds.
-    var stddev = sqrt(
-        m.reduce((num prev, num elm) => prev + pow(elm - avg, 2)) / m.length);
+    var stddev = 0.0;
+    for (var i = 0; i < m.length; i++) {
+      stddev += pow(m[i] - avg, 2);
+    }
+    stddev = sqrt(stddev / m.length);
 
     // Print measurement info.
     print('''

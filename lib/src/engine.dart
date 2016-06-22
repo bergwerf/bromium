@@ -160,7 +160,12 @@ class BromiumEngine {
 
   /// Print all available benchmark information.
   void printBenchmarks() {
-    _printIsolateBenchmarks = true;
+    if (_runIsolate) {
+      _printIsolateBenchmarks = true;
+    } else {
+      benchmark.printAllMeasurements();
+      print('Number of computed cycles: $nCycles');
+    }
   }
 
   /// Kill existing rendering isolate.
@@ -205,7 +210,6 @@ class BromiumEngine {
         sim.buffer = new SimulationBuffer.fromByteBuffer(msg);
       } else if (msg is BromiumBenchmark) {
         // Print all benchmarks (this was a response to .printBenchmarks())
-        benchmark.printAllMeasurements();
         msg.printAllMeasurements();
         print('Number of computed cycles: $nCycles');
       } else if (msg is SendPort) {
