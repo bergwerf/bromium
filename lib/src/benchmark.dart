@@ -54,11 +54,10 @@ class BromiumBenchmark {
 
     // Print measurement info.
     print('''
-Measurements for '$label':
+# $label
+Number of measurments: ${m.length}
 Average time (µs): $avg
 Standard dev (µs): $stddev
 ''');
-
-    // Print standard deviation in seconds.
   }
 }

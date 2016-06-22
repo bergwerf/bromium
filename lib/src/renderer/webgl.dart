@@ -194,7 +194,7 @@ void main(void) {
 
     if (runSimulation && !runInIsolate) {
       // Run a simulation cycle on the main thread.
-      _engine.step();
+      _engine.cycle();
     }
 
     // Clear view.

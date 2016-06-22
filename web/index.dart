@@ -97,10 +97,10 @@ void main() {
   });
 
   // Toggle isolates for simulations.
-  document.querySelector('#toggle-isolates').onClick.listen((_) {
+  document.querySelector('#toggle-isolates').onClick.listen((_) async {
     if (renderer.runInIsolate) {
+      await engine.killIsolate();
       renderer.runInIsolate = false;
-      engine.killIsolate();
     } else {
       renderer.runInIsolate = true;
       engine.restartIsolate();
