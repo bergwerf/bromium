@@ -16,7 +16,7 @@ class BromiumEngine {
   Uint32List _sortCache;
 
   /// Simulation render isolate.
-  Isolate _simIsolate;
+  Isolate _simulationIsolate;
 
   /// Isolate data receive port.
   ReceivePort _receivePort;
@@ -24,23 +24,23 @@ class BromiumEngine {
   /// Isolate trigger send port.
   SendPort _sendPort;
 
-  /// Run simulation on isolate.
-  bool _runIsolate = false;
-
-  /// Pause isolate.
-  bool _terminateIsolate = false;
-
-  /// Print benchmarks in next isolate cycle batch.
-  bool _printIsolateBenchmarks = false;
-
   /// Number of computed cycles so far.
-  int _isolateCycles = 0;
+  int _isolateComputedCycles = 0;
 
   /// Number of cycles computed per batch by the isolate runner.
-  static const nBatchCycles = 128;
+  static const _isolateCyclesPerBatch = 128;
+
+  /// Get benchmarks in next isolate cycle batch.
+  bool _isolateGetBenchmarks = false;
+
+  /// Run simulation on isolate.
+  bool _isolateRun = false;
+
+  /// Pause isolate.
+  bool _isolateTerminate = false;
 
   /// Isolate terminate completer.
-  Completer<Null> _isolateTerminate;
+  Completer<Null> _isolateTerminator;
 
   /// Constructor
   BromiumEngine() {
@@ -161,13 +161,13 @@ class BromiumEngine {
     benchmark.end('particle reactions');
     benchmark.end('simulation cycle');
 
-    _isolateCycles++;
+    _isolateComputedCycles++;
   }
 
   /// Print all available benchmark information.
   void printBenchmarks() {
-    if (_runIsolate) {
-      _printIsolateBenchmarks = true;
+    if (_isolateRun) {
+      _isolateGetBenchmarks = true;
     } else {
       benchmark.printAllMeasurements();
     }
@@ -175,12 +175,12 @@ class BromiumEngine {
 
   /// Kill existing rendering isolate.
   Future<Null> killIsolate() {
-    if (_simIsolate != null) {
-      _isolateTerminate = new Completer<Null>();
-      _runIsolate = false;
-      _terminateIsolate = true;
-      _simIsolate.kill();
-      return _isolateTerminate.future;
+    if (_simulationIsolate != null) {
+      _isolateTerminator = new Completer<Null>();
+      _isolateRun = false;
+      _isolateTerminate = true;
+      _simulationIsolate.kill();
+      return _isolateTerminator.future;
     } else {
       return new Future.value();
     }
@@ -188,14 +188,14 @@ class BromiumEngine {
 
   /// Pause isolate.
   void pauseIsolate() {
-    _runIsolate = false;
+    _isolateRun = false;
   }
 
   /// Resume isolate.
   void resumeIsolate() {
-    if (_simIsolate != null) {
-      _isolateCycles = 0;
-      _runIsolate = true;
+    if (_simulationIsolate != null) {
+      _isolateComputedCycles = 0;
+      _isolateRun = true;
 
       if (_sendPort != null) {
         _sendPort.send(false);
@@ -211,19 +211,20 @@ class BromiumEngine {
     _receivePort = new ReceivePort();
     _receivePort.listen((dynamic msg) {
       if (msg is ByteBuffer) {
-        _isolateCycles++;
+        _isolateComputedCycles++;
 
         // Trigger new batch.
-        if (_isolateCycles % nBatchCycles == 0 && _sendPort != null) {
-          if (_runIsolate) {
+        if (_isolateComputedCycles % _isolateCyclesPerBatch == 0 &&
+            _sendPort != null) {
+          if (_isolateRun) {
             // Trigger new batch.
-            _sendPort.send(_printIsolateBenchmarks);
-            _printIsolateBenchmarks = false;
-          } else if (_terminateIsolate) {
+            _sendPort.send(_isolateGetBenchmarks);
+            _isolateGetBenchmarks = false;
+          } else if (_isolateTerminate) {
             // Isolate was terminated.
-            _simIsolate = null;
-            _terminateIsolate = false;
-            _isolateTerminate.complete();
+            _simulationIsolate = null;
+            _isolateTerminate = false;
+            _isolateTerminator.complete();
           }
         }
 
@@ -240,9 +241,9 @@ class BromiumEngine {
     });
 
     // Spawn new isolate.
-    _isolateCycles = 0;
-    _runIsolate = true;
-    _simIsolate = await Isolate.spawn(
+    _isolateComputedCycles = 0;
+    _isolateRun = true;
+    _simulationIsolate = await Isolate.spawn(
         _isolateRunner,
         new Tuple3<SendPort, SimulationInfo, ByteBuffer>(
             _receivePort.sendPort, sim.info, sim.buffer.byteBuffer));
@@ -267,7 +268,7 @@ class BromiumEngine {
     var triggerPort = new ReceivePort();
     triggerPort.listen((bool sendBenchmark) {
       // Render 100 frames.
-      for (var i = nBatchCycles; i > 0; i--) {
+      for (var i = _isolateCyclesPerBatch; i > 0; i--) {
         benchmark.start('isolate simulation cycle');
         benchmark.start('isolate simulation motion');
 
