@@ -12,6 +12,8 @@ class _HIParticle {
 
 /// Internal function in [computeReactionsWithArraySort] to apply reactions.
 void _applyReactionsInParticleTree(Simulation sim, Map<int, List<int>> tree) {
+  var rng = new Random();
+
   // NOTE: this process is inefficient when the particle system is very
   // dence. Perhaps it is possible to better predict if a voxel contains
   // particles that can do potential reactions.
@@ -27,14 +29,22 @@ void _applyReactionsInParticleTree(Simulation sim, Map<int, List<int>> tree) {
         (r.particleA == r.particleB &&
             tree.containsKey(r.particleA) &&
             tree[r.particleA].length > 1)) {
-      // Randomly decide to proceed the reaction.
-      if (new Random().nextDouble() < r.p) {
-        // Collect particle indices.
-        var aidx = tree[r.particleA].removeLast();
-        var bidx = tree[r.particleB].removeLast();
+      // Remove particle indices (and collect them as side effect).
+      // Note that this still behaves correctly if particleA == particleB.
+      var aidx = tree[r.particleA].removeLast();
+      var bidx = tree[r.particleB].removeLast();
 
+      // There are two conditions to proceed:
+      // 1. Both particles must have fully matching parent membranes.
+      // 2. Randomly decide based on the reaction probability.
+      if (sim.buffer.matchParentMembranes(aidx, bidx) &&
+          rng.nextDouble() < r.p) {
         // Bind the particles.
         sim.bindParticles(aidx, bidx, r.particleC);
+      } else {
+        // Add both particles back to the tree.
+        tree[r.particleB].add(bidx);
+        tree[r.particleA].add(aidx);
       }
     }
   }

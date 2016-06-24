@@ -10,17 +10,23 @@ const _i16b = Int16List.BYTES_PER_ELEMENT;
 const _ui32b = Uint32List.BYTES_PER_ELEMENT;
 const _ui16b = Uint16List.BYTES_PER_ELEMENT;
 const _ui8b = Uint8List.BYTES_PER_ELEMENT;
+const _i8b = Uint8List.BYTES_PER_ELEMENT;
 
 /// Class for transferring and manipulating simulation data using only ByteData.
 class SimulationBuffer {
   // Byte data packing offsets
   static const nMembraneDims = 6;
-  static const nTypesOffset = 0;
-  static const nParticlesOffset = 1;
-  static const nMembranesOffset = 2;
-  static const nInactiveOffset = 3;
-  static const pTypeOffset = 4 * _ui32b;
-  int pCoordsOffset, pColorOffset, memPOffset, memDimOffset, memDeltaOffset;
+  static const _nTypesOffset = 0;
+  static const _nParticlesOffset = 1;
+  static const _nMembranesOffset = 2;
+  static const _nInactiveOffset = 3;
+  static const _pTypeOffset = 4 * _ui32b;
+  int _pCoordsOffset,
+      _pColorOffset,
+      _pMembranesOffset,
+      _memPerOffset,
+      _memOldDimOffset,
+      _memNewDimOffset;
 
   /// Byte buffer that contains all data in this class.
   final ByteBuffer _buffer;
@@ -37,20 +43,18 @@ class SimulationBuffer {
   /// Particle color
   Uint8List pColor;
 
+  /// Particle parent membranes
+  Int8List pMembranes;
+
   /// Membrane in/outward permeability for each membrane and each particle.
   Float32List membranePermeability;
 
-  /// Membrane domain dimensions
+  /// Old and new membrane dimensions
   ///
   /// Currenly all domains (box and ellipsoid) can be described using only
   /// 6 values (translation and scaling, we do not currenly support rotation).
   /// If more complex domains are added we will have to rethink this.
-  Float32List membraneDimensions;
-
-  /// Membrane domain delta values
-  ///
-  /// This array has the same limitation as [membraneDimensions].
-  Float32List membraneDelta;
+  Float32List membraneOldDims, membraneNewDims;
 
   /// Construct from ByteData.
   SimulationBuffer.fromByteBuffer(this._buffer) {
@@ -58,30 +62,45 @@ class SimulationBuffer {
     dimensions = new Uint32List.view(_buffer, 0, 4);
 
     // Create all views.
-    pType = new Int16List.view(_buffer, pTypeOffset, nParticles);
-    pCoordsOffset = pTypeOffset + pType.lengthInBytes;
-    pCoords = new Uint16List.view(_buffer, pCoordsOffset, nParticles * 3);
-    pColorOffset = pCoordsOffset + pCoords.lengthInBytes;
-    pColor = new Uint8List.view(_buffer, pColorOffset, nParticles * 4);
-    memPOffset = pColorOffset + pColor.lengthInBytes;
+    pType = new Int16List.view(_buffer, _pTypeOffset, nParticles);
+
+    _pCoordsOffset = _pTypeOffset + pType.lengthInBytes;
+    pCoords = new Uint16List.view(_buffer, _pCoordsOffset, nParticles * 3);
+
+    _pColorOffset = _pCoordsOffset + pCoords.lengthInBytes;
+    pColor = new Uint8List.view(_buffer, _pColorOffset, nParticles * 4);
+
+    _pMembranesOffset = _pColorOffset + pColor.lengthInBytes;
+    pMembranes =
+        new Int8List.view(_buffer, _pMembranesOffset, nParticles * nMembranes);
+
+    _memPerOffset = _pMembranesOffset + pMembranes.lengthInBytes;
     membranePermeability =
-        new Float32List.view(_buffer, memPOffset, nMembranes * 2 * nTypes);
-    memDimOffset = memPOffset + membranePermeability.lengthInBytes;
-    membraneDimensions =
-        new Float32List.view(_buffer, memDimOffset, nMembranes * 6);
-    memDeltaOffset = memDimOffset + membraneDimensions.lengthInBytes;
-    membraneDelta =
-        new Float32List.view(_buffer, memDeltaOffset, nMembranes * 6);
+        new Float32List.view(_buffer, _memPerOffset, nMembranes * 2 * nTypes);
+
+    _memOldDimOffset = _memPerOffset + membranePermeability.lengthInBytes;
+    membraneOldDims =
+        new Float32List.view(_buffer, _memOldDimOffset, nMembranes * 6);
+
+    _memNewDimOffset = _memOldDimOffset + membraneOldDims.lengthInBytes;
+    membraneNewDims =
+        new Float32List.view(_buffer, _memNewDimOffset, nMembranes * 6);
   }
 
   /// Construct empty data from dimensions.
   factory SimulationBuffer.fromDimensions(
       int nTypes, int nParticles, int nMembranes) {
     // Allocate byte data.
-    var byteData = new ByteData(pTypeOffset +
+    var byteData = new ByteData(_pTypeOffset +
+        // Particle type
         (nParticles * _i16b) +
+        // Particle coords
         (nParticles * 3 * _ui16b) +
+        // Particle colors
         (nParticles * 4 * _ui8b) +
+        // Particle membranes
+        (nParticles * nMembranes) +
+        // Membrane permeability and membrane dimensions (old + new)
         (nMembranes * 2 * nTypes + nMembranes * 12) * _f32b);
 
     // Load simulation dimensions.
@@ -98,11 +117,11 @@ class SimulationBuffer {
   ByteBuffer get byteBuffer => _buffer;
 
   // Simulation dimension getters and setters
-  int get nTypes => dimensions[nTypesOffset];
-  int get nParticles => dimensions[nParticlesOffset];
-  int get nMembranes => dimensions[nMembranesOffset];
-  int get nInactive => dimensions[nInactiveOffset];
-  set nInactive(int n) => dimensions[nInactiveOffset] = n;
+  int get nTypes => dimensions[_nTypesOffset];
+  int get nParticles => dimensions[_nParticlesOffset];
+  int get nMembranes => dimensions[_nMembranesOffset];
+  int get nInactive => dimensions[_nInactiveOffset];
+  set nInactive(int n) => dimensions[_nInactiveOffset] = n;
 
   /// Compute index of the last active particle (before the tail of inactive
   /// particles).
@@ -115,6 +134,45 @@ class SimulationBuffer {
   /// Compute the number of active particles.
   /// Alias for [firstInactiveParticleIdx].
   int get activeParticleCount => firstInactiveParticleIdx;
+
+  /// Set particle coordinates.
+  void setParticleCoords(int p, Vector3 point) {
+    for (var d = 0; d < 3; d++) {
+      pCoords[p * 3 + d] = point[d].round();
+    }
+  }
+
+  /// Set particle color.
+  void setParticleColor(int p, List<int> color) {
+    for (var c = 0; c < 4; c++) {
+      pColor[p * 4 + c] = color[c];
+    }
+  }
+
+  /// Check if the given particle [i] is inside the given membrane [m].
+  bool isInMembrane(int i, int m) {
+    return pMembranes[i * nMembranes + m] == 1;
+  }
+
+  /// Set the given particle [i] to be inside the given membrane [m].
+  void setParentMembrane(int i, int m) {
+    pMembranes[i * nMembranes + m] = 1;
+  }
+
+  /// Unset the given particle [i] to be inside the given membrane [m].
+  void unsetParentMembrane(int i, int m) {
+    pMembranes[i * nMembranes + m] = 0;
+  }
+
+  /// Check if the parent membranes of the two given particles are equal.
+  bool matchParentMembranes(int a, int b) {
+    for (var m = 0; m < nMembranes; m++) {
+      if (isInMembrane(a, m) != isInMembrane(b, m)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   /// Get the membrane inward permeability for the given particle type.
   double getInwardPermeability(int membrane, int type) {
@@ -137,15 +195,16 @@ class SimulationBuffer {
   }
 
   /// Get membrane dimensions (array with nMembraneDims values).
-  Float32List getMembraneDimensions(int membrane) {
+  Float32List getOldMembraneDims(int membrane) {
     return new Float32List.view(_buffer,
-        memDimOffset + membrane * nMembraneDims * _f32b, nMembraneDims);
+        _memOldDimOffset + membrane * nMembraneDims * _f32b, nMembraneDims);
   }
 
   /// Set membrane dimensions (array with nMembraneDims values).
-  void setMembraneDimensions(int membrane, Float32List dims) {
+  void loadMembraneDimensions(int membrane, Float32List dims) {
     for (var i = 0; i < dims.length && i < nMembraneDims; i++) {
-      membraneDimensions[membrane * nMembraneDims + i] = dims[i];
+      membraneOldDims[membrane * nMembraneDims + i] = dims[i];
+      membraneNewDims[membrane * nMembraneDims + i] = dims[i];
     }
   }
 }

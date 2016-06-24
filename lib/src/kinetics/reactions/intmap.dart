@@ -47,8 +47,11 @@ void computeReactionsWithIntMap(Simulation sim) {
               continue;
             }
 
-            // Randomly decide to proceed the reaction.
-            if (rng.nextDouble() < r.p) {
+            // There are two conditions to proceed:
+            // 1. Both particles must have fully matching parent membranes.
+            // 2. Randomly decide based on the reaction probability.
+            if (sim.buffer.matchParentMembranes(i, p) &&
+                rng.nextDouble() < r.p) {
               // Remove particle i and p from the tree.
               var ikey = sim.info.space
                   .voxelAddress(pos[j], pos[j + 1], pos[j + 2], r.particleB);

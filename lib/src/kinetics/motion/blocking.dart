@@ -6,6 +6,13 @@ part of bromium;
 
 /// This function applies one cycle of random motion to the given [BromiumData].
 void computeMotion(Simulation sim) {
+  // Create temporary array of membrane domains.
+  var membranes = new List<Domain>.generate(
+      sim.info.membranes.length,
+      (int i) => new Domain.fromType(
+          sim.info.membranes[i], sim.buffer.getOldMembraneDims(i)));
+
+  // Apply random motion to all particles.
   var rng = new Random();
   OUTER: for (var i = 0; i < sim.buffer.nParticles; i++) {
     // If the particleType is -1 the particle is inactive.
@@ -26,12 +33,17 @@ void computeMotion(Simulation sim) {
           var x = sim.buffer.pCoords[i * 3 + 0];
           var y = sim.buffer.pCoords[i * 3 + 1];
           var z = sim.buffer.pCoords[i * 3 + 2];
-          var intersect = sim.membranes[m]
-              .surfaceIntersection(x, y, z, x + mx, y + my, z + mz);
+          var containsBefore = sim.buffer.isInMembrane(i, m);
+          var containsAfter = membranes[m].contains(x + mx, y + my, z + mz);
+          var inward = !containsBefore && containsAfter;
+          var outward = containsBefore && !containsAfter;
 
-          if ((intersect == DomainIntersect.inwardIntersect && !ip) ||
-              (intersect == DomainIntersect.outwardIntersect && !op)) {
+          if ((!ip && inward) || (!op && outward)) {
             continue OUTER;
+          } else if (inward) {
+            sim.buffer.setParentMembrane(i, m);
+          } else if (outward) {
+            sim.buffer.unsetParentMembrane(i, m);
           }
         }
       }

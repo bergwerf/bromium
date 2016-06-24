@@ -4,9 +4,6 @@
 
 part of bromium;
 
-/// Intersection type for [Domain.surfaceIntersection].
-enum DomainIntersect { noIntersect, inwardIntersect, outwardIntersect }
-
 /// Available [Domain] types
 enum DomainType { box, ellipsoid }
 
@@ -53,11 +50,6 @@ abstract class Domain {
     return contains(point.x, point.y, point.z);
   }
 
-  /// Check if the given voxel is contained in this domain.
-  bool containsVoxel(int x, int y, int z) {
-    return contains(x, y, z);
-  }
-
   /// Check if the given coordinates are contained in this domain.
   /// Points that touch the domain surface are also contained.
   bool contains(num x, num y, num z);
@@ -67,20 +59,4 @@ abstract class Domain {
 
   /// Generate a GL_TRIANGLES polygon outlining this domain.
   Float32List computePolygon();
-
-  /// Check if the given step (from voxel A to voxel B) intersects with the
-  /// domain surface
-  ///
-  /// The default implementation relies on [containsVoxel] and checks if the
-  /// origin is inside the membrane before and after the motion is applied.
-  DomainIntersect surfaceIntersection(
-      int ax, int ay, int az, int bx, int by, int bz) {
-    var before = containsVoxel(ax, ay, az);
-    var after = containsVoxel(bx, by, bz);
-    return !before && after
-        ? DomainIntersect.inwardIntersect
-        : (before && !after
-            ? DomainIntersect.outwardIntersect
-            : DomainIntersect.noIntersect);
-  }
 }

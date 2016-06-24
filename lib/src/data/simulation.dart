@@ -12,33 +12,8 @@ class Simulation {
   /// Simulation data buffer (can be replaced by externally computed cycles).
   SimulationBuffer buffer;
 
-  /// Temporary list of membrane domains.
-  final List<Domain> membranes = new List<Domain>();
-
   /// Constuctor
-  Simulation(this.info, this.buffer) {
-    for (var i = 0; i < info.membranes.length; i++) {
-      // Note, the DomainType is 'casted' since passing enums to an isolate
-      // somehow broke the enum values.
-      membranes.add(new Domain.fromType(
-          DomainType.values[info.membranes[i].index],
-          buffer.getMembraneDimensions(i)));
-    }
-  }
-
-  /// Set particle coordinates.
-  void setParticleCoords(int p, Vector3 point) {
-    for (var d = 0; d < 3; d++) {
-      buffer.pCoords[p * 3 + d] = point[d].round();
-    }
-  }
-
-  /// Set particle color.
-  void setParticleColor(int p, List<int> color) {
-    for (var c = 0; c < 4; c++) {
-      buffer.pColor[p * 4 + c] = color[c];
-    }
-  }
+  Simulation(this.info, this.buffer);
 
   /// Bind a particle
   ///
@@ -101,6 +76,6 @@ class Simulation {
     buffer.pType[i] = type;
 
     // Copy color.
-    setParticleColor(i, info.particleInfo[type].rgba);
+    buffer.setParticleColor(i, info.particleInfo[type].rgba);
   }
 }

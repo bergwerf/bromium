@@ -84,7 +84,7 @@ class BromiumEngine {
 
     // Load membrane data into simulation buffer.
     for (var i = 0; i < membranes.length; i++) {
-      buffer.setMembraneDimensions(i, membranes[i].domain.getDims());
+      buffer.loadMembraneDimensions(i, membranes[i].domain.getDims());
       for (var t = 0; t < buffer.nTypes; t++) {
         buffer.setInwardPermeability(i, t, membranes[i].inwardPermeability[t]);
         buffer.setOutwardPermeability(
@@ -106,9 +106,17 @@ class BromiumEngine {
       // Assign coordinates and color to each particle.
       for (var j = 0; j < sets[i].count; j++, p++) {
         // Assign particle type, random position, and color.
+        var point = sets[i].domain.computeRandomPoint(rng);
         sim.buffer.pType[p] = sets[i].type;
-        sim.setParticleCoords(p, sets[i].domain.computeRandomPoint(rng));
-        sim.setParticleColor(p, info.particleInfo[sets[i].type].rgba);
+        sim.buffer.setParticleCoords(p, point);
+        sim.buffer.setParticleColor(p, info.particleInfo[sets[i].type].rgba);
+
+        // Assign particle parent membranes.
+        for (var m = 0; m < membranes.length; m++) {
+          if (membranes[m].domain.containsVec(point)) {
+            sim.buffer.setParentMembrane(p, m);
+          }
+        }
       }
     }
 
@@ -254,8 +262,16 @@ class BromiumEngine {
       Tuple3<SendPort, SimulationInfo, ByteBuffer> setup) async {
     // Extract setup data.
     var sendPort = setup.item1;
+
+    // Create simulation (recast DomainType to fix the enum issue in isolates).
     var sim = new Simulation(
-        setup.item2, new SimulationBuffer.fromByteBuffer(setup.item3));
+        new SimulationInfo(
+            setup.item2.space,
+            setup.item2.particleInfo,
+            setup.item2.bindReactions,
+            new List<DomainType>.generate(setup.item2.membranes.length,
+                (int i) => DomainType.values[setup.item2.membranes[i].index])),
+        new SimulationBuffer.fromByteBuffer(setup.item3));
 
     // Create sort cache.
     var sortCache = new Uint32List.fromList(

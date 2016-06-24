@@ -34,8 +34,7 @@ part 'src/data/simulation_buffer.dart';
 part 'src/data/simulation.dart';
 
 // Kinetics algorithms
-part 'src/kinetics/compute_motion.dart';
-part 'src/kinetics/reactions/base.dart';
+part 'src/kinetics/motion/blocking.dart';
 part 'src/kinetics/reactions/intmap.dart';
 part 'src/kinetics/reactions/intset.dart';
 part 'src/kinetics/reactions/arraysort.dart';

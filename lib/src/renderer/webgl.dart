@@ -92,7 +92,7 @@ class BromiumWebGLRenderer {
       var faceBuffer = new _Buffer(_gl);
       var wireBuffer = new _Buffer(_gl);
 
-      var dims = _engine.sim.buffer.getMembraneDimensions(m);
+      var dims = _engine.sim.buffer.getOldMembraneDims(m);
       var faceVerts = computeDomainPolygon(_engine.sim.info.membranes[m], dims);
       var wireVerts =
           computeDomainWireframe(_engine.sim.info.membranes[m], dims);
