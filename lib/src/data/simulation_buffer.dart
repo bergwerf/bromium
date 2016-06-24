@@ -25,8 +25,8 @@ class SimulationBuffer {
       _pColorOffset,
       _pMembranesOffset,
       _memPerOffset,
-      _memOldDimOffset,
-      _memNewDimOffset;
+      _memOldDimsOffset,
+      _memNewDimsOffset;
 
   /// Byte buffer that contains all data in this class.
   final ByteBuffer _buffer;
@@ -78,13 +78,13 @@ class SimulationBuffer {
     membranePermeability =
         new Float32List.view(_buffer, _memPerOffset, nMembranes * 2 * nTypes);
 
-    _memOldDimOffset = _memPerOffset + membranePermeability.lengthInBytes;
+    _memOldDimsOffset = _memPerOffset + membranePermeability.lengthInBytes;
     membraneOldDims =
-        new Float32List.view(_buffer, _memOldDimOffset, nMembranes * 6);
+        new Float32List.view(_buffer, _memOldDimsOffset, nMembranes * 6);
 
-    _memNewDimOffset = _memOldDimOffset + membraneOldDims.lengthInBytes;
+    _memNewDimsOffset = _memOldDimsOffset + membraneOldDims.lengthInBytes;
     membraneNewDims =
-        new Float32List.view(_buffer, _memNewDimOffset, nMembranes * 6);
+        new Float32List.view(_buffer, _memNewDimsOffset, nMembranes * 6);
   }
 
   /// Construct empty data from dimensions.
@@ -194,17 +194,39 @@ class SimulationBuffer {
     membranePermeability[membrane * (nTypes * 2) + type * 2 + 1] = value;
   }
 
-  /// Get membrane dimensions (array with nMembraneDims values).
-  Float32List getOldMembraneDims(int membrane) {
-    return new Float32List.view(_buffer,
-        _memOldDimOffset + membrane * nMembraneDims * _f32b, nMembraneDims);
-  }
-
-  /// Set membrane dimensions (array with nMembraneDims values).
+  /// Set membrane dimensions (array with length nMembraneDims).
   void loadMembraneDimensions(int membrane, Float32List dims) {
     for (var i = 0; i < dims.length && i < nMembraneDims; i++) {
       membraneOldDims[membrane * nMembraneDims + i] = dims[i];
       membraneNewDims[membrane * nMembraneDims + i] = dims[i];
+    }
+  }
+
+  /// Get membrane dimensions (array with nMembraneDims values).
+  Float32List getMembraneDims(int membrane, [bool newDims = false]) {
+    return new Float32List.view(
+        _buffer,
+        (newDims ? _memNewDimsOffset : _memOldDimsOffset) +
+            membrane * nMembraneDims * _f32b,
+        nMembraneDims);
+  }
+
+  /// Check if the dimensions of the given membrane have changed.
+  bool membraneDimsChanged(int m) {
+    for (var i = 0; i < nMembraneDims; i++) {
+      if (membraneOldDims[m * nMembraneDims + i] !=
+          membraneNewDims[m * nMembraneDims + i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Copy the the new membrane dimensions into the old ones for membrane [m].
+  void applyMembraneMotion(int m) {
+    for (var i = 0; i < nMembraneDims; i++) {
+      membraneOldDims[m * nMembraneDims + i] =
+          membraneNewDims[m * nMembraneDims + i];
     }
   }
 }

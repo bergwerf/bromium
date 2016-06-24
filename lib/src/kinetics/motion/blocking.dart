@@ -10,7 +10,7 @@ void computeMotion(Simulation sim) {
   var membranes = new List<Domain>.generate(
       sim.info.membranes.length,
       (int i) => new Domain.fromType(
-          sim.info.membranes[i], sim.buffer.getOldMembraneDims(i)));
+          sim.info.membranes[i], sim.buffer.getMembraneDims(i)));
 
   // Apply random motion to all particles.
   var rng = new Random();

@@ -5,7 +5,7 @@
 part of bromium_webgl_renderer;
 
 /// Wrapper for a GL vertex and color buffer.
-class _Buffer {
+class Buffer {
   /// Current number of stored vertices.
   int _size;
 
@@ -19,7 +19,7 @@ class _Buffer {
   final gl.Buffer c;
 
   /// Constructor
-  _Buffer(gl.RenderingContext glCtx)
+  Buffer(gl.RenderingContext glCtx)
       : _size = 0,
         _vertexType = gl.FLOAT,
         v = glCtx.createBuffer(),

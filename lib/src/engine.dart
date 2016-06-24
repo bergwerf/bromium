@@ -167,6 +167,11 @@ class BromiumEngine {
     computeReactionsWithArraySort(sim, _sortCache, benchmark);
 
     benchmark.end('particle reactions');
+    benchmark.start('isolate simulation membrane dynamics');
+
+    ellipsoidMembraneDynamicsWithProjection(sim);
+
+    benchmark.end('isolate simulation membrane dynamics');
     benchmark.end('simulation cycle');
 
     _isolateComputedCycles++;
@@ -296,6 +301,11 @@ class BromiumEngine {
         computeReactionsWithArraySort(sim, sortCache, benchmark);
 
         benchmark.end('isolate simulation reactions');
+        benchmark.start('isolate simulation membrane dynamics');
+
+        ellipsoidMembraneDynamicsWithProjection(sim);
+
+        benchmark.end('isolate simulation membrane dynamics');
         benchmark.end('isolate simulation cycle');
 
         sendPort.send(sim.buffer.byteBuffer);

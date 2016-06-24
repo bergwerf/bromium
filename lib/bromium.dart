@@ -38,6 +38,7 @@ part 'src/kinetics/motion/blocking.dart';
 part 'src/kinetics/reactions/intmap.dart';
 part 'src/kinetics/reactions/intset.dart';
 part 'src/kinetics/reactions/arraysort.dart';
+part 'src/kinetics/membrane_dynamics/projection.dart';
 
 // Computation engine class
 part 'src/engine.dart';

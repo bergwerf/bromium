@@ -11,26 +11,20 @@ class BromiumWebGLRenderer {
   /// Output canvas
   CanvasElement _canvas;
 
-  /// Vertex and color buffers for the particle system.
-  _Buffer _particleSystem;
+  /// Viewport dimensions
+  int _viewportWidth, _viewportHeight;
 
   // Vertex and color buffers for each membrane (faces and wireframe).
-  List<Tuple2<_Buffer, _Buffer>> _membranes =
-      new List<Tuple2<_Buffer, _Buffer>>();
+  List<Tuple2<Buffer, Buffer>> _membranes = new List<Tuple2<Buffer, Buffer>>();
 
   /// WebGL context
   gl.RenderingContext _gl;
 
-  /// Main shader program
-  gl.Program _shaderProgram;
+  /// Vertex and color buffers for the particle system.
+  Buffer _particleSystem;
 
-  /// Viewport dimensions
-  int _viewportWidth, _viewportHeight;
-
-  // Shader attributes
-  int _aVertexPosition;
-  int _aVertexColor;
-  gl.UniformLocation _uViewMatrix;
+  /// Main shader
+  Shader _shader;
 
   /// View matrix
   Matrix4 _viewMatrix;
@@ -66,10 +60,25 @@ class BromiumWebGLRenderer {
     _gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // Load shaders.
-    _initShaders();
+    _shader = new Shader(_vsSource, _fsSource, [
+      'aVertexPosition',
+      'aVertexColor'
+    ], [
+      'uViewMatrix',
+      'uRotationMatrix',
+      'uZoom',
+      'uTranslateX',
+      'uTranslateY',
+      'uTranslateZ',
+      'uScaleX',
+      'uScaleY',
+      'uScaleZ'
+    ]);
+    _shader.compile(_gl);
+    _shader.use(_gl);
 
     // Setup buffer for the particle system.
-    _particleSystem = new _Buffer(_gl);
+    _particleSystem = new Buffer(_gl);
 
     // Setup trackball.
     _trackball = new _Trackball(_canvas, 1.1);
@@ -89,10 +98,10 @@ class BromiumWebGLRenderer {
   /// Reload membrane data from the computation engine.
   void reloadMembranes() {
     for (var m = 0; m < _engine.sim.buffer.nMembranes; m++) {
-      var faceBuffer = new _Buffer(_gl);
-      var wireBuffer = new _Buffer(_gl);
+      var faceBuffer = new Buffer(_gl);
+      var wireBuffer = new Buffer(_gl);
 
-      var dims = _engine.sim.buffer.getOldMembraneDims(m);
+      var dims = _engine.sim.buffer.getMembraneDims(m);
       var faceVerts = computeDomainPolygon(_engine.sim.info.membranes[m], dims);
       var wireVerts =
           computeDomainWireframe(_engine.sim.info.membranes[m], dims);
@@ -117,73 +126,8 @@ class BromiumWebGLRenderer {
 
       faceBuffer.updateFloat32(_gl, faceVerts, faceColors);
       wireBuffer.updateFloat32(_gl, wireVerts, wireColors);
-      _membranes.add(new Tuple2<_Buffer, _Buffer>(faceBuffer, wireBuffer));
+      _membranes.add(new Tuple2<Buffer, Buffer>(faceBuffer, wireBuffer));
     }
-  }
-
-  /// Load shader program.
-  void _initShaders() {
-    // Vertex shader
-    String vsSource = '''
-attribute vec3 aVertexPosition;
-attribute vec4 aVertexColor;
-
-uniform mat4 uViewMatrix;
-
-varying vec4 vColor;
-
-void main(void) {
-  gl_PointSize = 1.5;
-  gl_Position = uViewMatrix * vec4(aVertexPosition, 1.0);
-  vColor = aVertexColor;
-}
-''';
-
-    // Fragment shader
-    String fsSource = '''
-precision mediump float;
-varying vec4 vColor;
-void main(void) {
-  gl_FragColor = vColor;
-}
-''';
-
-    // Vertex shader compilation
-    gl.Shader vs = _gl.createShader(gl.RenderingContext.VERTEX_SHADER);
-    _gl.shaderSource(vs, vsSource);
-    _gl.compileShader(vs);
-
-    // Fragment shader compilation
-    gl.Shader fs = _gl.createShader(gl.RenderingContext.FRAGMENT_SHADER);
-    _gl.shaderSource(fs, fsSource);
-    _gl.compileShader(fs);
-
-    // Attach shaders to a WebGL program.
-    _shaderProgram = _gl.createProgram();
-    _gl.attachShader(_shaderProgram, vs);
-    _gl.attachShader(_shaderProgram, fs);
-    _gl.linkProgram(_shaderProgram);
-    _gl.useProgram(_shaderProgram);
-
-    // Check if shaders were compiled properly. This is probably the most
-    // painful part since there's no way to "debug" shader compilation.
-    if (!_gl.getShaderParameter(vs, gl.RenderingContext.COMPILE_STATUS)) {
-      print(_gl.getShaderInfoLog(vs));
-    }
-    if (!_gl.getShaderParameter(fs, gl.RenderingContext.COMPILE_STATUS)) {
-      print(_gl.getShaderInfoLog(fs));
-    }
-    if (!_gl.getProgramParameter(
-        _shaderProgram, gl.RenderingContext.LINK_STATUS)) {
-      print(_gl.getProgramInfoLog(_shaderProgram));
-    }
-
-    // Link shader attributes.
-    _aVertexPosition = _gl.getAttribLocation(_shaderProgram, "aVertexPosition");
-    _gl.enableVertexAttribArray(_aVertexPosition);
-    _aVertexColor = _gl.getAttribLocation(_shaderProgram, "aVertexColor");
-    _gl.enableVertexAttribArray(_aVertexColor);
-    _uViewMatrix = _gl.getUniformLocation(_shaderProgram, "uViewMatrix");
   }
 
   /// Perform one simulation cycle and render a single frame.
@@ -202,25 +146,39 @@ void main(void) {
     _gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Transform view matrix.
-    var viewMatrix = _viewMatrix.clone();
-    viewMatrix.translate(0.0, 0.0, _trackball.z);
-    viewMatrix.multiply(_trackball.rotationMatrix);
-    viewMatrix.translate(_center.clone()..scale(-1.0));
+    //viewMatrix.translate(0.0, 0.0, _trackball.z);
+    //viewMatrix.multiply(_trackball.rotationMatrix);
+    //viewMatrix.translate(_center.clone()..scale(-1.0));
 
     // Apply view matrix.
-    Float32List viewMatrixCpy = new Float32List(16);
-    viewMatrix.copyIntoArray(viewMatrixCpy);
-    _gl.uniformMatrix4fv(_uViewMatrix, false, viewMatrixCpy);
+    _gl.uniformMatrix4fv(
+        _shader.uniforms['uViewMatrix'], false, _viewMatrix.storage);
+    _gl.uniformMatrix4fv(_shader.uniforms['uRotationMatrix'], false,
+        _trackball.rotationMatrix.storage);
+    _gl.uniform1f(_shader.uniforms['uZoom'], _trackball.z);
+    _gl.uniform1f(_shader.uniforms['uTranslateX'], -1 * _center.x);
+    _gl.uniform1f(_shader.uniforms['uTranslateY'], -1 * _center.y);
+    _gl.uniform1f(_shader.uniforms['uTranslateZ'], -1 * _center.z);
+    _gl.uniform1f(_shader.uniforms['uScaleX'], 1.0);
+    _gl.uniform1f(_shader.uniforms['uScaleY'], 1.0);
+    _gl.uniform1f(_shader.uniforms['uScaleZ'], 1.0);
 
     // Draw particles.
-    _particleSystem.draw(_gl, _aVertexPosition, _aVertexColor, gl.POINTS, 0,
+    _particleSystem.draw(
+        _gl,
+        _shader.attributes['aVertexPosition'],
+        _shader.attributes['aVertexColor'],
+        gl.POINTS,
+        0,
         _engine.sim.buffer.activeParticleCount);
 
     // Draw membranes.
-    _membranes.forEach((Tuple2<_Buffer, _Buffer> b) {
-      b.item1.draw(_gl, _aVertexPosition, _aVertexColor, gl.TRIANGLES);
+    _membranes.forEach((Tuple2<Buffer, Buffer> b) {
+      b.item1.draw(_gl, _shader.attributes['aVertexPosition'],
+          _shader.attributes['aVertexColor'], gl.TRIANGLES);
       _gl.disable(gl.DEPTH_TEST);
-      b.item2.draw(_gl, _aVertexPosition, _aVertexColor, gl.LINES);
+      b.item2.draw(_gl, _shader.attributes['aVertexPosition'],
+          _shader.attributes['aVertexColor'], gl.LINES);
       _gl.enable(gl.DEPTH_TEST);
     });
 
