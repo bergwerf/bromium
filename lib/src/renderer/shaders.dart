@@ -10,7 +10,7 @@ attribute vec3 aVertexPosition;
 attribute vec4 aVertexColor;
 
 uniform mat4 uViewMatrix, uRotationMatrix;
-uniform float uZoom, uTranslateX, uTranslateY, uTranslateZ;
+uniform float uZoom, uTransX, uTransY, uTransZ;
 uniform float uScaleX, uScaleY, uScaleZ;
 
 varying vec4 vColor;
@@ -23,26 +23,18 @@ void main(void) {
     vec4(0.0, 0.0, uZoom, 1.0)
   );
 
-  mat4 translateMatrix = mat4(
-    vec4(1.0, 0.0, 0.0, 0.0),
-    vec4(0.0, 1.0, 0.0, 0.0),
-    vec4(0.0, 0.0, 1.0, 0.0),
-    vec4(uTranslateX, uTranslateY, uTranslateZ, 1.0)
-  );
-
-  mat4 scaleMatrix = mat4(
+  mat4 transformMatrix = mat4(
     vec4(uScaleX, 0.0, 0.0, 0.0),
     vec4(0.0, uScaleY, 0.0, 0.0),
     vec4(0.0, 0.0, uScaleZ, 0.0),
-    vec4(1.0, 1.0, 1.0, 1.0)
+    vec4(uTransX, uTransY, uTransZ, 1.0)
   );
 
   gl_PointSize = 1.5;
   gl_Position = uViewMatrix
     * zoomMatrix
     * uRotationMatrix
-    * scaleMatrix
-    * translateMatrix
+    * transformMatrix
     * vec4(aVertexPosition, 1.0);
 
   vColor = aVertexColor;

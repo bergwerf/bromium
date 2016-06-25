@@ -80,7 +80,6 @@ void main() {
   var sceneDimensions = engine.computeSceneDimensions();
   renderer.resetCamera(
       sceneDimensions.item1, sceneDimensions.item2, space.depth);
-  renderer.reloadMembranes();
   renderer.start();
   engine.restartIsolate();
 

@@ -16,4 +16,4 @@ part 'src/renderer/shader.dart';
 part 'src/renderer/buffer.dart';
 part 'src/renderer/shaders.dart';
 part 'src/renderer/trackball.dart';
-part 'src/renderer/webgl.dart';
+part 'src/renderer/renderer.dart';

@@ -132,7 +132,7 @@ class BoxDomain extends Domain {
             // Note: the vertex order in the triangle is reversed when
             // t + f != 1, this is a dirty trick to fix face culling in OpenGL.
             var offset =
-                a * 36 + f * 18 + t * 9 + (t + f == 1 ? v * 3 : 6 - v * 3);
+                a * 36 + f * 18 + t * 9 + (t + f != 1 ? v * 3 : 6 - v * 3);
 
             // Compute offset of variable dimensions.
             // This will give access to the two free dimensions. e.g. if

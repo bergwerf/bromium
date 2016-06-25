@@ -14,8 +14,9 @@ class BromiumWebGLRenderer {
   /// Viewport dimensions
   int _viewportWidth, _viewportHeight;
 
-  // Vertex and color buffers for each membrane (faces and wireframe).
-  List<Tuple2<Buffer, Buffer>> _membranes = new List<Tuple2<Buffer, Buffer>>();
+  // (0, 0, 0, 100, 100, 100) shape for each domain type (faces and wireframe).
+  Map<DomainType, Tuple2<Buffer, Buffer>> _domainShapes =
+      new Map<DomainType, Tuple2<Buffer, Buffer>>();
 
   /// WebGL context
   gl.RenderingContext _gl;
@@ -67,9 +68,9 @@ class BromiumWebGLRenderer {
       'uViewMatrix',
       'uRotationMatrix',
       'uZoom',
-      'uTranslateX',
-      'uTranslateY',
-      'uTranslateZ',
+      'uTransX',
+      'uTransY',
+      'uTransZ',
       'uScaleX',
       'uScaleY',
       'uScaleZ'
@@ -82,29 +83,17 @@ class BromiumWebGLRenderer {
 
     // Setup trackball.
     _trackball = new _Trackball(_canvas, 1.1);
-  }
 
-  /// Resest the camera position and zooming.
-  void resetCamera(Vector3 center, double z, double depth) {
-    _trackball.z = -2.0 * z;
-    _center = center;
-    _viewMatrix = makePerspectiveMatrix(
-        radians(45.0),
-        _viewportWidth / _viewportHeight,
-        _engine.sim.info.space.utov(0.01),
-        depth);
-  }
-
-  /// Reload membrane data from the computation engine.
-  void reloadMembranes() {
-    for (var m = 0; m < _engine.sim.buffer.nMembranes; m++) {
+    // Setup domain shape buffers.
+    var dims = [0.0, 0.0, 0.0, 100.0, 100.0, 100.0];
+    var types = [DomainType.box, DomainType.ellipsoid];
+    for (var t = 0; t < types.length; t++) {
+      // Add domain to _domains
       var faceBuffer = new Buffer(_gl);
       var wireBuffer = new Buffer(_gl);
 
-      var dims = _engine.sim.buffer.getMembraneDims(m);
-      var faceVerts = computeDomainPolygon(_engine.sim.info.membranes[m], dims);
-      var wireVerts =
-          computeDomainWireframe(_engine.sim.info.membranes[m], dims);
+      var faceVerts = computeDomainPolygon(types[t], dims);
+      var wireVerts = computeDomainWireframe(types[t], dims);
 
       var faceColors = new Uint8List((faceVerts.length / 3).ceil() * 4);
       var wireColors = new Uint8List((wireVerts.length / 3).ceil() * 4);
@@ -113,8 +102,7 @@ class BromiumWebGLRenderer {
         faceColors[i + 0] = 255;
         faceColors[i + 1] = 255;
         faceColors[i + 2] = 255;
-        faceColors[i + 3] =
-            _engine.sim.info.membranes[m] == DomainType.box ? 0 : 64;
+        faceColors[i + 3] = types[t] == DomainType.box ? 16 : 64;
       }
 
       for (var i = 0; i < wireColors.length; i += 4) {
@@ -126,8 +114,20 @@ class BromiumWebGLRenderer {
 
       faceBuffer.updateFloat32(_gl, faceVerts, faceColors);
       wireBuffer.updateFloat32(_gl, wireVerts, wireColors);
-      _membranes.add(new Tuple2<Buffer, Buffer>(faceBuffer, wireBuffer));
+      _domainShapes[types[t]] =
+          new Tuple2<Buffer, Buffer>(faceBuffer, wireBuffer);
     }
+  }
+
+  /// Resest the camera position and zooming.
+  void resetCamera(Vector3 center, double z, double depth) {
+    _trackball.z = -2.0 * z;
+    _center = center;
+    _viewMatrix = makePerspectiveMatrix(
+        radians(45.0),
+        _viewportWidth / _viewportHeight,
+        _engine.sim.info.space.utov(0.01),
+        depth);
   }
 
   /// Perform one simulation cycle and render a single frame.
@@ -145,20 +145,15 @@ class BromiumWebGLRenderer {
     _gl.viewport(0, 0, _viewportWidth, _viewportHeight);
     _gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // Transform view matrix.
-    //viewMatrix.translate(0.0, 0.0, _trackball.z);
-    //viewMatrix.multiply(_trackball.rotationMatrix);
-    //viewMatrix.translate(_center.clone()..scale(-1.0));
-
     // Apply view matrix.
     _gl.uniformMatrix4fv(
         _shader.uniforms['uViewMatrix'], false, _viewMatrix.storage);
     _gl.uniformMatrix4fv(_shader.uniforms['uRotationMatrix'], false,
         _trackball.rotationMatrix.storage);
     _gl.uniform1f(_shader.uniforms['uZoom'], _trackball.z);
-    _gl.uniform1f(_shader.uniforms['uTranslateX'], -1 * _center.x);
-    _gl.uniform1f(_shader.uniforms['uTranslateY'], -1 * _center.y);
-    _gl.uniform1f(_shader.uniforms['uTranslateZ'], -1 * _center.z);
+    _gl.uniform1f(_shader.uniforms['uTransX'], -1 * _center.x);
+    _gl.uniform1f(_shader.uniforms['uTransY'], -1 * _center.y);
+    _gl.uniform1f(_shader.uniforms['uTransZ'], -1 * _center.z);
     _gl.uniform1f(_shader.uniforms['uScaleX'], 1.0);
     _gl.uniform1f(_shader.uniforms['uScaleY'], 1.0);
     _gl.uniform1f(_shader.uniforms['uScaleZ'], 1.0);
@@ -173,14 +168,32 @@ class BromiumWebGLRenderer {
         _engine.sim.buffer.activeParticleCount);
 
     // Draw membranes.
-    _membranes.forEach((Tuple2<Buffer, Buffer> b) {
-      b.item1.draw(_gl, _shader.attributes['aVertexPosition'],
+    for (var i = 0; i < _engine.sim.buffer.nMembranes; i++) {
+      var dims = _engine.sim.buffer.getMembraneDims(i);
+      var box = _engine.sim.info.membranes[i] == DomainType.box;
+
+      // Compute scaling.
+      var scaleX = box ? dims[3] - dims[0] : dims[3];
+      var scaleY = box ? dims[4] - dims[1] : dims[4];
+      var scaleZ = box ? dims[5] - dims[2] : dims[5];
+
+      // Set transformation uniforms.
+      _gl.uniform1f(_shader.uniforms['uTransX'], dims[0] - _center.x);
+      _gl.uniform1f(_shader.uniforms['uTransY'], dims[1] - _center.y);
+      _gl.uniform1f(_shader.uniforms['uTransZ'], dims[2] - _center.z);
+      _gl.uniform1f(_shader.uniforms['uScaleX'], scaleX / 100);
+      _gl.uniform1f(_shader.uniforms['uScaleY'], scaleY / 100);
+      _gl.uniform1f(_shader.uniforms['uScaleZ'], scaleZ / 100);
+
+      // Draw membrane shape.
+      var shape = _domainShapes[_engine.sim.info.membranes[i]];
+      shape.item1.draw(_gl, _shader.attributes['aVertexPosition'],
           _shader.attributes['aVertexColor'], gl.TRIANGLES);
       _gl.disable(gl.DEPTH_TEST);
-      b.item2.draw(_gl, _shader.attributes['aVertexPosition'],
+      shape.item2.draw(_gl, _shader.attributes['aVertexPosition'],
           _shader.attributes['aVertexColor'], gl.LINES);
       _gl.enable(gl.DEPTH_TEST);
-    });
+    }
 
     // Schedule next frame.
     if (!_blockRendering) {
