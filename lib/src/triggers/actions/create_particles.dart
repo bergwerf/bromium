@@ -10,21 +10,18 @@ class CreateParticlesAction extends TriggerAction {
 
   final int particleCount;
 
-  final int parentMembrane;
+  final Domain domain;
 
-  CreateParticlesAction(
-      this.particleType, this.particleCount, this.parentMembrane);
+  CreateParticlesAction(this.particleType, this.particleCount, this.domain);
 
   void run(Simulation sim) {
     // Create temporary array of membrane domains.
     var membranes = sim.generateMembraneDomains();
 
     var rng = new Random();
-    var parentDomain = new Domain.fromType(sim.info.membranes[parentMembrane],
-        sim.buffer.getMembraneDims(parentMembrane));
     for (var i = 0; i < particleCount; i++) {
       int p = sim.activateParticle(particleType);
-      var point = parentDomain.computeRandomPoint(rng);
+      var point = domain.computeRandomPoint(rng);
       sim.buffer.setParticleCoords(p, point);
 
       for (var m = 0; m < membranes.length; m++) {

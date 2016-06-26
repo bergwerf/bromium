@@ -25,8 +25,11 @@ part 'src/domains/polygons.dart';
 // Trigger library
 part 'src/triggers/trigger.dart';
 part 'src/triggers/conditions/particle_count.dart';
+part 'src/triggers/conditions/membrane_dim.dart';
 part 'src/triggers/actions/create_particles.dart';
 part 'src/triggers/actions/grow_ellipsoid.dart';
+part 'src/triggers/actions/move_membrane.dart';
+part 'src/triggers/actions/permeability.dart';
 
 // Data structures
 part 'src/data/voxels.dart';

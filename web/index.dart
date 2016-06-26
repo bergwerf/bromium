@@ -15,15 +15,16 @@ void main() {
   var space = new VoxelSpace(0.05);
 
   // Simulation variables.
-  var nParticlesGrowth = 1200;
-  var nParticlesGrowth2 = 200;
+  var nParticlesGrowth = 800;
+  var nParticlesGrowth2 = 30;
+  var nParticlesGrowth3 = 160;
   var nNutrients = 10000;
   var nEnzymes = 5000;
   var cellA = space.utov(4.0), cellB = space.utov(4.0), cellC = space.utov(3.0);
 
   // Create domains.
   var sceneDomain =
-      new BoxDomain(space.point(-5.0, -5.0, -5.0), space.point(5.0, 5.0, 5.0));
+      new BoxDomain(space.point(-5.0, -5.0, -5.0), space.point(15.0, 5.0, 5.0));
   var parentCellDomain = new EllipsoidDomain(
       space.point(0.0, 0.0, 0.0), cellA / 2, cellB / 2, cellC / 2);
   var childCellDomain = new EllipsoidDomain(
@@ -133,7 +134,10 @@ void main() {
           nParticlesGrowth, particles.particle('nutrient'), parentCell)
     ], [
       new CreateParticlesAction(
-          particles.particle('enzyme'), nEnzymes, parentCell)
+          particles.particle('enzyme'),
+          nEnzymes,
+          new EllipsoidDomain(space.point(0.0, 0.0, 0.0), cellA, cellB, cellC)
+            ..addCavity(childCellDomain))
     ]),
     new Trigger([
       new ParticleCountCondition.less(
@@ -146,10 +150,48 @@ void main() {
           cellA / 3,
           cellB / 3,
           cellC / 3,
-          cellA / 6 * 5,
-          cellB / 6 * 5,
-          cellC / 6 * 5)
+          cellA / 3 * 2,
+          cellB / 3 * 2,
+          cellC / 3 * 2)
     ]),
+    new Trigger.once([
+      new ParticleCountCondition.greaterOrEqual(
+          nParticlesGrowth2, particles.particle('nutrient2'), childCell)
+    ], [
+      new MembranePermeability(
+          parentCell, false, particles.particle('nutrient'), 1.0),
+      new MembranePermeability(
+          parentCell, false, particles.particle('enzyme'), 1.0),
+      new MembranePermeability(
+          parentCell, false, particles.particle('enzyme-n'), 1.0),
+      new MembranePermeability(
+          parentCell, false, particles.particle('enzyme-nn'), 1.0),
+      new MembranePermeability(
+          parentCell, false, particles.particle('nutrient2'), 1.0),
+    ]),
+    new Trigger([
+      new ParticleCountCondition.greaterOrEqual(
+          nParticlesGrowth2, particles.particle('nutrient2'), childCell),
+      new MembraneDim.less(childCell, 0, space.point(10.0, .0, .0).x)
+    ], [
+      new MoveMembrane(childCell, space.utov(0.01), .0, .0)
+    ]),
+    new Trigger.once([
+      new ParticleCountCondition.greaterOrEqual(
+          nParticlesGrowth2, particles.particle('nutrient2'), childCell),
+      new MembraneDim.greaterOrEqual(childCell, 0, space.point(10.0, .0, .0).x)
+    ], [
+      new MembranePermeability(
+          childCell, true, particles.particle('nutrient'), 1.0),
+    ]),
+    new Trigger([
+      new ParticleCountCondition.greaterOrEqual(
+          nParticlesGrowth2, particles.particle('nutrient2'), childCell),
+      new MembraneDim.greaterOrEqual(childCell, 0, space.point(10.0, .0, .0).x)
+    ], [
+      new GrowEllipsoid(childCell, particles.particle('nutrient2'),
+          nParticlesGrowth3, .0, .0, .0, cellA, cellB, cellC)
+    ])
   ];
 
   // Setup simulation engine.

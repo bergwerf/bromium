@@ -128,6 +128,11 @@ class BromiumWebGLRenderer {
         _viewportWidth / _viewportHeight,
         _engine.sim.info.space.utov(0.01),
         depth);
+    /*_viewMatrix = makePerspectiveMatrix(
+        radians(45.0),
+        _viewportWidth / _viewportHeight,
+        _engine.sim.info.space.utov(16.0),
+        _engine.sim.info.space.utov(17.0))*/
   }
 
   /// Perform one simulation cycle and render a single frame.
