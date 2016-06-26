@@ -33,7 +33,7 @@ class EllipsoidDomain extends Domain {
   }
 
   /// Check if the given coordinates are contained in this ellipsoid.
-  bool contains(num x, num y, num z) {
+  bool _contains(num x, num y, num z) {
     x -= center.x;
     y -= center.y;
     z -= center.z;

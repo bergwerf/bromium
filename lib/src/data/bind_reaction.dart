@@ -4,18 +4,18 @@
 
 part of bromium;
 
-/// Data structure for A + B -> C style reactions information
+/// Data structure for A + B -> C style reactions
 class BindReaction {
-  /// Particle A label
+  /// Particle A
   final int particleA;
 
-  /// Particle B label
+  /// Particle B
   final int particleB;
 
-  /// Particle C label
+  /// Particle C
   final int particleC;
 
-  /// Reaction probability on hit.
+  /// Reaction probability on hit
   final double p;
 
   /// Constructor

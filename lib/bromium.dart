@@ -22,12 +22,19 @@ part 'src/domains/box.dart';
 part 'src/domains/ellipsoid.dart';
 part 'src/domains/polygons.dart';
 
+// Trigger library
+part 'src/triggers/trigger.dart';
+part 'src/triggers/conditions/particle_count.dart';
+part 'src/triggers/actions/create_particles.dart';
+part 'src/triggers/actions/grow_ellipsoid.dart';
+
 // Data structures
 part 'src/data/voxels.dart';
 part 'src/data/particle_info.dart';
 part 'src/data/particle_dict.dart';
 part 'src/data/particle_set.dart';
 part 'src/data/bind_reaction.dart';
+part 'src/data/unbind_reaction.dart';
 part 'src/data/membrane.dart';
 part 'src/data/simulation_info.dart';
 part 'src/data/simulation_buffer.dart';
@@ -38,6 +45,7 @@ part 'src/kinetics/motion/blocking.dart';
 part 'src/kinetics/reactions/intmap.dart';
 part 'src/kinetics/reactions/intset.dart';
 part 'src/kinetics/reactions/arraysort.dart';
+part 'src/kinetics/reactions/unbind.dart';
 part 'src/kinetics/membrane_dynamics/projection.dart';
 
 // Computation engine class

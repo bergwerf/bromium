@@ -54,7 +54,10 @@ class BromiumEngine {
       ParticleDict particles,
       List<ParticleSet> sets,
       List<BindReaction> bindReactions,
-      List<Membrane> membranes) {
+      List<UnbindReaction> unbindReactions,
+      List<Membrane> membranes,
+      List<Trigger> triggers,
+      int initialExtraInactive) {
     benchmark.start('load new simulation');
 
     // Sanity check bind reactions.
@@ -69,8 +72,10 @@ class BromiumEngine {
         space,
         particles.data,
         bindReactions,
+        unbindReactions,
         new List<DomainType>.generate(
-            membranes.length, (int i) => membranes[i].domain.type));
+            membranes.length, (int i) => membranes[i].domain.type),
+        triggers);
 
     // Compute total particle count.
     int nParticles = 0;
@@ -80,11 +85,14 @@ class BromiumEngine {
 
     // Allocate new simulation data.
     var buffer = new SimulationBuffer.fromDimensions(
-        particles.data.length, nParticles, membranes.length);
+        particles.data.length,
+        nParticles + initialExtraInactive,
+        membranes.length,
+        initialExtraInactive);
 
     // Load membrane data into simulation buffer.
     for (var i = 0; i < membranes.length; i++) {
-      buffer.loadMembraneDimensions(i, membranes[i].domain.getDims());
+      buffer.setMembraneDims(i, membranes[i].domain.getDims(), true);
       for (var t = 0; t < buffer.nTypes; t++) {
         buffer.setInwardPermeability(i, t, membranes[i].inwardPermeability[t]);
         buffer.setOutwardPermeability(
@@ -120,7 +128,7 @@ class BromiumEngine {
       }
     }
 
-    // Set inactive particles.
+    // Fill particle buffer with inactive particles.
     for (; p < sim.buffer.nParticles; p++) {
       sim.buffer.pType[p] = -1;
     }
@@ -134,49 +142,60 @@ class BromiumEngine {
 
   /// Compute scene center and scale.
   Tuple2<Vector3, double> computeSceneDimensions() {
-    var center = new Vector3.zero();
-    var _min = sim.buffer.pCoords.first.toDouble();
-    var _max = _min;
+    var center = sim.buffer.getParticleVec(0);
+    var _min = center.clone();
+    var _max = center.clone();
 
-    for (var i = 0; i < sim.buffer.pCoords.length; i += 3) {
-      center.add(new Vector3(
-          sim.buffer.pCoords[i + 0].toDouble(),
-          sim.buffer.pCoords[i + 1].toDouble(),
-          sim.buffer.pCoords[i + 2].toDouble()));
-
-      for (var d = 0; d < 3; d++) {
-        _min = min(_min, sim.buffer.pCoords[i + d]);
-        _max = max(_max, sim.buffer.pCoords[i + d]);
-      }
+    for (var p = 1; p < sim.buffer.activeParticleCount; p++) {
+      var particle = sim.buffer.getParticleVec(p);
+      Vector3.min(_min, particle, _min);
+      Vector3.max(_max, particle, _max);
+      center.add(particle);
     }
-    center.scale(1 / sim.buffer.nParticles);
+    center.scale(1 / sim.buffer.activeParticleCount);
 
-    return new Tuple2<Vector3, double>(center, _max - _min);
+    return new Tuple2<Vector3, double>(center, (_max - _min).length);
   }
 
   /// Simulate one step in the particle simulation.
   void cycle() {
-    sim.buffer.membraneNewDims[0]++;
-    
+    _cycle(sim, benchmark, _sortCache);
+  }
+
+  /// Simulate one step in the particle simulation.
+  static void _cycle(
+      Simulation sim, BromiumBenchmark benchmark, Uint32List sortCache) {
     benchmark.start('simulation cycle');
-    benchmark.start('particle motion');
+    benchmark.start('random motion');
 
     computeMotion(sim);
 
-    benchmark.end('particle motion');
-    benchmark.start('particle reactions');
+    benchmark.end('random motion');
+    benchmark.start('bind reactions');
 
-    computeReactionsWithArraySort(sim, _sortCache, benchmark);
+    computeReactionsWithArraySort(sim, sortCache, benchmark);
 
-    benchmark.end('particle reactions');
-    benchmark.start('isolate simulation membrane dynamics');
+    benchmark.end('bind reactions');
+    benchmark.start('unbind reactions');
+
+    applyUnbindReactions(sim);
+
+    benchmark.end('unbind reactions');
+    benchmark.start('membrane dynamics');
 
     ellipsoidMembraneDynamicsWithProjection(sim);
 
-    benchmark.end('isolate simulation membrane dynamics');
-    benchmark.end('simulation cycle');
+    benchmark.end('membrane dynamics');
+    benchmark.start('triggers');
 
-    _isolateComputedCycles++;
+    for (var trigger in sim.info.triggers) {
+      if (trigger.check(sim)) {
+        trigger.run(sim);
+      }
+    }
+
+    benchmark.end('triggers');
+    benchmark.end('simulation cycle');
   }
 
   /// Print all available benchmark information.
@@ -276,8 +295,10 @@ class BromiumEngine {
             setup.item2.space,
             setup.item2.particleInfo,
             setup.item2.bindReactions,
+            setup.item2.unbindReactions,
             new List<DomainType>.generate(setup.item2.membranes.length,
-                (int i) => DomainType.values[setup.item2.membranes[i].index])),
+                (int i) => DomainType.values[setup.item2.membranes[i].index]),
+            setup.item2.triggers),
         new SimulationBuffer.fromByteBuffer(setup.item3));
 
     // Create sort cache.
@@ -292,26 +313,7 @@ class BromiumEngine {
     triggerPort.listen((bool sendBenchmark) {
       // Render 100 frames.
       for (var i = _isolateCyclesPerBatch; i > 0; i--) {
-        sim.buffer.membraneNewDims[0]++;
-
-        benchmark.start('isolate simulation cycle');
-        benchmark.start('isolate simulation motion');
-
-        computeMotion(sim);
-
-        benchmark.end('isolate simulation motion');
-        benchmark.start('isolate simulation reactions');
-
-        computeReactionsWithArraySort(sim, sortCache, benchmark);
-
-        benchmark.end('isolate simulation reactions');
-        benchmark.start('isolate simulation membrane dynamics');
-
-        ellipsoidMembraneDynamicsWithProjection(sim);
-
-        benchmark.end('isolate simulation membrane dynamics');
-        benchmark.end('isolate simulation cycle');
-
+        _cycle(sim, benchmark, sortCache);
         sendPort.send(sim.buffer.byteBuffer);
       }
 

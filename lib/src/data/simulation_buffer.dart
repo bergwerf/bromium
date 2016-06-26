@@ -24,6 +24,7 @@ class SimulationBuffer {
   int _pCoordsOffset,
       _pColorOffset,
       _pMembranesOffset,
+      _memParOffset,
       _memPerOffset,
       _memOldDimsOffset,
       _memNewDimsOffset;
@@ -45,6 +46,9 @@ class SimulationBuffer {
 
   /// Particle parent membranes
   Int8List pMembranes;
+
+  /// Number of particles in each membrane
+  Uint32List membraneParticleCount;
 
   /// Membrane in/outward permeability for each membrane and each particle.
   Float32List membranePermeability;
@@ -74,7 +78,11 @@ class SimulationBuffer {
     pMembranes =
         new Int8List.view(_buffer, _pMembranesOffset, nParticles * nMembranes);
 
-    _memPerOffset = _pMembranesOffset + pMembranes.lengthInBytes;
+    _memParOffset = _pMembranesOffset + pMembranes.lengthInBytes;
+    membraneParticleCount =
+        new Uint32List.view(_buffer, _memParOffset, nMembranes * nTypes);
+
+    _memPerOffset = _memParOffset + membraneParticleCount.lengthInBytes;
     membranePermeability =
         new Float32List.view(_buffer, _memPerOffset, nMembranes * 2 * nTypes);
 
@@ -89,7 +97,7 @@ class SimulationBuffer {
 
   /// Construct empty data from dimensions.
   factory SimulationBuffer.fromDimensions(
-      int nTypes, int nParticles, int nMembranes) {
+      int nTypes, int nParticles, int nMembranes, int nInactive) {
     // Allocate byte data.
     var byteData = new ByteData(_pTypeOffset +
         // Particle type
@@ -99,7 +107,9 @@ class SimulationBuffer {
         // Particle colors
         (nParticles * 4 * _ui8b) +
         // Particle membranes
-        (nParticles * nMembranes) +
+        (nParticles * nMembranes * _i8b) +
+        // Membrane particle count
+        (nMembranes * nTypes * _ui32b) +
         // Membrane permeability and membrane dimensions (old + new)
         (nMembranes * 2 * nTypes + nMembranes * 12) * _f32b);
 
@@ -108,6 +118,7 @@ class SimulationBuffer {
     dimensions[0] = nTypes;
     dimensions[1] = nParticles;
     dimensions[2] = nMembranes;
+    dimensions[3] = nInactive;
 
     // Create simulation buffer from this byte data.
     return new SimulationBuffer.fromByteBuffer(byteData.buffer);
@@ -163,11 +174,13 @@ class SimulationBuffer {
   /// Set the given particle [i] to be inside the given membrane [m].
   void setParentMembrane(int i, int m) {
     pMembranes[i * nMembranes + m] = 1;
+    membraneParticleCount[m * nTypes + pType[i]]++;
   }
 
   /// Unset the given particle [i] to be inside the given membrane [m].
   void unsetParentMembrane(int i, int m) {
     pMembranes[i * nMembranes + m] = 0;
+    membraneParticleCount[m * nTypes + pType[i]]--;
   }
 
   /// Check if the parent membranes of the two given particles are equal.
@@ -178,6 +191,11 @@ class SimulationBuffer {
       }
     }
     return true;
+  }
+
+  /// Return the number of particles of a specific type in the given membrane.
+  int particleCountIn(int m, int type) {
+    return membraneParticleCount[m * nTypes + type];
   }
 
   /// Get the membrane inward permeability for the given particle type.
@@ -211,9 +229,11 @@ class SimulationBuffer {
   }
 
   /// Set membrane dimensions (array with length nMembraneDims).
-  void loadMembraneDimensions(int membrane, Float32List dims) {
+  void setMembraneDims(int membrane, Float32List dims, [bool both = false]) {
     for (var i = 0; i < dims.length && i < nMembraneDims; i++) {
-      membraneOldDims[membrane * nMembraneDims + i] = dims[i];
+      if (both) {
+        membraneOldDims[membrane * nMembraneDims + i] = dims[i];
+      }
       membraneNewDims[membrane * nMembraneDims + i] = dims[i];
     }
   }

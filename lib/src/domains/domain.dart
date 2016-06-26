@@ -9,10 +9,15 @@ enum DomainType { box, ellipsoid }
 
 /// A particle domain for the BromiumEngine
 abstract class Domain {
+  /// The domain type
   final DomainType type;
 
+  /// Cavities in the domain
+  final List<Domain> cavities;
+
   /// Default contsuctor
-  Domain(this.type);
+  Domain(this.type, [List<Domain> _cavities])
+      : cavities = _cavities != null ? _cavities : new List<Domain>();
 
   /// Create [Domain] from a [DomainType] and an array of dimensions.
   factory Domain.fromType(DomainType type, Float32List dims) {
@@ -25,6 +30,9 @@ abstract class Domain {
         return null;
     }
   }
+
+  /// Add a new cavity.
+  void addCavity(Domain cavity) => cavities.add(cavity);
 
   /// Get dimensions as floating point array.
   Float32List getDims();
@@ -52,7 +60,22 @@ abstract class Domain {
 
   /// Check if the given coordinates are contained in this domain.
   /// Points that touch the domain surface are also contained.
-  bool contains(num x, num y, num z);
+  bool contains(num x, num y, num z) {
+    if (_contains(x, y, z)) {
+      for (var i = 0; i < cavities.length; i++) {
+        if (cavities[i].contains(x, y, z)) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /// Check if the given coordinates are contained in this domain.
+  /// Points that touch the domain surface are also contained.
+  bool _contains(num x, num y, num z);
 
   /// Generate a GL_LINES wireframe outlining this domain.
   Float32List computeWireframe();

@@ -11,75 +11,126 @@ import 'package:color/color.dart';
 void main() {
   var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
 
-  // Setup voxel space.
-  var space = new VoxelSpace(0.01);
+  // Setup voxel space
+  var space = new VoxelSpace(0.05);
+
+  // Simulation variables.
+  var nParticlesGrowth = 1200;
+  var nNutrients = 10000;
+  var nEnzymes = 5000;
+  var cellA = space.utov(4.0), cellB = space.utov(4.0), cellC = space.utov(3.0);
+
+  // Create domains.
+  var sceneDomain =
+      new BoxDomain(space.point(-5.0, -5.0, -5.0), space.point(5.0, 5.0, 5.0));
+  var parentCellDomain = new EllipsoidDomain(
+      space.point(0.0, 0.0, 0.0), cellA / 2, cellB / 2, cellC / 2);
 
   // Setup particle dictionary with some particles.
-  var particles = new ParticleDict()
-    ..addParticle('A', space.utov(.05), [], new RgbColor.name('red'))
-    ..addParticle('B', space.utov(.05), [], new RgbColor.name('blue'))
-    ..addParticle('C', space.utov(.02), ['B', 'A'], new RgbColor.name('white'));
+  var r = space.utov(.05);
+  var red = new RgbColor.name('red');
+  var blue = new RgbColor.name('blue');
+  var green = new RgbColor.name('green');
+  var white = new RgbColor.name('white');
 
-  // Define particle sets.
+  var particles = new ParticleDict()
+    ..addParticle('nutrient', r, [], red)
+    ..addParticle('enzyme', r, [], blue)
+    ..addParticle('enzyme-n', r, ['enzyme', 'nutrient'], green)
+    ..addParticle('enzyme-nn', r, ['enzyme-n', 'nutrient'], green)
+    ..addParticle('nutrient2', r, ['nutrient', 'nutrient'], white);
+
+  // Setup particle sets.
   var particleSets = [
     new ParticleSet(
-        particles.particle('A'),
-        10000,
-        new EllipsoidDomain(space.point(1.0, .0, .0), space.utov(0.5),
-            space.utov(0.5), space.utov(0.5))),
-    new ParticleSet(
-        particles.particle('B'),
-        10000,
-        new EllipsoidDomain(space.point(-1.0, .0, .0), space.utov(0.5),
-            space.utov(0.5), space.utov(0.5)))
+        particles.particle('nutrient'),
+        nNutrients,
+        new BoxDomain(sceneDomain.sc, sceneDomain.lc)
+          ..addCavity(parentCellDomain))
   ];
 
-  // Define bind reactions.
+  // Setup bind reactions.
   var bindReactions = [
-    new BindReaction(particles.particle('A'), particles.particle('B'),
-        particles.particle('C'), 1.0)
+    new BindReaction(particles.particle('nutrient'),
+        particles.particle('enzyme'), particles.particle('enzyme-n'), 1.0),
+    new BindReaction(particles.particle('nutrient'),
+        particles.particle('enzyme-n'), particles.particle('enzyme-nn'), 1.0)
   ];
 
-  // Define membranes.
+  // Setup unbind reactions.
+  var unbindReactions = [
+    new UnbindReaction(particles.particle('enzyme-nn'),
+        [particles.particle('enzyme'), particles.particle('nutrient2')], 0.1)
+  ];
+
+  // Setup membranes.
   var membranes = [
-    new Membrane(
-        new EllipsoidDomain(space.point(0.0, 0.0, 0.0), space.utov(3.0),
-            space.utov(2.0), space.utov(3.0)),
-        {
-          particles.particle('A'): 0.0,
-          particles.particle('B'): 0.0,
-          particles.particle('C'): 0.0
-        },
-        {
-          particles.particle('A'): 0.0,
-          particles.particle('B'): 0.0,
-          particles.particle('C'): 1.0
-        }),
-    new Membrane(
-        new BoxDomain(
-            space.point(-5.0, -5.0, -5.0), space.point(5.0, 5.0, 5.0)),
-        {
-          particles.particle('A'): 0.0,
-          particles.particle('B'): 0.0,
-          particles.particle('C'): 0.0
-        },
-        {
-          particles.particle('A'): 0.0,
-          particles.particle('B'): 0.0,
-          particles.particle('C'): 0.0
-        })
+    new Membrane(parentCellDomain, {
+      particles.particle('nutrient'): 1.0,
+      particles.particle('nutrient2'): 0.0,
+      particles.particle('enzyme'): 0.0,
+      particles.particle('enzyme-n'): 0.0,
+      particles.particle('enzyme-nn'): 0.0
+    }, {
+      particles.particle('nutrient'): 0.0,
+      particles.particle('nutrient2'): 0.0,
+      particles.particle('enzyme'): 0.0,
+      particles.particle('enzyme-n'): 0.0,
+      particles.particle('enzyme-nn'): 0.0
+    }),
+    new Membrane(sceneDomain, {
+      particles.particle('nutrient'): 0.0,
+      particles.particle('nutrient2'): 0.0,
+      particles.particle('enzyme'): 0.0,
+      particles.particle('enzyme-n'): 0.0,
+      particles.particle('enzyme-nn'): 0.0
+    }, {
+      particles.particle('nutrient'): 0.0,
+      particles.particle('nutrient2'): 0.0,
+      particles.particle('enzyme'): 0.0,
+      particles.particle('enzyme-n'): 0.0,
+      particles.particle('enzyme-nn'): 0.0
+    })
+  ];
+  var parentCell = 0;
+
+  // Setup triggers.
+  var triggers = [
+    new Trigger([
+      new ParticleCountCondition.less(
+          nParticlesGrowth, particles.particle('nutrient'), parentCell)
+    ], [
+      new GrowEllipsoid(
+          parentCell,
+          particles.particle('nutrient'),
+          nParticlesGrowth,
+          cellA / 2,
+          cellB / 2,
+          cellC / 2,
+          cellA,
+          cellB,
+          cellC)
+    ]),
+    new Trigger.once([
+      new ParticleCountCondition.greaterOrEqual(
+          nParticlesGrowth, particles.particle('nutrient'), parentCell)
+    ], [
+      new CreateParticlesAction(
+          particles.particle('enzyme'), nEnzymes, parentCell)
+    ])
   ];
 
   // Setup simulation engine.
   var engine = new BromiumEngine();
-  engine.loadSimulation(
-      space, particles, particleSets, bindReactions, membranes);
+  engine.loadSimulation(space, particles, particleSets, bindReactions,
+      unbindReactions, membranes, triggers, nEnzymes);
 
   // Setup WebGL renderer.
   var renderer = new BromiumWebGLRenderer(engine, canvas);
   var sceneDimensions = engine.computeSceneDimensions();
   renderer.resetCamera(
       sceneDimensions.item1, sceneDimensions.item2, space.depth);
+  //renderer.runSimulationInline = true;
   renderer.start();
   engine.restartIsolate();
 

@@ -121,7 +121,7 @@ class BromiumWebGLRenderer {
 
   /// Resest the camera position and zooming.
   void resetCamera(Vector3 center, double z, double depth) {
-    _trackball.z = -2.0 * z;
+    _trackball.z = -1.0 * z;
     _center = center;
     _viewMatrix = makePerspectiveMatrix(
         radians(45.0),

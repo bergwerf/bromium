@@ -61,18 +61,8 @@ class BoxDomain extends Domain {
   /// The bounding box is the same as this.
   BoxDomain computeBoundingBox() => this;
 
-  /// Random distribution is guaranteed since the coordinate system is not
-  /// deformed.
-  Vector3 computeRandomPoint(Random rng) {
-    var ret = new Vector3.zero();
-    ret.x = this.sc.x + rng.nextDouble() * (this.lc.x - this.sc.x);
-    ret.y = this.sc.y + rng.nextDouble() * (this.lc.y - this.sc.y);
-    ret.z = this.sc.z + rng.nextDouble() * (this.lc.z - this.sc.z);
-    return ret;
-  }
-
   /// Check if the given coordinates are contained in this box.
-  bool contains(num x, num y, num z) {
+  bool _contains(num x, num y, num z) {
     return !(x < sc.x ||
         x > lc.x ||
         y < sc.y ||

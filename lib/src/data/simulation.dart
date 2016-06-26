@@ -15,6 +15,14 @@ class Simulation {
   /// Constuctor
   Simulation(this.info, this.buffer);
 
+  /// Generate Domain list using the current membrane dimensions.
+  List<Domain> generateMembraneDomains() {
+    return new List<Domain>.generate(
+        info.membranes.length,
+        (int i) =>
+            new Domain.fromType(info.membranes[i], buffer.getMembraneDims(i)));
+  }
+
   /// Bind a particle
   ///
   /// This will effectively swap particle b to the front of the inactive part
@@ -33,20 +41,21 @@ class Simulation {
 
   /// Unbind particle
   ///
-  /// This will effectively activate the front of the inactive part of the
-  /// particle vextex buffer and change it into [typeB] while the given
-  /// particle is changed into [typeA]. An error is thrown if no inactive
-  /// particle exists.
-  void unbindParticles(int i, int typeA, int typeB) {
-    // Set the given particle to typeA.
-    editParticle(i, typeA);
+  /// This will change particle [i] to [products.first], and activate a new
+  /// particle for each other particle in [products].
+  void unbindParticles(int i, List<int> products) {
+    if (products.length == 0) {
+      throw new Exception('cannot unbind into 0 products');
+    }
 
-    // Set the first inactive particle.
-    int particleB = activateParticle(typeB);
+    // Set the given particle to products.first.
+    editParticle(i, products.first);
 
-    // Copy the location of the given particle to the typeB particle.
-    for (var d = 0; d < 3; d++) {
-      buffer.pCoords[particleB * 3 + d] = buffer.pCoords[i * 3 + d];
+    // Activate the other products.
+    var position = buffer.getParticleVec(i);
+    for (var j = 1; j < products.length; j++) {
+      int p = activateParticle(products[j]);
+      buffer.setParticleCoords(p, position);
     }
   }
 
@@ -62,6 +71,10 @@ class Simulation {
 
   /// Activate a particle.
   int activateParticle(int type) {
+    if (buffer.nInactive == 0) {
+      throw new Exception('activateParticle called but nInactive = 0');
+    }
+
     int i = buffer.firstInactiveParticleIdx;
     editParticle(i, type);
     buffer.nInactive--;

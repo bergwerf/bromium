@@ -15,10 +15,16 @@ class SimulationInfo {
   /// Bind reactions (currenly we keep these static).
   final List<BindReaction> bindReactions;
 
+  /// Unbind reactions (currenly we keep these static).
+  final List<UnbindReaction> unbindReactions;
+
   /// Membrane types (dimensions and permeability are dynamic).
   final List<DomainType> membranes;
 
+  /// Triggers.
+  final List<Trigger> triggers;
+
   /// Constuctor
-  SimulationInfo(
-      this.space, this.particleInfo, this.bindReactions, this.membranes);
+  SimulationInfo(this.space, this.particleInfo, this.bindReactions,
+      this.unbindReactions, this.membranes, this.triggers);
 }

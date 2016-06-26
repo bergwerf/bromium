@@ -25,7 +25,9 @@ void _applyReactionsInParticleTree(Simulation sim, Map<int, List<int>> tree) {
     // A's.
     if ((r.particleA != r.particleB &&
             tree.containsKey(r.particleA) &&
-            tree.containsKey(r.particleB)) ||
+            tree[r.particleA].isNotEmpty &&
+            tree.containsKey(r.particleB) &&
+            tree[r.particleB].isNotEmpty) ||
         (r.particleA == r.particleB &&
             tree.containsKey(r.particleA) &&
             tree[r.particleA].length > 1)) {

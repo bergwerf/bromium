@@ -7,10 +7,7 @@ part of bromium;
 /// This function applies one cycle of random motion to the given [BromiumData].
 void computeMotion(Simulation sim) {
   // Create temporary array of membrane domains.
-  var membranes = new List<Domain>.generate(
-      sim.info.membranes.length,
-      (int i) => new Domain.fromType(
-          sim.info.membranes[i], sim.buffer.getMembraneDims(i)));
+  var membranes = sim.generateMembraneDomains();
 
   // Apply random motion to all particles.
   var rng = new Random();
