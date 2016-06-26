@@ -42,8 +42,8 @@ class BromiumWebGLRenderer {
   /// Update simulation data in render cycle?
   bool runSimulation = true;
 
-  /// Use isolates for simulation computations?
-  bool runInIsolate = true;
+  /// Run simulation `.step()` inline?
+  bool runSimulationInline = false;
 
   /// Constructor
   BromiumWebGLRenderer(this._engine, this._canvas) {
@@ -136,7 +136,7 @@ class BromiumWebGLRenderer {
     _particleSystem.updateUint16(
         _gl, _engine.sim.buffer.pCoords, _engine.sim.buffer.pColor);
 
-    if (runSimulation && !runInIsolate) {
+    if (runSimulation && runSimulationInline) {
       // Run a simulation cycle on the main thread.
       _engine.cycle();
     }

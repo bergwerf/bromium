@@ -156,6 +156,8 @@ class BromiumEngine {
 
   /// Simulate one step in the particle simulation.
   void cycle() {
+    sim.buffer.membraneNewDims[0]++;
+    
     benchmark.start('simulation cycle');
     benchmark.start('particle motion');
 
@@ -290,6 +292,8 @@ class BromiumEngine {
     triggerPort.listen((bool sendBenchmark) {
       // Render 100 frames.
       for (var i = _isolateCyclesPerBatch; i > 0; i--) {
+        sim.buffer.membraneNewDims[0]++;
+
         benchmark.start('isolate simulation cycle');
         benchmark.start('isolate simulation motion');
 

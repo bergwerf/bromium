@@ -135,6 +135,12 @@ class SimulationBuffer {
   /// Alias for [firstInactiveParticleIdx].
   int get activeParticleCount => firstInactiveParticleIdx;
 
+  /// Get particle coordinates as vector.
+  Vector3 getParticleVec(int p) {
+    return new Vector3(pCoords[p * 3].toDouble(), pCoords[p * 3 + 1].toDouble(),
+        pCoords[p * 3 + 2].toDouble());
+  }
+
   /// Set particle coordinates.
   void setParticleCoords(int p, Vector3 point) {
     for (var d = 0; d < 3; d++) {
@@ -192,6 +198,16 @@ class SimulationBuffer {
   /// Set the membrane outward permeability for the given particle type.
   void setOutwardPermeability(int membrane, int type, double value) {
     membranePermeability[membrane * (nTypes * 2) + type * 2 + 1] = value;
+  }
+
+  /// Randomly decide if the given particle can move into the given membrane.
+  bool rndInwardPermeability(int p, int m) {
+    return new Random().nextDouble() < getInwardPermeability(m, pType[p]);
+  }
+
+  /// Randomly decide if the given particle can move out of the given membrane.
+  bool rndOutwardPermeability(int p, int m) {
+    return new Random().nextDouble() < getOutwardPermeability(m, pType[p]);
   }
 
   /// Set membrane dimensions (array with length nMembraneDims).

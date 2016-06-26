@@ -37,6 +37,23 @@ class BoxDomain extends Domain {
     return new BoxDomain(new Vector3.array(dims), new Vector3.array(dims, 3));
   }
 
+  /// Construct box domain that contains all the given domains.
+  factory BoxDomain.enclose(List<Domain> domains) {
+    if (domains.isEmpty) {
+      throw new ArgumentError.value(domains, 'domains', 'cannot be empty');
+    } else {
+      var box = domains.first.computeBoundingBox();
+      var sc = box.sc;
+      var lc = box.lc;
+      for (var i = 1; i < domains.length; i++) {
+        box = domains[i].computeBoundingBox();
+        Vector3.min(box.sc, sc, sc);
+        Vector3.max(box.lc, lc, lc);
+      }
+      return new BoxDomain(sc, lc);
+    }
+  }
+
   /// Get dimensions.
   Float32List getDims() =>
       new Float32List.fromList([sc.x, sc.y, sc.z, lc.x, lc.y, lc.z]);
