@@ -16,6 +16,7 @@ void main() {
 
   // Simulation variables.
   var nParticlesGrowth = 1200;
+  var nParticlesGrowth2 = 200;
   var nNutrients = 10000;
   var nEnzymes = 5000;
   var cellA = space.utov(4.0), cellB = space.utov(4.0), cellC = space.utov(3.0);
@@ -25,6 +26,8 @@ void main() {
       new BoxDomain(space.point(-5.0, -5.0, -5.0), space.point(5.0, 5.0, 5.0));
   var parentCellDomain = new EllipsoidDomain(
       space.point(0.0, 0.0, 0.0), cellA / 2, cellB / 2, cellC / 2);
+  var childCellDomain = new EllipsoidDomain(
+      space.point(0.0, 0.0, 0.0), cellA / 3, cellB / 3, cellC / 3);
 
   // Setup particle dictionary with some particles.
   var r = space.utov(.05);
@@ -78,6 +81,19 @@ void main() {
       particles.particle('enzyme-n'): 0.0,
       particles.particle('enzyme-nn'): 0.0
     }),
+    new Membrane(childCellDomain, {
+      particles.particle('nutrient'): 0.0,
+      particles.particle('nutrient2'): 1.0,
+      particles.particle('enzyme'): 0.0,
+      particles.particle('enzyme-n'): 0.0,
+      particles.particle('enzyme-nn'): 0.0
+    }, {
+      particles.particle('nutrient'): 0.0,
+      particles.particle('nutrient2'): 0.0,
+      particles.particle('enzyme'): 0.0,
+      particles.particle('enzyme-n'): 0.0,
+      particles.particle('enzyme-nn'): 0.0
+    }),
     new Membrane(sceneDomain, {
       particles.particle('nutrient'): 0.0,
       particles.particle('nutrient2'): 0.0,
@@ -93,6 +109,7 @@ void main() {
     })
   ];
   var parentCell = 0;
+  var childCell = 1;
 
   // Setup triggers.
   var triggers = [
@@ -117,7 +134,22 @@ void main() {
     ], [
       new CreateParticlesAction(
           particles.particle('enzyme'), nEnzymes, parentCell)
-    ])
+    ]),
+    new Trigger([
+      new ParticleCountCondition.less(
+          nParticlesGrowth2, particles.particle('nutrient2'), childCell)
+    ], [
+      new GrowEllipsoid(
+          childCell,
+          particles.particle('nutrient2'),
+          nParticlesGrowth2,
+          cellA / 3,
+          cellB / 3,
+          cellC / 3,
+          cellA / 6 * 5,
+          cellB / 6 * 5,
+          cellC / 6 * 5)
+    ]),
   ];
 
   // Setup simulation engine.

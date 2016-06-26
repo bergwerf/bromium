@@ -194,8 +194,8 @@ class SimulationBuffer {
   }
 
   /// Return the number of particles of a specific type in the given membrane.
-  int particleCountIn(int m, int type) {
-    return membraneParticleCount[m * nTypes + type];
+  int particleCountIn(int type, int membrane) {
+    return membraneParticleCount[membrane * nTypes + type];
   }
 
   /// Get the membrane inward permeability for the given particle type.
@@ -230,7 +230,7 @@ class SimulationBuffer {
 
   /// Set membrane dimensions (array with length nMembraneDims).
   void setMembraneDims(int membrane, Float32List dims, [bool both = false]) {
-    for (var i = 0; i < dims.length && i < nMembraneDims; i++) {
+    for (var i = 0; i < nMembraneDims; i++) {
       if (both) {
         membraneOldDims[membrane * nMembraneDims + i] = dims[i];
       }
@@ -240,11 +240,13 @@ class SimulationBuffer {
 
   /// Get membrane dimensions (array with nMembraneDims values).
   Float32List getMembraneDims(int membrane, [bool newDims = false]) {
-    return new Float32List.view(
-        _buffer,
-        (newDims ? _memNewDimsOffset : _memOldDimsOffset) +
-            membrane * nMembraneDims * _f32b,
-        nMembraneDims);
+    var dims = new Float32List(nMembraneDims);
+    for (var i = 0; i < nMembraneDims; i++) {
+      dims[i] = newDims
+          ? membraneNewDims[membrane * nMembraneDims + i]
+          : membraneOldDims[membrane * nMembraneDims + i];
+    }
+    return dims;
   }
 
   /// Check if the dimensions of the given membrane have changed.

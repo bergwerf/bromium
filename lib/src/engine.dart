@@ -181,11 +181,6 @@ class BromiumEngine {
     applyUnbindReactions(sim);
 
     benchmark.end('unbind reactions');
-    benchmark.start('membrane dynamics');
-
-    ellipsoidMembraneDynamicsWithProjection(sim);
-
-    benchmark.end('membrane dynamics');
     benchmark.start('triggers');
 
     for (var trigger in sim.info.triggers) {
@@ -195,6 +190,11 @@ class BromiumEngine {
     }
 
     benchmark.end('triggers');
+    benchmark.start('membrane dynamics');
+
+    ellipsoidMembraneDynamicsWithProjection(sim);
+
+    benchmark.end('membrane dynamics');
     benchmark.end('simulation cycle');
   }
 
