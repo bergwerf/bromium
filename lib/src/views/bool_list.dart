@@ -7,13 +7,18 @@ part of bromium.views;
 /// Simple wrapper around [Int8List] to act like a boolean list. Could be
 /// extended into real bitset in the future.
 class BoolList {
-  final Int8List _data;
+  final Int8List data;
 
   BoolList.view(ByteBuffer buffer, [int offset = 0, int length = 0])
-      : _data = new Int8List.view(buffer, offset, length);
+      : data = new Int8List.view(buffer, offset, length);
 
-  bool operator [](int i) => _data[i] == 1;
+  bool operator [](int i) => data[i] == 1;
   void operator []=(int i, bool value) {
-    _data[i] = value ? 1 : 0;
+    data[i] = value ? 1 : 0;
+  }
+
+  /// Copy values from [source] into [_data].
+  void copyFrom(BoolList source) {
+    data.setAll(0, source.data);
   }
 }
