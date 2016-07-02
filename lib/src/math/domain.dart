@@ -8,15 +8,11 @@ part of bromium.math;
 enum DomainType { aabb, ellipsoid }
 
 /// A particle domain for the BromiumEngine
-abstract class Domain {
+abstract class Domain implements Transferrable {
   /// The domain type
   final DomainType type;
 
-  /// Cavities in the domain
-  final List<Domain> cavities;
-
-  Domain(this.type, [List<Domain> _cavities])
-      : cavities = _cavities != null ? _cavities : new List<Domain>();
+  Domain(this.type);
 
   /// Create [Domain] from the given [type] and [dims].
   factory Domain.fromBuffer(DomainType type, ByteBuffer buffer, int offset) {
@@ -30,83 +26,43 @@ abstract class Domain {
     }
   }
 
-  /// Add a new cavity.
-  void addCavity(Domain cavity) => cavities.add(cavity);
-
   /// Compute bounding box.
   Aabb3 computeBoundingBox();
 
   /// Compute a random point within the domain.
   /// The default implementation uses [computeBoundingBox] and [contains].
-  Vector3 computeRandomPoint(Random rng) {
+  Vector3 computeRandomPoint(Random rng, [List<Domain> cavities]) {
     var point = new Vector3.zero();
     var bbox = computeBoundingBox();
+    bool containsPoint = false;
+
     do {
       point = bbox.min + randomVector3(rng)..dot(bbox.max - bbox.min);
-    } while (!contains(point));
-    return point;
-  }
 
-  /// Check if the given point is contained in this domain.
-  bool contains(Vector3 point, {includeCavities: true}) {
-    if (_contains(point)) {
-      if (includeCavities) {
+      // Check if the domain contains the point and exclude cavities.
+      containsPoint = contains(point);
+      if (containsPoint && cavities != null) {
         for (var cavity in cavities) {
           if (cavity.contains(point)) {
-            return false;
+            containsPoint = false;
+            break;
           }
         }
       }
-      return true;
-    } else {
-      return false;
-    }
+    } while (!containsPoint);
+
+    return point;
   }
 
   /// Internal method for [contains]
-  bool _contains(Vector3 point);
-
-  /// Find ray intersections.
-  List<double> computeRayIntersections(Ray ray, {includeCavities: true}) {
-    var intersections = _computeRayIntersections(ray);
-    if (includeCavities) {
-      for (var cavity in cavities) {
-        intersections.addAll(cavity.computeRayIntersections(ray));
-      }
-    }
-    return intersections;
-  }
+  bool contains(Vector3 point);
 
   /// Internal method for [computeRayIntersections]
-  List<double> _computeRayIntersections(Ray ray);
-
-  /// Generate a GL_LINES wireframe outlining this domain.
-  List<Vector3> generateWireframe({includeCavities: true}) {
-    var vertices = new List<Vector3>();
-    vertices.addAll(_generateWireframe());
-    if (includeCavities) {
-      for (var cavity in cavities) {
-        vertices.addAll(cavity.generateWireframe());
-      }
-    }
-    return vertices;
-  }
+  List<double> computeRayIntersections(Ray ray);
 
   /// Internal method for [generateWireframe]
-  List<Vector3> _generateWireframe();
-
-  /// Generate a GL_TRIANGLES polygon outlining this domain.
-  List<Vector3> generatePolygonMesh({includeCavities: true}) {
-    var vertices = new List<Vector3>();
-    vertices.addAll(_generatePolygonMesh());
-    if (includeCavities) {
-      for (var cavity in cavities) {
-        vertices.addAll(cavity.generatePolygonMesh());
-      }
-    }
-    return vertices;
-  }
+  List<Vector3> generateWireframe();
 
   /// Internal method for [generatePolygonMesh]
-  List<Vector3> _generatePolygonMesh();
+  List<Vector3> generatePolygonMesh();
 }

@@ -9,8 +9,7 @@ class AabbDomain extends Domain {
   /// AABB data (from vector_math)
   Aabb3 data;
 
-  AabbDomain(this.data, [List<Domain> cavities])
-      : super(DomainType.aabb, cavities);
+  AabbDomain(this.data) : super(DomainType.aabb);
 
   /// Construct from buffer.
   factory AabbDomain.fromBuffer(ByteBuffer buffer, int offset) {
@@ -34,14 +33,26 @@ class AabbDomain extends Domain {
     }
   }
 
+  int get sizeInBytes =>
+      data.min.storage.lengthInBytes + data.max.storage.lengthInBytes;
+
+  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+    data = copy
+        ? (new Aabb3.fromBuffer(buffer, offset)..copyFrom(data))
+        : new Aabb3.fromBuffer(buffer, offset);
+    return offset +
+        data.min.storage.lengthInBytes +
+        data.max.storage.lengthInBytes;
+  }
+
   Aabb3 computeBoundingBox() => data;
 
-  bool _contains(Vector3 point) => data.containsVector3(point);
+  bool contains(Vector3 point) => data.containsVector3(point);
 
-  List<double> _computeRayIntersections(Ray ray) =>
+  List<double> computeRayIntersections(Ray ray) =>
       computeRayAabbIntersections(ray, data);
 
-  List<Vector3> _generateWireframe() => generateAabbWireframe(data);
+  List<Vector3> generateWireframe() => generateAabbWireframe(data);
 
-  List<Vector3> _generatePolygonMesh() => generateAabbPolygonMesh(data);
+  List<Vector3> generatePolygonMesh() => generateAabbPolygonMesh(data);
 }

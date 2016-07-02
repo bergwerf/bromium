@@ -12,8 +12,7 @@ class EllipsoidDomain extends Domain {
   /// Semi-axis sizes
   Vector3 semiAxes;
 
-  EllipsoidDomain(this.center, this.semiAxes, [List<Domain> cavities])
-      : super(DomainType.ellipsoid, cavities);
+  EllipsoidDomain(this.center, this.semiAxes) : super(DomainType.ellipsoid);
 
   /// Construct from buffer.
   factory EllipsoidDomain.fromBuffer(ByteBuffer buffer, int offset) {
@@ -23,10 +22,32 @@ class EllipsoidDomain extends Domain {
             buffer, offset + Float32List.BYTES_PER_ELEMENT * 3));
   }
 
+  int get sizeInBytes =>
+      center.storage.lengthInBytes + semiAxes.storage.lengthInBytes;
+
+  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+    // Create views.
+    var _center = new Vector3.fromBuffer(buffer, offset);
+    offset += center.storage.lengthInBytes;
+    var _semiAxes = new Vector3.fromBuffer(buffer, offset);
+
+    // Copy old data into new buffer.
+    if (copy) {
+      _center.copyFromArray(center.storage);
+      _semiAxes.copyFromArray(semiAxes.storage);
+    }
+
+    // Replace local data.
+    center = _center;
+    semiAxes = _semiAxes;
+
+    return offset + semiAxes.storage.lengthInBytes;
+  }
+
   Aabb3 computeBoundingBox() =>
       new Aabb3.minMax(center - semiAxes, center + semiAxes);
 
-  bool _contains(Vector3 point) {
+  bool contains(Vector3 point) {
     /// Good looking but probably slower alternative:
     ///
     ///     final v = point.clone() - center;
@@ -42,11 +63,11 @@ class EllipsoidDomain extends Domain {
         1;
   }
 
-  List<double> _computeRayIntersections(Ray ray) =>
+  List<double> computeRayIntersections(Ray ray) =>
       computeRayEllipsoidIntersection(ray, this);
 
-  List<Vector3> _generateWireframe() => generateEllipsoidWireframe(this, 100);
+  List<Vector3> generateWireframe() => generateEllipsoidWireframe(this, 100);
 
-  List<Vector3> _generatePolygonMesh() =>
+  List<Vector3> generatePolygonMesh() =>
       generateEllipsoidPolygonMesh(this, 100, 50);
 }
