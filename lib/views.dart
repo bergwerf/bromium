@@ -7,5 +7,4 @@ library bromium.views;
 import 'dart:typed_data';
 
 part 'src/views/transferrable.dart';
-part 'src/views/bool_list.dart';
 part 'src/views/primitives.dart';

@@ -7,8 +7,8 @@ Sub-libraries
 Bromium consists of the following set of smaller libraries:
 
 - `bromium.math` Collection of general mathematical algorithms
-- `bromium.views` Additional ByteBuffer views
-- `bromium.structs` Data structures for simulation objects
+- `bromium.views` Additional typed views
+- `bromium.structs` Data structures for the simulation
 - `bromium.kinetics` Simulation kinetics algorithms
 - `bromium.nodes` Library for node based scene modeling
 - `bromium.engine` Controller for an isolated simulation with nodes
