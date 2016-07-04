@@ -17,16 +17,17 @@ class Membrane implements Transferrable {
   /// Outward flux fraction that is allowed per type
   Float32List ffOut;
 
-  /// Particle count per type
-  Uint16List particleCount;
+  /// Contained number of particles per type
+  Uint16List concentrations;
 
-  Membrane(this.domain, this.ffIn, this.ffOut, this.particleCount);
+  Membrane(this.domain, this.ffIn, this.ffOut, int particleCount)
+      : concentrations = new Uint16List(particleCount);
 
   int get sizeInBytes =>
       domain.sizeInBytes +
       ffIn.lengthInBytes +
       ffOut.lengthInBytes +
-      particleCount.lengthInBytes;
+      concentrations.lengthInBytes;
 
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     // Create new views.
@@ -41,14 +42,14 @@ class Membrane implements Transferrable {
     if (copy) {
       _ffIn.setAll(0, ffIn);
       _ffOut.setAll(0, ffOut);
-      _particleCount.setAll(0, particleCount);
+      _particleCount.setAll(0, concentrations);
     }
 
     // Replace local data.
     ffIn = _ffIn;
     ffOut = _ffOut;
-    particleCount = _particleCount;
+    concentrations = _particleCount;
 
-    return offset + particleCount.lengthInBytes;
+    return offset + concentrations.lengthInBytes;
   }
 }

@@ -8,14 +8,11 @@ part of bromium.structs;
 ///
 /// Particle type information is not included in the binary stream.
 class ParticleType {
-  /// Sub particles
-  final List<int> fragments;
-
   /// Particle color
   final Vector4 color;
 
   /// Random walk step radius
   final double stepRadius;
 
-  ParticleType(this.fragments, this.color, this.stepRadius);
+  ParticleType(this.color, this.stepRadius);
 }

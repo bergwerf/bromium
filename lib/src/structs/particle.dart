@@ -22,7 +22,9 @@ class Particle implements Transferrable {
   /// List containing all entered membranes.
   final List<int> entered;
 
-  Particle(this._type, this.position) : entered = [];
+  Particle(int type, this.position)
+      : _type = new Uint16View.value(type),
+        entered = [];
 
   int get type => _type.get();
   set type(int value) => _type.set(value);

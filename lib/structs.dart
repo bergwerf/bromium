@@ -15,3 +15,4 @@ part 'src/structs/particle.dart';
 part 'src/structs/membrane.dart';
 part 'src/structs/reactions.dart';
 part 'src/structs/simulation.dart';
+part 'src/structs/index.dart';
