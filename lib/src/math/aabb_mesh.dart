@@ -5,8 +5,8 @@
 part of bromium.math;
 
 /// Generate AABB wireframe.
-List<Vector3> generateAabbWireframe(Aabb3 aabb) {
-  var vertices = new List<Vector3>((4 + 2 * 4) * 2);
+Vector3List generateAabbWireframe(Aabb3 aabb) {
+  var vertices = new Vector3List((4 + 2 * 4) * 2);
 
   // Add top and bottom quad.
   for (var f = 0; f < 2; f++) {
@@ -33,8 +33,8 @@ List<Vector3> generateAabbWireframe(Aabb3 aabb) {
 }
 
 /// Generate AABB polygon mesh.
-List<Vector3> generateAabbPolygonMesh(Aabb3 aabb) {
-  var vertices = new List<Vector3>(3 * 3 * 2 * 2);
+Vector3List generateAabbPolygonMesh(Aabb3 aabb) {
+  var vertices = new Vector3List(3 * 3 * 2 * 2);
   var dims = [
     aabb.min.x,
     aabb.min.y,

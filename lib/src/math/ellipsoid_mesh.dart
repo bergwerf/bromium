@@ -5,8 +5,8 @@
 part of bromium.math;
 
 /// Generate x, y, and z axis ellipses.
-List<Vector3> generateEllipsoidWireframe(EllipsoidDomain e, int detail) {
-  var v = new List<Vector3>(3 * detail * 2);
+Vector3List generateEllipsoidWireframe(EllipsoidDomain e, int detail) {
+  var v = new Vector3List(3 * detail * 2);
 
   for (var axis = 0, i = 0; axis < 3; axis++) {
     // Compute sine translation to implicitly use cosine for the right axes.
@@ -32,9 +32,9 @@ List<Vector3> generateEllipsoidWireframe(EllipsoidDomain e, int detail) {
 }
 
 /// Generate triangles that cover the surface of this ellipsoid.
-List<Vector3> generateEllipsoidPolygonMesh(
+Vector3List generateEllipsoidPolygonMesh(
     EllipsoidDomain e, int thetaDetail, int phiDetail) {
-  var v = new List<Vector3>(thetaDetail * phiDetail * 6);
+  var v = new Vector3List(thetaDetail * phiDetail * 6);
 
   for (var thetaI = 0, i = 0; thetaI < thetaDetail; thetaI++) {
     for (var phiI = 0; phiI < phiDetail; phiI++, i += 6) {

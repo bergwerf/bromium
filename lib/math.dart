@@ -8,6 +8,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:vector_math/vector_math.dart';
+import 'package:vector_math/vector_math_lists.dart';
 import 'package:bromium/views.dart';
 
 part 'src/math/vector_utils.dart';
