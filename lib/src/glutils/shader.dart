@@ -30,6 +30,9 @@ class GlShader {
   /// Primary color attribute label
   String colorAttribLabel;
 
+  /// Primary view matrix uniform label
+  String viewMatrixUniformLabel;
+
   /// Uniform names
   final List<String> _uniforms;
 
@@ -84,6 +87,9 @@ class GlShader {
       uniforms[uniform] = _ctx.getUniformLocation(_shaderProgram, uniform);
     });
   }
+
+  /// Primary view matrix index
+  gl.UniformLocation get uViewMatrix => uniforms[viewMatrixUniformLabel];
 
   /// Use this shader.
   void use() {

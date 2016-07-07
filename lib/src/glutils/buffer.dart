@@ -9,8 +9,8 @@ abstract class _GlBuffer<D extends TypedData, U> {
   /// Rendering context
   final gl.RenderingContext _ctx;
 
-  /// Number of stored vertices
-  int _size = 0;
+  /// Number of stored elements
+  int size = 0;
 
   /// Buffer data type
   final int _type;
@@ -70,12 +70,12 @@ class GlBuffer<D extends TypedData> extends _GlBuffer<D, D> {
       : super(ctx, type, usage, target);
 
   void update(D data) {
-    if (data.lengthInBytes == _size) {
+    if ((data.lengthInBytes / data.elementSizeInBytes).truncate() == size) {
       // Substitute data.
       sub(data);
     } else {
       // Reallocate buffer.
-      _size = data.lengthInBytes;
+      size = (data.lengthInBytes / data.elementSizeInBytes).truncate();
       alloc(data);
     }
   }
@@ -97,10 +97,11 @@ class GlFloat32Buffer extends GlBuffer<Float32List> {
 /// Buffer for element indices
 class GlIndexBuffer extends GlBuffer<Uint16List> {
   /// Type used for element index buffers.
-  static const indexBufferType = gl.ELEMENT_ARRAY_BUFFER;
+  static const indexBufferType = gl.UNSIGNED_SHORT;
 
   GlIndexBuffer(gl.RenderingContext ctx, [int usage = gl.STATIC_DRAW])
-      : super(ctx, gl.UNSIGNED_SHORT, usage: usage, target: indexBufferType);
+      : super(ctx, indexBufferType,
+            usage: usage, target: gl.ELEMENT_ARRAY_BUFFER);
 }
 
 /// Buffer for storing vector lists
@@ -113,12 +114,12 @@ class GlVectorBuffer<L extends VectorList> extends _GlBuffer<Float32List, L> {
       : super(ctx, gl.FLOAT, usage, gl.ARRAY_BUFFER);
 
   void update(L data) {
-    if (data.length == _size) {
+    if (data.length == size) {
       // Substitute data.
       sub(data.buffer);
     } else {
       // Reallocate buffer.
-      _size = data.length;
+      size = data.length;
       alloc(data.buffer);
     }
   }

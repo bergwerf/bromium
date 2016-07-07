@@ -34,10 +34,13 @@ abstract class GlCanvas {
   bool _pause = true;
 
   /// Construct from document ID.
-  GlCanvas.fromId(String id, [double fov = defaultFov]) {
-    // Get canvas and create WebGL context.
-    canvas = document.getElementById(id);
+  GlCanvas.fromId(this.canvas, [double fov = defaultFov]) {
+    // Get WebGL context.
     ctx = canvas.getContext('webgl');
+
+    // Bind trackball.
+    trackball = new Trackball(canvas, 1.1);
+    trackball.z = -10.0;
 
     // Load our default WebGL settings.
     ctx.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -52,7 +55,7 @@ abstract class GlCanvas {
     _viewportWidth = canvas.clientWidth;
     _viewportHeight = canvas.clientHeight;
     projection = makePerspectiveMatrix(
-        radians(45.0), _viewportWidth / _viewportHeight, 0.01, 1000.0);
+        radians(fov), _viewportWidth / _viewportHeight, 0.01, 1000.0);
   }
 
   /// Focus the camera on the given bounding box.
@@ -65,7 +68,7 @@ abstract class GlCanvas {
   }
 
   /// One draw cycle
-  void draw(num time);
+  void draw(num time, Matrix4 viewMatrix);
 
   /// Internal draw cycle
   void _draw(num time) {
@@ -74,7 +77,11 @@ abstract class GlCanvas {
     ctx.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Run main draw method.
-    draw(time);
+    draw(
+        time,
+        projection.clone()
+          ..translate(.0, .0, trackball.z)
+          ..multiply(trackball.rotationMatrix));
 
     // Schedule next frame.
     if (!_pause) {

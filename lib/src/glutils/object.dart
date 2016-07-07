@@ -42,6 +42,9 @@ class GlObject {
   void _prepare() {
     shaderProgram.use();
 
+    // Set uniform view matrix.
+    _ctx.uniformMatrix4fv(shaderProgram.uViewMatrix, false, transform.storage);
+
     // Link all buffers.
     for (var buffer in buffers.values) {
       buffer.linkAll(shaderProgram);
@@ -55,9 +58,10 @@ class GlObject {
   }
 
   /// Draw this object using [gl.drawElements].
-  void drawElements(int mode, int length, [int offset = 0]) {
+  void drawElements(int mode, [int length = -1, int offset = 0]) {
     _prepare();
     indexBuffer.linkAll(shaderProgram);
+    length = length == -1 ? indexBuffer.size : length;
     _ctx.drawElements(mode, length, GlIndexBuffer.indexBufferType, offset);
   }
 }
