@@ -60,10 +60,4 @@ abstract class Domain implements Transferrable {
 
   /// Internal method for [computeRayIntersections]
   List<double> computeRayIntersections(Ray ray);
-
-  /// Internal method for [generateWireframe]
-  Vector3List generateWireframe();
-
-  /// Internal method for [generatePolygonMesh]
-  Vector3List generatePolygonMesh();
 }

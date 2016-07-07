@@ -51,8 +51,4 @@ class AabbDomain extends Domain {
 
   List<double> computeRayIntersections(Ray ray) =>
       computeRayAabbIntersections(ray, data);
-
-  Vector3List generateWireframe() => generateAabbWireframe(data);
-
-  Vector3List generatePolygonMesh() => generateAabbPolygonMesh(data);
 }

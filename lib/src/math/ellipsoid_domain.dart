@@ -65,9 +65,4 @@ class EllipsoidDomain extends Domain {
 
   List<double> computeRayIntersections(Ray ray) =>
       computeRayEllipsoidIntersection(ray, this);
-
-  Vector3List generateWireframe() => generateEllipsoidWireframe(this, 100);
-
-  Vector3List generatePolygonMesh() =>
-      generateEllipsoidPolygonMesh(this, 100, 50);
 }

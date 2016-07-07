@@ -8,14 +8,11 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:vector_math/vector_math.dart';
-import 'package:vector_math/vector_math_lists.dart';
 import 'package:bromium/views.dart';
 
 part 'src/math/vector_utils.dart';
 part 'src/math/domain.dart';
 part 'src/math/aabb_domain.dart';
-part 'src/math/aabb_mesh.dart';
 part 'src/math/aabb_ray.dart';
 part 'src/math/ellipsoid_domain.dart';
-part 'src/math/ellipsoid_mesh.dart';
 part 'src/math/ellipsoid_ray.dart';
