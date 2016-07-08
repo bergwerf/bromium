@@ -13,6 +13,6 @@ import 'package:bromium/engine.dart';
 import 'package:bromium/glutils.dart';
 import 'package:vector_math/vector_math.dart';
 
-part 'src/renderer/shaders/membrane_shader.dart';
-part 'src/renderer/shaders/particle_shader.dart';
 part 'src/renderer/renderer.dart';
+part 'src/renderer/shaders/grid_shader.dart';
+part 'src/renderer/shaders/particle_shader.dart';

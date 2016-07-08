@@ -33,9 +33,13 @@ class GlObject {
     buffers.add(new GlVector3Buffer(_ctx)
       ..update(positions)
       ..link(shaderProgram.positionAttrib));
-    buffers.add(new GlVector4Buffer(_ctx)
-      ..update(colors)
-      ..link(shaderProgram.colorAttrib));
+
+    // Colors are omitted if the shader does not support them.
+    if (shaderProgram.colorAttrib != null) {
+      buffers.add(new GlVector4Buffer(_ctx)
+        ..update(colors)
+        ..link(shaderProgram.colorAttrib));
+    }
   }
 
   /// Prepare for drawing.
