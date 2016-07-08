@@ -17,21 +17,16 @@ class Simulation {
   static const membranesCapBytes = 120;
 
   /// Byte buffer for data that must be continously streamed to the frontend.
-  /// (3D render input, some simulation state information)
+  /// This contains 3D render input and simulation state information this is
+  /// displayed in the user interface. This buffer can be parsed using
+  /// [RenderBuffer].
   ByteBuffer buffer;
 
-  /// Buffer header
-  Uint32List bufferHeader;
+  /// Simulation dimensions
+  final SimulationHeader header;
 
-  // Buffer header indices
-  static const _bindReactionCount = 0,
-      _unbindReactionCount = 1,
-      _particleCount = 2,
-      _membranesOffset = 3,
-      _membraneCount = 4,
-      _bufferHeaderLength = 5;
-
-  /// Store particles offset in the buffer for convenience.
+  /// Store particles offset in the buffer for convenience. This value can
+  /// be calculated from the [header].
   int particlesOffset = 0;
 
   /// Particle types
@@ -50,20 +45,18 @@ class Simulation {
   final List<Membrane> membranes;
 
   /// Load simulation from loose data.
-  Simulation(this.particleTypes, this.bindReactions, this.unbindReactions)
-      : particles = [],
+  Simulation(this.particleTypes, List<BindReaction> bindReactions,
+      List<UnbindReaction> unbindReactions)
+      : header =
+            new SimulationHeader(bindReactions.length, unbindReactions.length),
+        bindReactions = bindReactions,
+        unbindReactions = unbindReactions,
+        particles = [],
         membranes = [] {
-    // Set buffer header.
-    bufferHeader = new Uint32List(_bufferHeaderLength);
-    bufferHeader[_bindReactionCount] = bindReactions.length;
-    bufferHeader[_unbindReactionCount] = unbindReactions.length;
-    bufferHeader[_particleCount] = 0;
-    bufferHeader[_membranesOffset] = 0;
-    bufferHeader[_membraneCount] = 0;
-
     // Compute particles offset.
-    particlesOffset = _bufferHeaderLength * Uint32List.BYTES_PER_ELEMENT +
-        Reaction.byteCount * (bindReactions.length + unbindReactions.length);
+    particlesOffset = SimulationHeader.byteCount +
+        Reaction.byteCount *
+            (header.bindReactionCount + header.unbindReactionCount);
 
     // Transfer all data to a single byte buffer.
     transfer(0, 0);
@@ -90,7 +83,7 @@ class Simulation {
   /// Add a membrane to the buffer.
   void addMembrane(Membrane membrane) {
     _rescaleBuffer(0, membrane.sizeInBytes);
-    membrane.transfer(buffer, membranesOffset + allMembraneBytes);
+    membrane.transfer(buffer, header.membranesOffset + allMembraneBytes);
     membranes.add(membrane);
   }
 
@@ -123,23 +116,23 @@ class Simulation {
     /// - membranes + cap
 
     // Compute new buffer size.
-    var _membranesOffset = _bufferHeaderLength * Uint32List.BYTES_PER_ELEMENT +
+    var membranesOffset = SimulationHeader.byteCount +
         Reaction.byteCount * (bindReactions.length + unbindReactions.length) +
         Particle.byteCount * (particles.length + addParticles + particlesCap);
 
-    var bufferSize = _membranesOffset;
-    bufferSize += allMembraneBytes + addMembraneBytes + membranesCapBytes;
+    var bufferSize = membranesOffset +
+        allMembraneBytes +
+        addMembraneBytes +
+        membranesCapBytes;
 
     // Create new buffer.
     var newBuffer = new ByteData(bufferSize).buffer;
 
     // Transfer header.
-    bufferHeader = new Uint32List.view(newBuffer, 0, _bufferHeaderLength)
-      ..setAll(0, bufferHeader);
-    membranesOffset = _membranesOffset;
+    var offset = header.transfer(newBuffer, 0);
+    header.membranesOffset = membranesOffset;
 
     // Transfer reactions and particles.
-    var offset = bufferHeader.lengthInBytes;
     for (var bindReaction in bindReactions) {
       offset = bindReaction.transfer(newBuffer, offset);
     }
@@ -151,7 +144,7 @@ class Simulation {
     }
 
     // Skip particles cap and transfer membranes.
-    offset = _membranesOffset;
+    offset = membranesOffset;
     for (var membrane in membranes) {
       offset = membrane.transfer(newBuffer, offset);
     }
@@ -160,6 +153,8 @@ class Simulation {
     buffer = newBuffer;
   }
 
+  /// Get the number of bytes in the render buffer that are allocated by
+  /// membranes.
   int get allMembraneBytes {
     int count = 0;
     for (var membrane in membranes) {
@@ -176,13 +171,13 @@ class Simulation {
     if (addParticles > 0) {
       var finalParticlesOffset = particlesOffset +
           Particle.byteCount * (particles.length + addParticles);
-      if (finalParticlesOffset < membranesOffset) {
+      if (finalParticlesOffset < header.membranesOffset) {
         addParticles = 0;
       }
     }
     if (addMembraneBytes > 0) {
       var finalMembranesOffset =
-          membranesOffset + allMembraneBytes + addMembraneBytes;
+          header.membranesOffset + allMembraneBytes + addMembraneBytes;
       if (finalMembranesOffset <= buffer.lengthInBytes) {
         addMembraneBytes = 0;
       }
@@ -195,16 +190,7 @@ class Simulation {
 
   /// Update the [bufferHeader] values.
   void updateBufferHeader() {
-    particleCount = particles.length;
-    membraneCount = membranes.length;
+    header.particleCount = particles.length;
+    header.membraneCount = membranes.length;
   }
-
-  int get bindReactionCount => bufferHeader[_bindReactionCount];
-  int get unbindReactionCount => bufferHeader[_unbindReactionCount];
-  int get particleCount => bufferHeader[_particleCount];
-  set particleCount(int value) => bufferHeader[_particleCount] = value;
-  int get membranesOffset => bufferHeader[_membranesOffset];
-  set membranesOffset(int value) => bufferHeader[_membranesOffset] = value;
-  int get membraneCount => bufferHeader[_membraneCount];
-  set membraneCount(int value) => bufferHeader[_membraneCount] = value;
 }
