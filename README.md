@@ -12,26 +12,12 @@ Bromium consists of the following set of smaller libraries:
 - `bromium.kinetics` Simulation kinetics algorithms
 - `bromium.nodes` Library for node based scene modeling
 - `bromium.engine` Controller for an isolated simulation with nodes
+- `bromium.glutils` WebGL utility library
+- `bromium.renderer` Simulation 3D renderer
+- `bromium.editor` Scene editor for Bromium
 
 Conventions
 -----------
-### Variable names
-There are a number of variable naming conventions to keep the code more
-consistent.
-
-Name   | Meaning
--------|---------
-`dims` | domain dimensions
-`p`    | particle index
-`p*`   | array with particle information
-`m`    | membrane index
-`m*`   | array with membrane information
-`r`    | reaction index
-`r*`   | array with reaction information
-`n`    | node index
-`n*`   | array with node information
-`i`    | ALL other index values
-
 ### Types
 In almost all circumstances it is preferred to use types from the `vector_math`
 library to keep the code more readable. Array to vector conversion should be
