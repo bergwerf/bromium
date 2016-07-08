@@ -14,8 +14,14 @@ abstract class Domain implements Transferrable {
 
   Domain(this.type);
 
-  /// Create [Domain] from the given [type] and [dims].
-  factory Domain.fromBuffer(DomainType type, ByteBuffer buffer, int offset) {
+  /// Create [Domain] from the data in [buffer] at [offset].
+  factory Domain.fromBuffer(ByteBuffer buffer, int offset) {
+    // Resolve the domain type.
+    var typeView = new Uint32View(buffer, offset);
+    var type = DomainType.values[typeView.get()];
+    offset += Uint32View.byteCount;
+
+    // Construct the specific domain.
     switch (type) {
       case DomainType.aabb:
         return new AabbDomain.fromBuffer(buffer, offset);
@@ -61,4 +67,21 @@ abstract class Domain implements Transferrable {
 
   /// Internal method for [computeRayIntersections]
   List<double> computeRayIntersections(Ray ray);
+
+  /// General getter for the byte size
+  int get sizeInBytes => Uint32View.byteCount + _sizeInBytes;
+
+  /// General method for transferring the domain data
+  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+    /// Copy the domain type into a Uint32.
+    var typeView = new Uint32View(buffer, offset);
+    typeView.set(type.index);
+    return _transfer(buffer, offset + Uint32View.byteCount);
+  }
+
+  /// Membrane specific additional byte size
+  int get _sizeInBytes;
+
+  /// Membrane specific transfer method
+  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]);
 }

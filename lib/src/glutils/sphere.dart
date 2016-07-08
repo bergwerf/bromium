@@ -33,6 +33,15 @@ class GlSphere extends GlGeometry {
   GlSphere._create(GlObject wireframe, GlObject surface)
       : super(wireframe, surface);
 
+  /// Compute transformation to transform the standard sphere into the given
+  /// ellipsoid.
+  static Matrix4 computeTransform(Vector3 center, Vector3 semiAxes) {
+    var mat = new Matrix4.identity();
+    mat.scale(semiAxes.x, semiAxes.y, semiAxes.z);
+    mat.translate(center.x, center.y, center.z);
+    return mat;
+  }
+
   /// Cube positions
   static Vector3List generateSpherePositions(
       int phiSegments, int thetaSegments) {

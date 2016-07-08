@@ -5,7 +5,6 @@
 library bromium.engine;
 
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:bromium/structs.dart';
 

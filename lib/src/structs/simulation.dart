@@ -89,8 +89,8 @@ class Simulation {
 
   /// Compute bounding box that encloses all particles.
   Aabb3 particlesBoundingBox() {
-    var _min = particles[0].position;
-    var _max = particles[0].position;
+    var _min = particles[0].position.clone();
+    var _max = particles[0].position.clone();
 
     for (var p = 1; p < particles.length; p++) {
       Vector3.min(_min, particles[p].position, _min);

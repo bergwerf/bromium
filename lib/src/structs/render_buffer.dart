@@ -34,4 +34,15 @@ class RenderBuffer {
     return new Float32List.view(
         buffer, particlesOffset, header.particleCount * Particle.floatCount);
   }
+
+  /// Get list of membrane domains.
+  List<Domain> generateMembraneDomains() {
+    var list = new List<Domain>(header.membraneCount);
+    var offset = header.membranesOffset;
+    for (var i = 0; i < header.membraneCount; i++) {
+      list[i] = new Domain.fromBuffer(buffer, offset);
+      offset += list[i].sizeInBytes;
+    }
+    return list;
+  }
 }

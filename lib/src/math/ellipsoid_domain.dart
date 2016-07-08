@@ -22,10 +22,10 @@ class EllipsoidDomain extends Domain {
             buffer, offset + Float32List.BYTES_PER_ELEMENT * 3));
   }
 
-  int get sizeInBytes =>
+  int get _sizeInBytes =>
       center.storage.lengthInBytes + semiAxes.storage.lengthInBytes;
 
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     // Create views.
     var _center = new Vector3.fromBuffer(buffer, offset);
     offset += center.storage.lengthInBytes;

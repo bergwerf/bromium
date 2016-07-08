@@ -33,10 +33,10 @@ class AabbDomain extends Domain {
     }
   }
 
-  int get sizeInBytes =>
+  int get _sizeInBytes =>
       data.min.storage.lengthInBytes + data.max.storage.lengthInBytes;
 
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     data = copy
         ? (new Aabb3.fromBuffer(buffer, offset)..copyFrom(data))
         : new Aabb3.fromBuffer(buffer, offset);

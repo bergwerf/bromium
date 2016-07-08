@@ -64,7 +64,7 @@ abstract class GlCanvas {
     center = target.center;
 
     // Compute distance to target egde and multiply by focusMultiplier for z.
-    trackball.z = focusMultiplier * target.min.distanceTo(center);
+    trackball.z = -focusMultiplier * target.min.distanceTo(target.center);
   }
 
   /// One draw cycle

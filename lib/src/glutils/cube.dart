@@ -32,6 +32,15 @@ class GlCube extends GlGeometry {
   GlCube._create(GlObject wireframe, GlObject surface)
       : super(wireframe, surface);
 
+  /// Compute transformation to transform the standard cube into the given AABB.
+  static Matrix4 computeTransform(Aabb3 aabb) {
+    var mat = new Matrix4.identity();
+    mat.scale(aabb.max.x - aabb.min.x, aabb.max.y - aabb.min.y,
+        aabb.max.z - aabb.min.z);
+    mat.translate(aabb.min.x, aabb.min.y, aabb.min.z);
+    return mat;
+  }
+
   /// Cube positions
   static Vector3List cubePositions = new Vector3List.fromList([
     new Vector3(0.0, 0.0, 0.0),
