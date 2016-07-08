@@ -35,4 +35,13 @@ class Index<E> {
     });
     return list;
   }
+
+  /// Same as [mappedList] but specifically to produce a [Float32List].
+  Float32List mappedFloat32List(Map<String, double> map) {
+    var list = new Float32List(data.length);
+    map.forEach((String label, value) {
+      list[_index[label]] = value;
+    });
+    return list;
+  }
 }

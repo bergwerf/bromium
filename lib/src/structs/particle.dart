@@ -9,33 +9,43 @@ part of bromium.structs;
 /// Only [type] and [position] are included in the binary stream. The
 /// [entered] array is only used for optimization.
 class Particle implements Transferrable {
+  /// Number of floats each particle allocates in a byte buffer
+  static const floatCount = 6;
+
   /// Number of bytes each particle allocates in a byte buffer
-  static const byteCount =
-      Uint16View.byteCount + Float32List.BYTES_PER_ELEMENT * 3;
+  static const byteCount = Float32List.BYTES_PER_ELEMENT * floatCount;
 
   /// Type
-  final Uint16View _type;
+  final int type;
 
   /// Position
   Vector3 position;
 
+  /// Color
+  Vector3 color;
+
   /// List containing all entered membranes.
   final List<int> entered;
 
-  Particle(int type, this.position)
-      : _type = new Uint16View.value(type),
-        entered = [];
-
-  int get type => _type.get();
-  set type(int value) => _type.set(value);
+  Particle(this.type, this.position, this.color) : entered = [];
 
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    offset += _type.transfer(buffer, offset, copy);
-    position = copy
-        ? (new Vector3.fromBuffer(buffer, offset)
-          ..copyFromArray(position.storage))
-        : new Vector3.fromBuffer(buffer, offset);
-    return offset + position.storage.lengthInBytes;
+    // Create new views.
+    var _position = new Vector3.fromBuffer(buffer, offset);
+    offset += position.storage.lengthInBytes;
+    var _color = new Vector3.fromBuffer(buffer, offset);
+
+    // Copy old data into new buffer.
+    if (copy) {
+      _position.copyFromArray(position.storage);
+      _color.copyFromArray(color.storage);
+    }
+
+    // Replace local data.
+    position = _position;
+    color = _color;
+
+    return offset + color.storage.lengthInBytes;
   }
 }

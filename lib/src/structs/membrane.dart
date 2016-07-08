@@ -18,10 +18,10 @@ class Membrane implements Transferrable {
   Float32List ffOut;
 
   /// Contained number of particles per type
-  Uint16List concentrations;
+  Uint32List concentrations;
 
   Membrane(this.domain, this.ffIn, this.ffOut, int particleCount)
-      : concentrations = new Uint16List(particleCount);
+      : concentrations = new Uint32List(particleCount);
 
   int get sizeInBytes =>
       domain.sizeInBytes +
@@ -36,19 +36,19 @@ class Membrane implements Transferrable {
     offset += ffIn.lengthInBytes;
     var _ffOut = new Float32List.view(buffer, offset);
     offset += ffOut.lengthInBytes;
-    var _particleCount = new Uint16List.view(buffer, offset);
+    var _concentrations = new Uint32List.view(buffer, offset);
 
     // Copy old data into new buffer.
     if (copy) {
       _ffIn.setAll(0, ffIn);
       _ffOut.setAll(0, ffOut);
-      _particleCount.setAll(0, concentrations);
+      _concentrations.setAll(0, concentrations);
     }
 
     // Replace local data.
     ffIn = _ffIn;
     ffOut = _ffOut;
-    concentrations = _particleCount;
+    concentrations = _concentrations;
 
     return offset + concentrations.lengthInBytes;
   }

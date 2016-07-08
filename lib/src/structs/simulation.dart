@@ -53,8 +53,16 @@ class Simulation {
   Simulation(this.particleTypes, this.bindReactions, this.unbindReactions)
       : particles = [],
         membranes = [] {
-    // Compute particle offset.
-    particlesOffset = _bufferHeaderLength +
+    // Set buffer header.
+    bufferHeader = new Uint32List(_bufferHeaderLength);
+    bufferHeader[_bindReactionCount] = bindReactions.length;
+    bufferHeader[_unbindReactionCount] = unbindReactions.length;
+    bufferHeader[_particleCount] = 0;
+    bufferHeader[_membranesOffset] = 0;
+    bufferHeader[_membraneCount] = 0;
+
+    // Compute particles offset.
+    particlesOffset = _bufferHeaderLength * Uint32List.BYTES_PER_ELEMENT +
         Reaction.byteCount * (bindReactions.length + unbindReactions.length);
 
     // Transfer all data to a single byte buffer.
@@ -67,7 +75,8 @@ class Simulation {
 
     // Generate particles.
     for (; n > 0; n--) {
-      _addParticle(new Particle(type, domain.computeRandomPoint()));
+      _addParticle(new Particle(
+          type, domain.computeRandomPoint(), particleTypes[type].color));
     }
   }
 
@@ -122,30 +131,33 @@ class Simulation {
     bufferSize += allMembraneBytes + addMembraneBytes + membranesCapBytes;
 
     // Create new buffer.
-    buffer = new ByteData(bufferSize).buffer;
+    var newBuffer = new ByteData(bufferSize).buffer;
 
     // Transfer header.
-    bufferHeader = new Uint32List.view(buffer, 0, _bufferHeaderLength)
+    bufferHeader = new Uint32List.view(newBuffer, 0, _bufferHeaderLength)
       ..setAll(0, bufferHeader);
     membranesOffset = _membranesOffset;
 
     // Transfer reactions and particles.
-    var offset = _bufferHeaderLength;
+    var offset = bufferHeader.lengthInBytes;
     for (var bindReaction in bindReactions) {
-      offset = bindReaction.transfer(buffer, offset);
+      offset = bindReaction.transfer(newBuffer, offset);
     }
     for (var unbindReaction in unbindReactions) {
-      offset = unbindReaction.transfer(buffer, offset);
+      offset = unbindReaction.transfer(newBuffer, offset);
     }
     for (var particle in particles) {
-      offset = particle.transfer(buffer, offset);
+      offset = particle.transfer(newBuffer, offset);
     }
 
     // Skip particles cap and transfer membranes.
     offset = _membranesOffset;
     for (var membrane in membranes) {
-      offset = membrane.transfer(buffer, offset);
+      offset = membrane.transfer(newBuffer, offset);
     }
+
+    // Replace the local buffer.
+    buffer = newBuffer;
   }
 
   int get allMembraneBytes {
@@ -176,7 +188,7 @@ class Simulation {
       }
     }
 
-    if (addParticles != 0 || addMembraneBytes != null) {
+    if (addParticles != 0 || addMembraneBytes != 0) {
       transfer(addParticles, addMembraneBytes);
     }
   }
