@@ -35,10 +35,11 @@ abstract class Domain implements Transferrable {
     rng = rng == null ? new Random() : rng;
     var point = new Vector3.zero();
     var bbox = computeBoundingBox();
+    var diagonal = bbox.max - bbox.min;
     bool containsPoint = false;
 
     do {
-      point = bbox.min + randomVector3(rng)..dot(bbox.max - bbox.min);
+      point = bbox.min + (randomVector3(rng)..multiply(diagonal));
 
       // Check if the domain contains the point and exclude cavities.
       containsPoint = contains(point);
