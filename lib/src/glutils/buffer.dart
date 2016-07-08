@@ -4,16 +4,24 @@
 
 part of bromium.glutils;
 
+/// Link between buffer and shader attribute
+class AttribPointer {
+  /// Attribute label
+  final String attrib;
+
+  /// Attribute type, element size, buffer stride and offset.
+  final int type, size, stride, offset;
+
+  AttribPointer(this.attrib, this.type, this.size, this.stride, this.offset);
+}
+
 /// Base for the buffer utility
-abstract class _GlBuffer<D extends TypedData, U> {
+abstract class _GlBuffer<D extends List> {
   /// Rendering context
   final gl.RenderingContext _ctx;
 
   /// Number of stored elements
   int size = 0;
-
-  /// Buffer data type
-  final int _type;
 
   /// Buffer usage type
   final int _usage;
@@ -22,13 +30,12 @@ abstract class _GlBuffer<D extends TypedData, U> {
   final int _target;
 
   /// All linked attributes
-  final List<Tuple4<String, int, int, int>> _attribs =
-      new List<Tuple4<String, int, int, int>>();
+  final List<AttribPointer> _attribs = new List<AttribPointer>();
 
   /// Coordinates buffer
   final gl.Buffer buffer;
 
-  _GlBuffer(gl.RenderingContext ctx, this._type,
+  _GlBuffer(gl.RenderingContext ctx,
       [this._usage = gl.STATIC_DRAW, this._target = gl.ARRAY_BUFFER])
       : _ctx = ctx,
         buffer = ctx.createBuffer();
@@ -39,7 +46,16 @@ abstract class _GlBuffer<D extends TypedData, U> {
   }
 
   /// Update buffer data.
-  void update(U data);
+  void rawUpdate(D data) {
+    if (data.length == size) {
+      // Substitute data.
+      sub(data);
+    } else {
+      // Reallocate buffer.
+      size = data.length;
+      alloc(data);
+    }
+  }
 
   /// Substitute buffer data
   void sub(D data, [int offset = 0]) {
@@ -56,42 +72,26 @@ abstract class _GlBuffer<D extends TypedData, U> {
   /// Link all attributes.
   void linkAll(GlShader shaderProgram) {
     bind();
-    for (var attrib in _attribs) {
-      _ctx.vertexAttribPointer(shaderProgram.attributes[attrib.item1],
-          attrib.item2, _type, false, attrib.item3, attrib.item4);
+    for (var ptr in _attribs) {
+      _ctx.vertexAttribPointer(shaderProgram.attributes[ptr.attrib], ptr.size,
+          ptr.type, false, ptr.stride, ptr.offset);
     }
   }
 }
 
 /// Buffer for directly storing typed data
-class GlBuffer<D extends TypedData> extends _GlBuffer<D, D> {
-  GlBuffer(gl.RenderingContext ctx, int type,
+class GlBuffer<D extends List> extends _GlBuffer<D> {
+  GlBuffer(gl.RenderingContext ctx,
       {int usage: gl.STATIC_DRAW, int target: gl.ARRAY_BUFFER})
-      : super(ctx, type, usage, target);
+      : super(ctx, usage, target);
 
-  void update(D data) {
-    if ((data.lengthInBytes / data.elementSizeInBytes).truncate() == size) {
-      // Substitute data.
-      sub(data);
-    } else {
-      // Reallocate buffer.
-      size = (data.lengthInBytes / data.elementSizeInBytes).truncate();
-      alloc(data);
-    }
-  }
+  void update(D data) => rawUpdate(data);
 
   /// Add attribute link.
-  void link(String attribute, [int stride = 0, int offset = 0, int size = 1]) {
-    _attribs.add(
-        new Tuple4<String, int, int, int>(attribute, size, stride, offset));
+  void link(String attribute, int type,
+      [int size = 1, int stride = 0, int offset = 0]) {
+    _attribs.add(new AttribPointer(attribute, type, size, stride, offset));
   }
-}
-
-/// Buffer for float32 data
-class GlFloat32Buffer extends GlBuffer<Float32List> {
-  GlFloat32Buffer(gl.RenderingContext ctx,
-      {int usage: gl.STATIC_DRAW, int target: gl.ARRAY_BUFFER})
-      : super(ctx, gl.FLOAT, usage: usage, target: target);
 }
 
 /// Buffer for element indices
@@ -100,34 +100,24 @@ class GlIndexBuffer extends GlBuffer<Uint16List> {
   static const indexBufferType = gl.UNSIGNED_SHORT;
 
   GlIndexBuffer(gl.RenderingContext ctx, [int usage = gl.STATIC_DRAW])
-      : super(ctx, indexBufferType,
-            usage: usage, target: gl.ELEMENT_ARRAY_BUFFER);
+      : super(ctx, usage: usage, target: gl.ELEMENT_ARRAY_BUFFER);
 }
 
 /// Buffer for storing vector lists
-class GlVectorBuffer<L extends VectorList> extends _GlBuffer<Float32List, L> {
+class GlVectorBuffer<L extends VectorList> extends _GlBuffer<Float32List> {
   /// Floats per vertex (vector size)
   final int vectorSize;
 
   GlVectorBuffer(gl.RenderingContext ctx, this.vectorSize,
       [int usage = gl.STATIC_DRAW])
-      : super(ctx, gl.FLOAT, usage, gl.ARRAY_BUFFER);
+      : super(ctx, usage, gl.ARRAY_BUFFER);
 
-  void update(L data) {
-    if (data.length == size) {
-      // Substitute data.
-      sub(data.buffer);
-    } else {
-      // Reallocate buffer.
-      size = data.length;
-      alloc(data.buffer);
-    }
-  }
+  void update(L data) => rawUpdate(data.buffer);
 
   /// Add attribute link.
   void link(String attribute, [int stride = 0, int offset = 0]) {
-    _attribs.add(new Tuple4<String, int, int, int>(
-        attribute, vectorSize, stride, offset));
+    _attribs.add(
+        new AttribPointer(attribute, gl.FLOAT, vectorSize, stride, offset));
   }
 }
 

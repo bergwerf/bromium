@@ -22,7 +22,7 @@ class GlObject {
   GlIndexBuffer indexBuffer;
 
   /// All object data buffers
-  Map<String, _GlBuffer> buffers = new Map<String, _GlBuffer>();
+  List<_GlBuffer> buffers = new List<_GlBuffer>();
 
   GlObject(this._ctx);
 
@@ -30,12 +30,12 @@ class GlObject {
   GlObject.from(this._ctx, this.shaderProgram, Vector3List positions,
       Vector4List colors, Uint16List elementIndices) {
     indexBuffer = new GlIndexBuffer(_ctx)..update(elementIndices);
-    buffers['position'] = new GlVector3Buffer(_ctx)
+    buffers.add(new GlVector3Buffer(_ctx)
       ..update(positions)
-      ..link(shaderProgram.positionAttribLabel);
-    buffers['color'] = new GlVector4Buffer(_ctx)
+      ..link(shaderProgram.positionAttrib));
+    buffers.add(new GlVector4Buffer(_ctx)
       ..update(colors)
-      ..link(shaderProgram.colorAttribLabel);
+      ..link(shaderProgram.colorAttrib));
   }
 
   /// Prepare for drawing.
@@ -46,7 +46,7 @@ class GlObject {
     _ctx.uniformMatrix4fv(shaderProgram.uViewMatrix, false, transform.storage);
 
     // Link all buffers.
-    for (var buffer in buffers.values) {
+    for (var buffer in buffers) {
       buffer.linkAll(shaderProgram);
     }
   }

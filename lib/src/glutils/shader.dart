@@ -25,13 +25,13 @@ class GlShader {
   Map<String, int> attributes;
 
   /// Primary position attribute label
-  String positionAttribLabel;
+  String positionAttrib;
 
   /// Primary color attribute label
-  String colorAttribLabel;
+  String colorAttrib;
 
   /// Primary view matrix uniform label
-  String viewMatrixUniformLabel;
+  String viewMatrix;
 
   /// Uniform names
   final List<String> _uniforms;
@@ -89,7 +89,7 @@ class GlShader {
   }
 
   /// Primary view matrix index
-  gl.UniformLocation get uViewMatrix => uniforms[viewMatrixUniformLabel];
+  gl.UniformLocation get uViewMatrix => uniforms[viewMatrix];
 
   /// Use this shader.
   void use() {
