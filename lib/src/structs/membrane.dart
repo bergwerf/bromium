@@ -20,6 +20,9 @@ class Membrane implements Transferrable {
   /// Contained number of particles per type
   Uint32List concentrations;
 
+  /// Membrane movement vector
+  Vector3 speed = new Vector3.zero();
+
   Membrane(this.domain, this.ffIn, this.ffOut, int particleCount)
       : concentrations = new Uint32List(particleCount);
 

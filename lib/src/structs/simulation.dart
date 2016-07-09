@@ -68,8 +68,8 @@ class Simulation {
 
     // Generate particles.
     for (; n > 0; n--) {
-      _addParticle(new Particle(
-          type, domain.computeRandomPoint(), particleTypes[type].color));
+      _addParticle(new Particle(type, domain.computeRandomPoint(),
+          particleTypes[type].displayColor, particleTypes[type].displayRadius));
     }
   }
 

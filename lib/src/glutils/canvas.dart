@@ -10,7 +10,7 @@ abstract class GlCanvas {
   static const defaultFov = 30.0;
 
   /// Multiplier constant used for focussing on a bounding box
-  static const focusMultiplier = 2.0;
+  static const focusMultiplier = 3.0;
 
   /// Output canvas
   CanvasElement canvas;
@@ -58,6 +58,10 @@ abstract class GlCanvas {
         radians(fov), _viewportWidth / _viewportHeight, 0.01, 1000.0);
   }
 
+  // Viewport dimensions are read-only.
+  int get viewportWidth => _viewportWidth;
+  int get viewportHeight => _viewportHeight;
+
   /// Focus the camera on the given bounding box.
   void focus(Aabb3 target) {
     // Compute center.
@@ -73,7 +77,8 @@ abstract class GlCanvas {
   /// Internal draw cycle
   void _draw(num time) {
     // Clear view
-    ctx.viewport(0, 0, _viewportWidth, _viewportHeight);
+    //ctx.viewport(0, 0, _viewportWidth, _viewportHeight);
+    ctx.clearColor(0.0, 0.0, 0.0, 1.0);
     ctx.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Run main draw method.
@@ -81,7 +86,8 @@ abstract class GlCanvas {
         time,
         projection.clone()
           ..translate(.0, .0, trackball.z)
-          ..multiply(trackball.rotationMatrix));
+          ..multiply(trackball.rotationMatrix)
+          ..translate(-center.x, -center.y, -center.z));
 
     // Schedule next frame.
     if (!_pause) {

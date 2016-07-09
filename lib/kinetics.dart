@@ -2,12 +2,12 @@
 // Use of this source code is governed by an AGPL-3.0-style license
 // that can be found in the LICENSE file.
 
-library bromium.engine;
+library bromium.kinetics;
 
 import 'dart:math';
 
+import 'package:bromium/math.dart';
 import 'package:bromium/structs.dart';
-import 'package:bromium/kinetics.dart';
+import 'package:vector_math/vector_math.dart';
 
-part 'src/engine/benchmark.dart';
-part 'src/engine/engine.dart';
+part 'src/kinetics/motion.dart';

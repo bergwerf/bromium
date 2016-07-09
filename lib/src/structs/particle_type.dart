@@ -8,11 +8,15 @@ part of bromium.structs;
 ///
 /// Particle type information is not included in the binary stream.
 class ParticleType {
-  /// Particle color
-  final Vector3 color;
+  /// Display color
+  final Vector3 displayColor;
 
   /// Random walk step radius
   final double stepRadius;
 
-  ParticleType(Vector4 color, this.stepRadius) : color = color.rgb;
+  /// Particle display radius
+  final double displayRadius;
+
+  ParticleType(Vector4 color, this.stepRadius, this.displayRadius)
+      : displayColor = color.rgb;
 }

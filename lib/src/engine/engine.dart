@@ -26,6 +26,7 @@ class BromiumEngine {
   /// Run one simulation cycle.
   void cycle() {
     if (!inIsolate) {
+      kineticsRandomMotion(data);
       data.updateBufferHeader();
       renderBuffer.update(data.buffer);
     }

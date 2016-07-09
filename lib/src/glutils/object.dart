@@ -68,4 +68,23 @@ class GlObject {
     length = length == -1 ? indexBuffer.size : length;
     _ctx.drawElements(mode, length, GlIndexBuffer.indexBufferType, offset);
   }
+
+  /// Draw instanced using an ANGLE extension.
+  void drawElementsInstanced(int mode, int count, Map<String, int> divisors,
+      [int length = -1, int offset = 0]) {
+    _prepare();
+    indexBuffer.linkAll(shaderProgram);
+    length = length == -1 ? indexBuffer.size : length;
+
+    // Get ANGLE extension.
+    gl.AngleInstancedArrays ext = _ctx.getExtension('ANGLE_instanced_arrays');
+
+    // Load divisors.
+    divisors.forEach((String attrib, int divisor) {
+      ext.vertexAttribDivisorAngle(shaderProgram.attributes[attrib], divisor);
+    });
+
+    ext.drawElementsInstancedAngle(
+        mode, length, GlIndexBuffer.indexBufferType, offset, count);
+  }
 }

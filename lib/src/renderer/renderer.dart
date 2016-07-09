@@ -15,6 +15,9 @@ class BromiumWebGLRenderer extends GlCanvas {
   /// Particle data
   GlBuffer<Float32List> particleData;
 
+  /// Particle imposter positions
+  GlBuffer<Float32List> imposterPositions;
+
   /// Shaders
   GlShader particleShader, gridShader;
 
@@ -27,20 +30,28 @@ class BromiumWebGLRenderer extends GlCanvas {
   /// Constructor
   BromiumWebGLRenderer(this.engine, CanvasElement canvas)
       : super.fromId(canvas) {
+    // Load shader extensions.
+    ctx.getExtension('OES_standard_derivatives');
+    //ctx.getExtension('EXT_frag_depth');
+
     // Compile particle shader.
     particleShader = new GlShader(
-        ctx,
-        _particleVertexShaderSrc,
-        _particleFragmentShaderSrc,
-        ['aParticlePosition', 'aParticleColor'],
-        ['uViewMatrix',]);
+        ctx, _particleVertexShaderSrc, _particleFragmentShaderSrc, [
+      'aImposterPosition',
+      'aParticlePosition',
+      'aParticleColor',
+      'aParticleRadius'
+    ], [
+      'uViewMatrix',
+      'uViewportRatio',
+      'uLightPosition'
+    ]);
     particleShader.positionAttrib = 'aParticlePosition';
     particleShader.colorAttrib = 'aParticleColor';
     particleShader.viewMatrix = 'uViewMatrix';
     particleShader.compile();
 
     // Compile grid shader.
-    ctx.getExtension('OES_standard_derivatives');
     gridShader = new GlShader(ctx, _gridVertexShaderSrc, _gridFragmentShaderSrc,
         ['aVertexPosition'], ['uViewMatrix', 'uLineColor']);
     gridShader.positionAttrib = 'aVertexPosition';
@@ -60,10 +71,24 @@ class BromiumWebGLRenderer extends GlCanvas {
     // Setup particle system.
     particleSystem = new GlObject(ctx);
     particleSystem.shaderProgram = particleShader;
+
     particleData = new GlBuffer<Float32List>(ctx);
-    particleData.link('aParticlePosition', gl.FLOAT, 3, 24, 0);
-    particleData.link('aParticleColor', gl.FLOAT, 3, 24, 12);
+    particleData.link('aParticlePosition', gl.FLOAT, 3, 28, 0);
+    particleData.link('aParticleColor', gl.FLOAT, 3, 28, 12);
+    particleData.link('aParticleRadius', gl.FLOAT, 1, 28, 24);
     particleSystem.buffers.add(particleData);
+
+    // Add particle vertices.
+    imposterPositions = new GlBuffer<Float32List>(ctx);
+    imposterPositions.link('aImposterPosition', gl.FLOAT, 2);
+    imposterPositions.update(
+        new Float32List.fromList([1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0]));
+    particleSystem.buffers.add(imposterPositions);
+
+    // Add particle elements (two triangles).
+    particleSystem.indexBuffer = new GlIndexBuffer(ctx);
+    particleSystem.indexBuffer
+        .update(new Uint16List.fromList([0, 1, 2, 0, 2, 3]));
   }
 
   void draw(num time, Matrix4 viewMatrix) {
@@ -75,10 +100,20 @@ class BromiumWebGLRenderer extends GlCanvas {
       particleData.update(engine.renderBuffer.getParticleData());
     }
 
-    // Transform the particle system using viewMatrix and draw as points.
+    // Transform the particle system using viewMatrix.
     particleSystem.transform = viewMatrix;
-    particleSystem.drawArrays(
-        gl.POINTS, engine.renderBuffer.header.particleCount);
+
+    // Set uniforms.
+    particleShader.use();
+    ctx.uniform1f(particleShader.uniforms['uViewportRatio'],
+        viewportWidth / viewportHeight);
+    ctx.uniform3fv(particleShader.uniforms['uLightPosition'],
+        new Float32List.fromList([5.0, 5.0, 10.0]));
+
+    particleSystem.drawElementsInstanced(
+        gl.TRIANGLES,
+        engine.renderBuffer.header.particleCount,
+        {'aParticlePosition': 1, 'aParticleColor': 1, 'aParticleRadius': 1});
 
     // Draw all membranes.
     var membranes = engine.renderBuffer.generateMembraneDomains();
