@@ -4,8 +4,8 @@
 
 part of bromium.kinetics;
 
-/// Apply particle motion
-void particlesRandomMotion(Simulation sim) {
+/// Normal particle random motion algorithm.
+void particlesRandomMotionNormal(Simulation sim) {
   var rng = new Random();
   OUTER: for (var particle in sim.particles) {
     var random = randomVector3(rng)..sub(new Vector3.all(.5));

@@ -25,6 +25,7 @@ class BromiumEngine {
   ReactionAlgorithmCache reactionCache;
 
   BromiumEngine(this.data) {
+    // Prepare for 3D rendering.
     data.updateBufferHeader();
     renderBuffer.update(data.buffer);
   }
@@ -32,10 +33,28 @@ class BromiumEngine {
   /// Run one simulation cycle.
   void cycle() {
     if (!inIsolate && isRunning) {
-      particlesRandomMotion(data);
-      reactionsFastVoxel(data);
-      reactionsUnbindRandom(data);
+      // Apply random motion to particles. If there are no membranes we can use
+      // the fast algorithm.
+      if (data.membranes.isEmpty) {
+        particlesRandomMotionFast(data);
+      } else {
+        particlesRandomMotionNormal(data);
+      }
+
+      // Find bind reactions using the fast voxel method.
+      if (data.bindReactions.isNotEmpty) {
+        reactionsFastVoxel(data);
+      }
+
+      // Apply unbind reactions using random unbinding.
+      if (data.unbindReactions.isNotEmpty) {
+        reactionsUnbindRandom(data);
+      }
+
+      // Update the simulation buffer header.
       data.updateBufferHeader();
+
+      // Update the render buffer.
       renderBuffer.update(data.buffer);
     }
   }
