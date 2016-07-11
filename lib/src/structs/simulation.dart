@@ -87,6 +87,77 @@ class Simulation {
     membranes.add(membrane);
   }
 
+  /// Remove particle
+  void removeParticle(int p) {
+    /// Swap particle p with the last particle unless p is the last particle.
+    if (p < particles.length - 1) {
+      /// Transfer the last particle to the byte buffer spot of particle p.
+      particles.last.transfer(buffer, particlesOffset + p * Particle.byteCount);
+
+      /// Replace particle p with the last particle.
+      particles[p] = particles.removeLast();
+    } else {
+      particles.removeLast();
+    }
+  }
+
+  /// Bind two particles.
+  void bindParticles(int a, int b, int type) {
+    /// Remove particle b.
+    removeParticle(b);
+
+    /// Set particle a to the new type.
+    particles[a].type = type;
+    particles[a].setColor(particleTypes[type].displayColor);
+    particles[a].setRadius(particleTypes[type].displayRadius);
+  }
+
+  /// Apply multiple bind reactions (takes care of index displacement).
+  void applyBindReactions(List<Tuple3<int, int, int>> rxns) {
+    // In all reactions set item1 to the smallest of {item1, item2}.
+    for (var i = 0; i < rxns.length; i++) {
+      if (rxns[i].item1 > rxns[i].item2) {
+        rxns[i] = new Tuple3<int, int, int>(
+            rxns[i].item2, rxns[i].item1, rxns[i].item3);
+      }
+    }
+
+    // Sort reactions in descending order using item2.
+    rxns.sort((Tuple3<int, int, int> a, Tuple3<int, int, int> b) =>
+        b.item2 - a.item2);
+
+    // Apply reactions
+    for (var rxn in rxns) {
+      bindParticles(rxn.item1, rxn.item2, rxn.item3);
+    }
+  }
+
+  /// Unbind particle into products
+  void unbindParticle(int p, List<int> products) {
+    /// If products.isNotEmpty, particle p can be replaced with products.first.
+    if (products.isNotEmpty) {
+      // Add first product.
+      final type = products.first;
+      particles[p].type = type;
+      particles[p].setColor(particleTypes[type].displayColor);
+      particles[p].setRadius(particleTypes[type].displayRadius);
+
+      // Add other reaction products.
+      _rescaleBuffer(products.length - 1, 0);
+      for (var i = 1; i < products.length; i++) {
+        final type = products[i];
+        _addParticle(new Particle(
+            type,
+            particles[p].position,
+            particleTypes[type].displayColor,
+            particleTypes[type].displayRadius));
+      }
+    } else {
+      /// Remove particle p.
+      removeParticle(p);
+    }
+  }
+
   /// Compute bounding box that encloses all particles.
   Aabb3 particlesBoundingBox() {
     var _min = particles[0].position.clone();

@@ -16,7 +16,7 @@ class Particle implements Transferrable {
   static const byteCount = Float32List.BYTES_PER_ELEMENT * floatCount;
 
   /// Type
-  final int type;
+  int type;
 
   /// Position
   Vector3 position;
@@ -37,6 +37,16 @@ class Particle implements Transferrable {
   Particle(this.type, this.position, this.color, double radius)
       : radius = new Float32View.value(radius),
         entered = [];
+
+  /// Copy the given color into the color view.
+  void setColor(Vector3 color) {
+    color.copyFromArray(color.storage);
+  }
+
+  /// Set the radius view to the given value.
+  void setRadius(double r) {
+    radius.set(r);
+  }
 
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {

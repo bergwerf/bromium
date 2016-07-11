@@ -32,9 +32,9 @@ void main(void) {
 const _particleFragmentShaderSrc = '''
 #extension GL_OES_standard_derivatives : enable
 
-precision highp float;
+precision mediump float;
 
-uniform mat4 uViewMatrix;
+//uniform highp mat4 uViewMatrix;
 uniform vec3 uLightPosition;
 
 varying vec3 sphereColor;
@@ -58,7 +58,7 @@ void main()
     //light = light - vec4(spherePosition, 0.0);
     //light = light / length(light.xyz);
 
-    // Without view matrix (light spot is fixed).
+    // Without view matrix (light spots are fixed).
     vec3 light = uLightPosition - spherePosition;
     light = light / length(light);
 
@@ -67,8 +67,9 @@ void main()
 
     // Apply radial gradients.
     vec3 color = sphereColor;
-    color = mix(vec3(1.0, 1.0, 1.0), color, smoothstep(0.0, 0.8, rdist));
-    color = mix(color, vec3(0.0, 0.0, 0.0), smoothstep(0.8, 2.0, rdist));
+    color = mix(vec3(1.0, 1.0, 1.0), color, 0.5 + 0.5 * smoothstep(0.0, 1.0, rdist));
+    color = mix(color, vec3(0.0, 0.0, 0.0), smoothstep(0.6, 2.0, rdist));
+    color = mix(color, vec3(0.0, 0.0, 0.0), smoothstep(1.0, 1.5, rdist));
 
     gl_FragColor = vec4(color, 1.0);
 

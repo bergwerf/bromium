@@ -32,7 +32,8 @@ void kineticsRandomMotion(Simulation sim) {
           particle.entered.add(m);
         } else if (outward) {
           particle.entered.remove(m);
-          particle.envMembrane = particle.entered.last;
+          particle.envMembrane =
+              particle.entered.isEmpty ? -1 : particle.entered.last;
         }
       }
 

@@ -6,6 +6,7 @@ library bromium.structs;
 
 import 'dart:typed_data';
 
+import 'package:tuple/tuple.dart';
 import 'package:bromium/math.dart';
 import 'package:bromium/views.dart';
 import 'package:vector_math/vector_math.dart';

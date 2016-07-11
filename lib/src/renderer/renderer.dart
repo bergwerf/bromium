@@ -76,6 +76,7 @@ class BromiumWebGLRenderer extends GlCanvas {
     particleData.link('aParticlePosition', gl.FLOAT, 3, 28, 0);
     particleData.link('aParticleColor', gl.FLOAT, 3, 28, 12);
     particleData.link('aParticleRadius', gl.FLOAT, 1, 28, 24);
+    particleData.update(engine.renderBuffer.getParticleData());
     particleSystem.buffers.add(particleData);
 
     // Add particle vertices.
@@ -92,11 +93,11 @@ class BromiumWebGLRenderer extends GlCanvas {
   }
 
   void draw(num time, Matrix4 viewMatrix) {
-    if (engine.onRenderThread) {
-      engine.cycle();
-    }
+    if (engine.isRunning) {
+      if (engine.onRenderThread) {
+        engine.cycle();
+      }
 
-    if (engine.changed) {
       particleData.update(engine.renderBuffer.getParticleData());
     }
 
@@ -108,7 +109,7 @@ class BromiumWebGLRenderer extends GlCanvas {
     ctx.uniform1f(particleShader.uniforms['uViewportRatio'],
         viewportWidth / viewportHeight);
     ctx.uniform3fv(particleShader.uniforms['uLightPosition'],
-        new Float32List.fromList([5.0, 5.0, 10.0]));
+        new Float32List.fromList([3.0, 3.0, 10.0]));
 
     particleSystem.drawElementsInstanced(
         gl.TRIANGLES,
