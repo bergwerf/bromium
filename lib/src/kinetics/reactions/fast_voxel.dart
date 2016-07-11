@@ -4,18 +4,21 @@
 
 part of bromium.kinetics;
 
+// Voxels per unit when using the fast voxel reaction algorithm.
+const fastVoxelReactionVPU = 10;
+
 class Voxel {
   final int i, n;
 
   Voxel(this.i, this.n);
 
   /// Compute a voxel number for the given vector. The vector is multiplied by
-  /// the given precision and truncated. The voxel space number fits inside the
+  /// the given [vpu] and truncated. The voxel space number fits inside the
   /// ECMA max int (2^53 - 1). The voxel space size is 2^17.
-  static int computeNumber(Vector3 vec, int precision) {
-    final x = (vec.x * precision).truncate() + 65536;
-    final y = (vec.y * precision).truncate() + 65536;
-    final z = (vec.z * precision).truncate() + 65536;
+  static int computeNumber(Vector3 vec, int vpu) {
+    final x = (vec.x * vpu).truncate() + 65536;
+    final y = (vec.y * vpu).truncate() + 65536;
+    final z = (vec.z * vpu).truncate() + 65536;
     return 17179869184 * x + 131072 * y + z;
   }
 }
@@ -26,7 +29,7 @@ class VoxelSortCache extends ReactionAlgorithmCache {
 
 void reactionsFastVoxel(Simulation sim) {
   var list = new List<List<Voxel>>(sim.particleTypes.length);
-  var precision = 20;
+  var vpu = fastVoxelReactionVPU;
 
   // Compute Z-order curve coordinates.
   for (var i = 0; i < sim.particles.length; i++) {
@@ -35,7 +38,7 @@ void reactionsFastVoxel(Simulation sim) {
       list[p.type] = new List<Voxel>();
     }
 
-    list[p.type].add(new Voxel(i, Voxel.computeNumber(p.position, precision)));
+    list[p.type].add(new Voxel(i, Voxel.computeNumber(p.position, vpu)));
   }
 
   // Sort all lists.
@@ -46,6 +49,7 @@ void reactionsFastVoxel(Simulation sim) {
   }
 
   // Iterate through reactions.
+  var rng = new Random();
   var reactionQueue = new List<Tuple3<int, int, int>>();
   for (var r in sim.bindReactions) {
     // Skip if one of the particles is not in the simulation.
@@ -73,7 +77,8 @@ void reactionsFastVoxel(Simulation sim) {
       }
 
       // Check if the next b voxel is equal to the current a voxel.
-      if (list[b][bi].n == vn) {
+      // If so randomly decide to proceed the reaction.
+      if (list[b][bi].n == vn && rng.nextDouble() < r.probability) {
         // Queue bind reaction.
         reactionQueue.add(new Tuple3<int, int, int>(
             list[a][ai].i, list[b][bi].i, r.particleC));

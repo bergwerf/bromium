@@ -7,10 +7,10 @@ import 'dart:html';
 import 'package:bromium/renderer.dart';
 import 'package:bromium/engine.dart';
 
-import 'demos/redblue.dart';
+import 'demos/enzyme.dart';
 
 void main() {
-  var simulation = createRedBlueDemo();
+  var simulation = createEnzymeDemo();
   var engine = new BromiumEngine(simulation);
 
   // Setup WebGL renderer.

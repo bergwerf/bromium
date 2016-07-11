@@ -19,7 +19,7 @@ Simulation createEnzymeDemo() {
   var bindRxn = new Index<BindReaction>();
   var unbindRxn = new Index<UnbindReaction>();
   bindRxn['step 1'] =
-      new BindReaction(p['N-a'], p['enzyme'], p['enzyme-N'], 1.0);
+      new BindReaction(p['N-a'], p['enzyme'], p['enzyme-N'], 0.1);
   bindRxn['step 2'] =
       new BindReaction(p['N-a'], p['enzyme-N'], p['enzyme-NN'], 1.0);
   unbindRxn['step 3'] =
@@ -47,7 +47,7 @@ Simulation createEnzymeDemo() {
   // Setup simulation.
   var simulation = new Simulation(p.data, bindRxn.data, unbindRxn.data);
   simulation.addRandomParticles(p['N-a'], cellMembrane.domain, 10000);
-  simulation.addRandomParticles(p['enzyme'], cellMembrane.domain, 1000);
+  simulation.addRandomParticles(p['enzyme'], cellMembrane.domain, 500);
   simulation.addMembrane(cellMembrane);
   return simulation;
 }

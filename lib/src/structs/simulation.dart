@@ -103,13 +103,22 @@ class Simulation {
 
   /// Bind two particles.
   void bindParticles(int a, int b, int type) {
-    /// Remove particle b.
-    removeParticle(b);
+    /// As a general rule, the new position will be the position of the particle
+    /// with the largest display radius.
+    final largest = particleTypes[particles[a].type].displayRadius >
+        particleTypes[particles[b].type].displayRadius ? a : b;
 
     /// Set particle a to the new type.
+    ///
+    /// Note that we have to do this before removing b or the index of particle
+    /// a might have changed (only if a is the last particle).
     particles[a].type = type;
     particles[a].setColor(particleTypes[type].displayColor);
     particles[a].setRadius(particleTypes[type].displayRadius);
+    particles[a].setPosition(particles[largest].position);
+
+    /// Remove particle b.
+    removeParticle(b);
   }
 
   /// Apply multiple bind reactions (takes care of index displacement).
