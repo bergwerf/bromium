@@ -32,6 +32,9 @@ abstract class Domain implements Transferrable {
     }
   }
 
+  /// Get center.
+  Vector3 get center => computeBoundingBox().center;
+
   /// Compute bounding box.
   Aabb3 computeBoundingBox();
 

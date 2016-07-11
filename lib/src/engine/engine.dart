@@ -32,7 +32,7 @@ class BromiumEngine {
   /// Run one simulation cycle.
   void cycle() {
     if (!inIsolate && isRunning) {
-      kineticsRandomMotion(data);
+      particlesRandomMotion(data);
       reactionsFastVoxel(data);
       reactionsUnbindRandom(data);
       data.updateBufferHeader();

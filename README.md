@@ -12,6 +12,7 @@ Bromium consists of the following set of smaller libraries:
 - `bromium.kinetics` Simulation kinetics algorithms
 - `bromium.nodes` Library for node based scene modeling
 - `bromium.engine` Controller for an isolated simulation with nodes
+- `bromium.gpgpu` Helpers for GPU computations using WebGL
 - `bromium.glutils` WebGL utility library
 - `bromium.renderer` Simulation 3D renderer
 - `bromium.editor` Scene editor for Bromium

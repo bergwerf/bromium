@@ -38,9 +38,14 @@ class Particle implements Transferrable {
       : radius = new Float32View.value(radius),
         entered = [];
 
+  /// Copy the given position into the position view.
+  void setPosition(Vector3 _position) {
+    position.copyFromArray(_position.storage);
+  }
+
   /// Copy the given color into the color view.
-  void setColor(Vector3 color) {
-    color.copyFromArray(color.storage);
+  void setColor(Vector3 _color) {
+    color.copyFromArray(_color.storage);
   }
 
   /// Set the radius view to the given value.
