@@ -4,16 +4,18 @@
 
 part of bromium.kinetics;
 
+var types = new Uint32List.fromList(new List<int>.filled(1000000, 0));
+
 /// Faster algorithm for particle random motion when there are no membranes.
 void particlesRandomMotionFast(Simulation sim) {
   var rng = new Random();
-  var stepRadius = new List<double>.generate(
-      sim.particleTypes.length, (int i) => sim.particleTypes[i].stepRadius);
-  for (var particle in sim.particles) {
-    final r = stepRadius[particle.type];
-    final vec = particle.position.storage;
-    vec[0] += (rng.nextDouble() - .5) * r;
-    vec[1] += (rng.nextDouble() - .5) * r;
-    vec[2] += (rng.nextDouble() - .5) * r;
+  var view = new Float32List.view(sim.buffer, sim.particlesOffset,
+      sim.particles.length * Particle.floatCount);
+
+  for (var p = 0, i = 0; i < view.length; p++, i += 5) {
+    final r = view[i + 7];
+    view[i++] += (rng.nextDouble() - .5) * r;
+    view[i++] += (rng.nextDouble() - .5) * r;
+    view[i++] += (rng.nextDouble() - .5) * r;
   }
 }

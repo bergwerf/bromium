@@ -70,6 +70,31 @@ class Simulation {
     logger.info('groupEnd');
   }
 
+  /// Unsafe add particle to buffer.
+  void _addParticle(Particle particle) {
+    particle.transfer(
+        buffer, particlesOffset + Particle.byteCount * particles.length);
+    particles.add(particle);
+  }
+
+  /// Utility for [_addParticle] with only a [type] and [position]. Also
+  /// computes the entered membranes. You can specify the entered mebmranes to
+  /// prevent an number of expensive ray projections.
+  void _easyAddParticle(int type, Vector3 position, [List<int> entered]) {
+    final _type = particleTypes[type];
+    final particle = new Particle(type, position, _type.displayColor,
+        _type.displayRadius, _type.stepRadius);
+    _addParticle(particle);
+
+    // Set entered membranes.
+    if (entered != null) {
+      particle.entered.insertAll(0, entered);
+    } else {
+      // Compute entered membranes using ray projection.
+      updateParticleEntered(particle);
+    }
+  }
+
   /// Add new particles by randomly generating [n] positions within [domain].
   void addRandomParticles(int type, Domain domain, int n) {
     logger.info('group: addRandomParticles');
@@ -82,18 +107,10 @@ Add $n particles:
 
     // Generate particles.
     for (; n > 0; n--) {
-      _addParticle(new Particle(type, domain.computeRandomPoint(),
-          particleTypes[type].displayColor, particleTypes[type].displayRadius));
+      _easyAddParticle(type, domain.computeRandomPoint());
     }
 
     logger.info('groupEnd');
-  }
-
-  /// Unsafe add particle to buffer.
-  void _addParticle(Particle particle) {
-    particle.transfer(
-        buffer, particlesOffset + Particle.byteCount * particles.length);
-    particles.add(particle);
   }
 
   /// Add a membrane to the buffer.
@@ -108,10 +125,15 @@ Add membrane:
     membrane.transfer(buffer, header.membranesOffset + allMembraneBytes);
     membranes.add(membrane);
 
+    /// Update the entered membranes for all particles.
+    for (var particle in particles) {
+      updateParticleEntered(particle);
+    }
+
     logger.info('groupEnd');
   }
 
-  /// Remove particle
+  /// Remove particle.
   void removeParticle(int p) {
     /// Swap particle p with the last particle unless p is the last particle.
     if (p < particles.length - 1) {
@@ -122,6 +144,41 @@ Add membrane:
       particles[p] = particles.removeLast();
     } else {
       particles.removeLast();
+    }
+  }
+
+  /// Edit the given particle type.
+  void editParticleType(Particle particle, int type) {
+    final _type = particleTypes[type];
+    particle.type = type;
+    particle.setColor(_type.displayColor);
+    particle.setRadius(_type.displayRadius);
+    particle.setStepRadius(_type.stepRadius);
+  }
+
+  /// Recompute the entered membranes for the given particle using ray
+  /// projections.
+  void updateParticleEntered(Particle particle) {
+    var ray =
+        new Ray.originDirection(particle.position, new Vector3(1.0, .0, .0));
+    var entered = new List<Tuple2<int, double>>();
+
+    for (var m = 0; m < membranes.length; m++) {
+      final domain = membranes[m].domain;
+      if (domain.contains(particle.position)) {
+        var proj = domain.computeRayIntersections(ray);
+        entered.add(new Tuple2<int, double>(m, proj.reduce(max)));
+      }
+    }
+
+    // Sort entered in descending order.
+    entered.sort((Tuple2<int, double> a, Tuple2<int, double> b) =>
+        b.item2.compareTo(a.item2));
+
+    // Updated entered membranes.
+    particle.entered.clear();
+    for (var tuple in entered) {
+      particle.entered.add(tuple.item1);
     }
   }
 
@@ -136,10 +193,9 @@ Add membrane:
     ///
     /// Note that we have to do this before removing b or the index of particle
     /// a might have changed (only if a is the last particle).
-    particles[a].type = type;
-    particles[a].setColor(particleTypes[type].displayColor);
-    particles[a].setRadius(particleTypes[type].displayRadius);
-    particles[a].setPosition(particles[largest].position);
+    final particle = particles[a];
+    editParticleType(particle, type);
+    particle.setPosition(particles[largest].position);
 
     /// Remove particle b.
     removeParticle(b);
@@ -171,19 +227,13 @@ Add membrane:
     if (products.isNotEmpty) {
       // Add first product.
       final type = products.first;
-      particles[p].type = type;
-      particles[p].setColor(particleTypes[type].displayColor);
-      particles[p].setRadius(particleTypes[type].displayRadius);
+      final particle = particles[p];
+      editParticleType(particle, type);
 
       // Add other reaction products.
       _rescaleBuffer(products.length - 1, 0);
       for (var i = 1; i < products.length; i++) {
-        final type = products[i];
-        _addParticle(new Particle(
-            type,
-            particles[p].position,
-            particleTypes[type].displayColor,
-            particleTypes[type].displayRadius));
+        _easyAddParticle(products[i], particle.position, particle.entered);
       }
     } else {
       /// Remove particle p.

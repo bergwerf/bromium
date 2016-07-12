@@ -9,7 +9,7 @@ void particlesRandomMotionNormal(Simulation sim) {
   var rng = new Random();
   OUTER: for (var particle in sim.particles) {
     var random = randomVector3(rng)..sub(new Vector3.all(.5));
-    random.scale(sim.particleTypes[particle.type].stepRadius);
+    random.scale(particle.stepRadius.get());
     var motion = particle.envMembrane >= 0
         ? sim.membranes[particle.envMembrane].speed + random
         : random;
@@ -20,7 +20,7 @@ void particlesRandomMotionNormal(Simulation sim) {
       var ip = rng.nextDouble() < membrane.ffIn[particle.type];
       var op = rng.nextDouble() < membrane.ffOut[particle.type];
       if (!(ip && op)) {
-        var before = membrane.domain.contains(particle.position);
+        var before = particle.entered.contains(m);
         var after = membrane.domain.contains(particle.position + motion);
         var inward = !before && after;
         var outward = before && !after;

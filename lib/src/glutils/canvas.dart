@@ -55,7 +55,7 @@ abstract class GlCanvas {
     _viewportWidth = canvas.clientWidth;
     _viewportHeight = canvas.clientHeight;
     projection = makePerspectiveMatrix(
-        radians(fov), _viewportWidth / _viewportHeight, 0.01, 1000.0);
+        radians(fov), _viewportWidth / _viewportHeight, 0.001, 1000.0);
   }
 
   // Viewport dimensions are read-only.

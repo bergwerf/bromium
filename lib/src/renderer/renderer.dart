@@ -73,9 +73,9 @@ class BromiumWebGLRenderer extends GlCanvas {
     particleSystem.shaderProgram = particleShader;
 
     particleData = new GlBuffer<Float32List>(ctx);
-    particleData.link('aParticlePosition', gl.FLOAT, 3, 28, 0);
-    particleData.link('aParticleColor', gl.FLOAT, 3, 28, 12);
-    particleData.link('aParticleRadius', gl.FLOAT, 1, 28, 24);
+    particleData.link('aParticlePosition', gl.FLOAT, 3, 32, 0);
+    particleData.link('aParticleColor', gl.FLOAT, 3, 32, 12);
+    particleData.link('aParticleRadius', gl.FLOAT, 1, 32, 24);
     particleData.update(engine.renderBuffer.getParticleData());
     particleSystem.buffers.add(particleData);
 

@@ -10,7 +10,7 @@ part of bromium.structs;
 /// [entered] array is only used for optimization.
 class Particle implements Transferrable {
   /// Number of floats each particle allocates in a byte buffer
-  static const floatCount = 7;
+  static const floatCount = 8;
 
   /// Number of bytes each particle allocates in a byte buffer
   static const byteCount = Float32List.BYTES_PER_ELEMENT * floatCount;
@@ -27,6 +27,9 @@ class Particle implements Transferrable {
   /// Display radius
   Float32View radius;
 
+  /// Step radius
+  Float32View stepRadius;
+
   /// List containing all entered membranes
   final List<int> entered;
 
@@ -34,8 +37,10 @@ class Particle implements Transferrable {
   /// membrane.
   int envMembrane = -1;
 
-  Particle(this.type, this.position, this.color, double radius)
+  Particle(
+      this.type, this.position, this.color, double radius, double stepRadius)
       : radius = new Float32View.value(radius),
+        stepRadius = new Float32View.value(stepRadius),
         entered = [];
 
   /// Copy the given position into the position view.
@@ -53,6 +58,11 @@ class Particle implements Transferrable {
     radius.set(r);
   }
 
+  /// Set the step radius view to the given value.
+  void setStepRadius(double r) {
+    stepRadius.set(r);
+  }
+
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     // Create new views.
@@ -61,6 +71,7 @@ class Particle implements Transferrable {
     var _color = new Vector3.fromBuffer(buffer, offset);
     offset += color.storage.lengthInBytes;
     offset = radius.transfer(buffer, offset, copy);
+    offset = stepRadius.transfer(buffer, offset, copy);
 
     // Copy old data into new buffer.
     if (copy) {

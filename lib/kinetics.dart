@@ -5,6 +5,7 @@
 library bromium.kinetics;
 
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:tuple/tuple.dart';
 import 'package:bromium/math.dart';

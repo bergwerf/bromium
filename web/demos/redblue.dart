@@ -14,7 +14,7 @@ Simulation createRedBlueDemo() {
   // Setup particle dictionary.
   var p = new Index<ParticleType>();
   p['red'] = new ParticleType(Colors.red, 0.01, 0.002);
-  p['blue'] = new ParticleType(Colors.blue, 0.01, 0.002);
+  p['blue'] = new ParticleType(Colors.blue, 0.02, 0.002);
 
   // Setup simulation.
   var simulation = new Simulation(p.data, [], []);
