@@ -61,12 +61,19 @@ void main() {
   final SelectElement simulationSelector =
       document.querySelector('#simulation-select');
   simulationSelector.onChange.listen((_) async {
+    await engine.pause();
     renderer.pause();
 
     var simulation;
     switch (simulationSelector.value) {
-      case 'redblue':
-        simulation = createRedBlueDemo();
+      case 'redblue-1m':
+        simulation = createRedBlueDemo(500000, 500000, .002);
+        break;
+      case 'redblue-100k':
+        simulation = createRedBlueDemo(50000, 50000, .006);
+        break;
+      case 'redblue-10k':
+        simulation = createRedBlueDemo(5000, 5000, .01);
         break;
       case 'enzyme':
         simulation = createEnzymeDemo();
@@ -76,7 +83,6 @@ void main() {
     if (simulation != null) {
       var bbox = simulation.particlesBoundingBox();
       await engine.loadSimulation(simulation);
-      renderer.updateParticles();
       renderer.focus(bbox);
       renderer.start();
     }

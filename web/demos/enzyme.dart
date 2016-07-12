@@ -46,7 +46,7 @@ Simulation createEnzymeDemo() {
 
   // Setup simulation.
   var simulation = new Simulation(p.data, bindRxn.data, unbindRxn.data);
-  simulation.addRandomParticles(p['N-a'], cellMembrane.domain, 10000);
+  simulation.addRandomParticles(p['N-a'], cellMembrane.domain, 20000);
   simulation.addRandomParticles(p['enzyme'], cellMembrane.domain, 500);
   simulation.addMembrane(cellMembrane);
   return simulation;

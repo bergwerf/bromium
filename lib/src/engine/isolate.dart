@@ -36,6 +36,9 @@ class SimulationIsolate {
   /// Pause isolate.
   bool _terminate = false;
 
+  /// Isolate pause completer.
+  Completer<Null> _pauser;
+
   /// Isolate terminate completer.
   Completer<Null> _terminator;
 
@@ -54,35 +57,51 @@ class SimulationIsolate {
     logger.info('Killing isolate...');
 
     if (_isolate != null) {
-      _terminator = new Completer<Null>();
-      _run = false;
-      _terminate = true;
-      _isolate.kill();
-      return _terminator.future;
+      if (_run) {
+        _terminator = new Completer<Null>();
+        _run = false;
+        _terminate = true;
+        _isolate.kill();
+        return _terminator.future;
+      } else {
+        _isolate.kill();
+        return new Future.value();
+      }
     } else {
+      logger.warning('No isolate is running.');
       return new Future.value();
     }
   }
 
   /// Pause isolate.
-  void pause() {
+  Future<Null> pause() {
     logger.info('Pausing isolate...');
-    _run = false;
+
+    if (_run) {
+      _pauser = new Completer<Null>();
+      _run = false;
+      return _pauser.future;
+    } else {
+      logger.warning('No isolate is running.');
+      return new Future.value();
+    }
   }
 
   /// Resume isolate.
   void resume() {
-    logger.info('Resuming isolate...');
-    if (_isolate != null) {
-      _computedCycles = 0;
-      _run = true;
+    if (!_run) {
+      logger.info('Resuming isolate...');
+      if (_isolate != null) {
+        _computedCycles = 0;
+        _run = true;
 
-      if (_sendPort != null) {
-        // Trigger new batch without retrieving benchmarks.
-        _sendPort.send(false);
+        if (_sendPort != null) {
+          // Trigger new batch without retrieving benchmarks.
+          _sendPort.send(false);
+        }
+      } else {
+        logger.warning('No isolate is running!');
       }
-    } else {
-      logger.warning('No isolate is running!');
     }
   }
 
@@ -92,7 +111,7 @@ class SimulationIsolate {
     logger.info('group: loadSimulation');
     logger.info('Loading new simulation...');
 
-    // Set last buffer temporarily using the given simulation buffer.
+    // Prepare some render data untill the isolate has really started up.
     simulation.updateBufferHeader();
     lastBuffer = simulation.buffer;
 
@@ -113,9 +132,14 @@ class SimulationIsolate {
             _getBenchmarks = false;
           } else if (_terminate) {
             // Isolate was terminated.
+            logger.info('Killed isolate.');
             _isolate = null;
             _terminate = false;
             _terminator.complete();
+          } else {
+            // Isolate was paused.
+            logger.info('Paused isolate.');
+            _pauser.complete();
           }
         }
 
@@ -166,13 +190,10 @@ class SimulationIsolate {
     var runner = new SimulationRunner();
 
     // Repair simulation.
-    setup.item2.rebuildParticles(new Int16List.view(setup.item3));
     setup.item2.addLogger();
+    setup.item2.rebuildParticles(new Int16List.view(setup.item3));
 
     runner.loadSimulation(setup.item2);
-
-    // Internal benchmark
-    var benchmark = new Benchmark();
 
     // Batch computation mechanism
     var triggerPort = new ReceivePort();
@@ -184,7 +205,7 @@ class SimulationIsolate {
       }
 
       if (sendBenchmark) {
-        sendPort.send(benchmark);
+        sendPort.send(runner.benchmark);
       }
     });
     sendPort.send(triggerPort.sendPort);

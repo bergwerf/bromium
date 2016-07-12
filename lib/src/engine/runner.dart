@@ -10,7 +10,7 @@ class SimulationRunner {
   Simulation data;
 
   /// Benchmarking data
-  Benchmark benchmark;
+  Benchmark benchmark = new Benchmark();
 
   /// Get buffer for rendering
   ByteBuffer getBuffer() {
@@ -31,19 +31,27 @@ class SimulationRunner {
     // Apply random motion to particles. If there are no membranes we can use
     // the fast algorithm.
     if (data.membranes.isEmpty) {
+      benchmark.start('particlesRandomMotionFast');
       particlesRandomMotionFast(data);
+      benchmark.end('particlesRandomMotionFast');
     } else {
+      benchmark.start('particlesRandomMotionNormal');
       particlesRandomMotionNormal(data);
+      benchmark.end('particlesRandomMotionNormal');
     }
 
     // Find bind reactions using the fast voxel method.
     if (data.bindReactions.isNotEmpty) {
+      benchmark.start('reactionsFastVoxel');
       reactionsFastVoxel(data);
+      benchmark.end('reactionsFastVoxel');
     }
 
     // Apply unbind reactions using random unbinding.
     if (data.unbindReactions.isNotEmpty) {
+      benchmark.start('reactionsUnbindRandom');
       reactionsUnbindRandom(data);
+      benchmark.end('reactionsUnbindRandom');
     }
   }
 }

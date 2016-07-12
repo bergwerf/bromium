@@ -27,10 +27,8 @@ class BromiumEngine {
   Future loadSimulation(Simulation sim) async {
     if (inIsolate) {
       await isolate.loadSimulation(sim);
-      renderBuffer.update(isolate.lastBuffer);
     } else {
       runner.loadSimulation(sim);
-      renderBuffer.update(runner.getBuffer());
     }
     run();
   }
@@ -48,10 +46,12 @@ class BromiumEngine {
   }
 
   /// Pause simulation.
-  void pause() {
-    isRunning = false;
+  Future pause() async {
     if (inIsolate) {
-      isolate.pause();
+      await isolate.pause();
+      isRunning = false;
+    } else {
+      isRunning = false;
     }
   }
 
@@ -65,6 +65,12 @@ class BromiumEngine {
 
   /// Print benchmarks.
   void printBenchmarks() {
-    // Not yet implemented
+    if (inIsolate) {
+      isolate.retrieveBenchmarks().then((Benchmark benchmark) {
+        benchmark.printAllMeasurements();
+      });
+    } else {
+      runner.benchmark.printAllMeasurements();
+    }
   }
 }
