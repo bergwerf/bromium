@@ -8,6 +8,8 @@ library devtools;
 import 'package:js/js.dart';
 
 external void log(String message, [String style]);
+external void error(Object error);
+external void trace(Object stackTrace);
 external void group([String label]);
 external void groupCollapsed([String label]);
 external void groupEnd();

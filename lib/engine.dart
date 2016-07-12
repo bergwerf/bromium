@@ -5,9 +5,16 @@
 library bromium.engine;
 
 import 'dart:math';
+import 'dart:async';
+import 'dart:isolate';
+import 'dart:typed_data';
 
+import 'package:tuple/tuple.dart';
+import 'package:logging/logging.dart';
 import 'package:bromium/structs.dart';
 import 'package:bromium/kinetics.dart';
 
 part 'src/engine/benchmark.dart';
+part 'src/engine/runner.dart';
+part 'src/engine/isolate.dart';
 part 'src/engine/engine.dart';

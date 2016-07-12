@@ -6,14 +6,8 @@ part of bromium.engine;
 
 /// Simulation controller
 class BromiumEngine {
-  /// Simulation data
-  Simulation data;
-
   /// Render buffer
   RenderBuffer renderBuffer = new RenderBuffer();
-
-  /// Run simulation on the 3D render thread.
-  bool onRenderThread = true;
 
   /// Run simulation in isolate.
   bool inIsolate = false;
@@ -21,54 +15,52 @@ class BromiumEngine {
   /// Simulation is running
   bool isRunning = false;
 
-  BromiumEngine();
+  /// Isolate controller
+  SimulationIsolate isolate = new SimulationIsolate();
+
+  /// Simulation runner for the main thread
+  SimulationRunner runner = new SimulationRunner();
+
+  BromiumEngine([this.inIsolate = true]);
 
   /// Load a new simulation.
-  void loadSimulation(Simulation sim) {
-    data = sim;
-
-    // Prepare for 3D rendering.
-    data.updateBufferHeader();
-    renderBuffer.update(data.buffer);
+  Future loadSimulation(Simulation sim) async {
+    if (inIsolate) {
+      await isolate.loadSimulation(sim);
+      renderBuffer.update(isolate.lastBuffer);
+    } else {
+      runner.loadSimulation(sim);
+      renderBuffer.update(runner.getBuffer());
+    }
+    run();
   }
 
-  /// Run one simulation cycle.
-  void cycle() {
-    if (!inIsolate && isRunning) {
-      // Apply random motion to particles. If there are no membranes we can use
-      // the fast algorithm.
-      if (data.membranes.isEmpty) {
-        particlesRandomMotionFast(data);
+  /// Update render data.
+  void update() {
+    if (isRunning) {
+      if (inIsolate) {
+        renderBuffer.update(isolate.lastBuffer);
       } else {
-        particlesRandomMotionNormal(data);
+        runner.cycle();
+        renderBuffer.update(runner.getBuffer());
       }
-
-      // Find bind reactions using the fast voxel method.
-      if (data.bindReactions.isNotEmpty) {
-        reactionsFastVoxel(data);
-      }
-
-      // Apply unbind reactions using random unbinding.
-      if (data.unbindReactions.isNotEmpty) {
-        reactionsUnbindRandom(data);
-      }
-
-      // Update the simulation buffer header.
-      data.updateBufferHeader();
-
-      // Update the render buffer.
-      renderBuffer.update(data.buffer);
     }
   }
 
   /// Pause simulation.
   void pause() {
     isRunning = false;
+    if (inIsolate) {
+      isolate.pause();
+    }
   }
 
   /// Run simulation.
   void run() {
     isRunning = true;
+    if (inIsolate) {
+      isolate.resume();
+    }
   }
 
   /// Print benchmarks.

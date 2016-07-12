@@ -10,7 +10,7 @@ enum DomainType { aabb, ellipsoid }
 /// A particle domain for the BromiumEngine
 abstract class Domain implements Transferrable {
   /// The domain type
-  final DomainType type;
+  DomainType type;
 
   Domain(this.type);
 
@@ -76,9 +76,14 @@ abstract class Domain implements Transferrable {
 
   /// General method for transferring the domain data
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    /// Copy the domain type into a Uint32.
     var typeView = new Uint32View(buffer, offset);
-    typeView.set(type.index);
+    if (copy) {
+      // Copy the domain type into a Uint32.
+      typeView.set(type.index);
+    } else {
+      // Read the domain type from the buffer.
+      type = DomainType.values[typeView.get()];
+    }
     return _transfer(buffer, offset + Uint32View.byteCount);
   }
 

@@ -9,6 +9,7 @@ import 'package:bromium/renderer.dart';
 import 'package:logging/logging.dart';
 
 import 'devtools.dart' as console;
+import 'demos/redblue.dart';
 import 'demos/enzyme.dart';
 
 void main() {
@@ -40,23 +41,47 @@ void main() {
         console.print('[${rec.loggerName}] ${rec.message}',
             color: logColor[rec.level.value]);
       }
+
+      if (rec.error != null) {
+        console.error(rec.error);
+      }
     }
   });
 
-  // Create simulation.
-  var simulation = createEnzymeDemo();
+  // Create engine.
   var engine = new BromiumEngine();
-  engine.loadSimulation(simulation);
 
   // Setup WebGL renderer.
   var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
   canvas.width = document.body.clientWidth;
   canvas.height = (canvas.width / 5 * 2).round();
   var renderer = new BromiumWebGLRenderer(engine, canvas);
-  renderer.focus(simulation.particlesBoundingBox());
-  renderer.start();
 
   // Bind events.
+  final SelectElement simulationSelector =
+      document.querySelector('#simulation-select');
+  simulationSelector.onChange.listen((_) async {
+    renderer.pause();
+
+    var simulation;
+    switch (simulationSelector.value) {
+      case 'redblue':
+        simulation = createRedBlueDemo();
+        break;
+      case 'enzyme':
+        simulation = createEnzymeDemo();
+        break;
+    }
+
+    if (simulation != null) {
+      var bbox = simulation.particlesBoundingBox();
+      await engine.loadSimulation(simulation);
+      renderer.updateParticles();
+      renderer.focus(bbox);
+      renderer.start();
+    }
+  });
+
   document.querySelector('#run-simulation').onClick.listen((_) {
     engine.run();
   });
@@ -64,7 +89,7 @@ void main() {
     engine.pause();
   });
   document.querySelector('#toggle-isolates').onClick.listen((_) async {
-    // Isolates are not yet implemented.
+    // First the isolate has to compress the simulation and send it back up.
   });
   document.querySelector('#print-benchmark').onClick.listen((_) {
     engine.printBenchmarks();

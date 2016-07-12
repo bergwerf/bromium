@@ -43,6 +43,10 @@ class Particle implements Transferrable {
         stepRadius = new Float32View.value(stepRadius),
         entered = [];
 
+  Particle.empty(this.type, this.entered)
+      : radius = new Float32View.value(0.0),
+        stepRadius = new Float32View.value(0.0);
+
   /// Copy the given position into the position view.
   void setPosition(Vector3 _position) {
     position.copyFromArray(_position.storage);
@@ -67,9 +71,9 @@ class Particle implements Transferrable {
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     // Create new views.
     var _position = new Vector3.fromBuffer(buffer, offset);
-    offset += position.storage.lengthInBytes;
+    offset += _position.storage.lengthInBytes;
     var _color = new Vector3.fromBuffer(buffer, offset);
-    offset += color.storage.lengthInBytes;
+    offset += _color.storage.lengthInBytes;
     offset = radius.transfer(buffer, offset, copy);
     offset = stepRadius.transfer(buffer, offset, copy);
 

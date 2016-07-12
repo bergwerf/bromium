@@ -17,7 +17,7 @@ class Simulation {
   static const membranesCapBytes = 120;
 
   /// Info logger
-  final Logger logger;
+  Logger logger;
 
   /// Byte buffer for data that must be continously streamed to the frontend.
   /// This contains 3D render input and simulation state information this is
@@ -26,6 +26,9 @@ class Simulation {
   ByteBuffer buffer;
 
   /// Simulation dimensions
+  ///
+  /// The buffer header is not updated continuously to avoid the misconception
+  /// that it should be used for anything else than raw buffer reading.
   final SimulationHeader header;
 
   /// Store particles offset in the buffer for convenience. This value can
@@ -50,13 +53,13 @@ class Simulation {
   /// Load simulation from loose data.
   Simulation(this.particleTypes, List<BindReaction> bindReactions,
       List<UnbindReaction> unbindReactions)
-      : logger = new Logger('Simulation'),
-        header =
+      : header =
             new SimulationHeader(bindReactions.length, unbindReactions.length),
         bindReactions = bindReactions,
         unbindReactions = unbindReactions,
         particles = [],
         membranes = [] {
+    addLogger();
     logger.info('group: Simulation');
 
     // Compute particles offset.
@@ -72,8 +75,11 @@ class Simulation {
 
   /// Unsafe add particle to buffer.
   void _addParticle(Particle particle) {
+    // Transfer particle to the data buffer.
     particle.transfer(
         buffer, particlesOffset + Particle.byteCount * particles.length);
+
+    // Add particle to the particle list.
     particles.add(particle);
   }
 
@@ -243,15 +249,19 @@ Add membrane:
 
   /// Compute bounding box that encloses all particles.
   Aabb3 particlesBoundingBox() {
-    var _min = particles[0].position.clone();
-    var _max = particles[0].position.clone();
+    if (particles.isNotEmpty) {
+      var _min = particles[0].position.clone();
+      var _max = particles[0].position.clone();
 
-    for (var p = 1; p < particles.length; p++) {
-      Vector3.min(_min, particles[p].position, _min);
-      Vector3.max(_max, particles[p].position, _max);
+      for (var p = 1; p < particles.length; p++) {
+        Vector3.min(_min, particles[p].position, _min);
+        Vector3.max(_max, particles[p].position, _max);
+      }
+
+      return new Aabb3.minMax(_min, _max);
+    } else {
+      return new Aabb3.minMax(new Vector3.zero(), new Vector3.all(1.0));
     }
-
-    return new Aabb3.minMax(_min, _max);
   }
 
   /// Transfer all dynamic data to a new buffer. This method is primarily used
@@ -352,5 +362,43 @@ Transfer to a larger buffer:
   void updateBufferHeader() {
     header.particleCount = particles.length;
     header.membraneCount = membranes.length;
+  }
+
+  void removeLogger() {
+    logger = null;
+  }
+
+  void addLogger() {
+    logger = new Logger('Simulation');
+  }
+
+  Int16List compressParticlesList() {
+    var list = new List<int>();
+    for (var particle in particles) {
+      list.add(particle.type);
+      list.addAll(particle.entered);
+      list.add(-1);
+    }
+    return new Int16List.fromList(list);
+  }
+
+  void rebuildParticles(Int16List compressed) {
+    var offset = particlesOffset;
+    for (var i = 0; i < compressed.length;) {
+      // Read particle data.
+      var type = compressed[i++];
+      var entered = new List<int>();
+      var membrane = 0;
+      while ((membrane = compressed[i++]) != -1) {
+        entered.add(membrane);
+      }
+
+      // Create particle.
+      final particle = new Particle.empty(type, entered);
+      offset = particle.transfer(buffer, offset, false);
+
+      // Add particle.
+      particles.add(particle);
+    }
   }
 }

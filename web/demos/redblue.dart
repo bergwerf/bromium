@@ -6,10 +6,7 @@ import 'package:bromium/math.dart';
 import 'package:bromium/structs.dart';
 import 'package:vector_math/vector_math.dart';
 
-/// Diffusion of red and blue particles
-///
-/// This is a classic stress test for the optimization of the random motion
-/// code.
+/// Diffusion of red and blue particles, a classic stress test.
 Simulation createRedBlueDemo() {
   // Setup particle dictionary.
   var p = new Index<ParticleType>();
