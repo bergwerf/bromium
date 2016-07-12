@@ -33,6 +33,9 @@ class AabbDomain extends Domain {
     }
   }
 
+  String toString() =>
+      'AABB domain {min: ${data.min.toString()}, max: ${data.max.toString()}}';
+
   int get _sizeInBytes =>
       data.min.storage.lengthInBytes + data.max.storage.lengthInBytes;
 

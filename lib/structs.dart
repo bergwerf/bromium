@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:tuple/tuple.dart';
 import 'package:bromium/math.dart';
 import 'package:bromium/views.dart';
+import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
 part 'src/structs/particle_type.dart';

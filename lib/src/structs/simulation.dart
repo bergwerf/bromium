@@ -16,6 +16,9 @@ class Simulation {
   /// Buffer membranes cap
   static const membranesCapBytes = 120;
 
+  /// Info logger
+  final Logger logger;
+
   /// Byte buffer for data that must be continously streamed to the frontend.
   /// This contains 3D render input and simulation state information this is
   /// displayed in the user interface. This buffer can be parsed using
@@ -47,12 +50,15 @@ class Simulation {
   /// Load simulation from loose data.
   Simulation(this.particleTypes, List<BindReaction> bindReactions,
       List<UnbindReaction> unbindReactions)
-      : header =
+      : logger = new Logger('Simulation'),
+        header =
             new SimulationHeader(bindReactions.length, unbindReactions.length),
         bindReactions = bindReactions,
         unbindReactions = unbindReactions,
         particles = [],
         membranes = [] {
+    logger.info('group: Simulation');
+
     // Compute particles offset.
     particlesOffset = SimulationHeader.byteCount +
         Reaction.byteCount *
@@ -60,10 +66,18 @@ class Simulation {
 
     // Transfer all data to a single byte buffer.
     transfer(0, 0);
+
+    logger.info('groupEnd');
   }
 
   /// Add new particles by randomly generating [n] positions within [domain].
   void addRandomParticles(int type, Domain domain, int n) {
+    logger.info('group: addRandomParticles');
+    logger.info('''
+Add $n particles:
+  type: $type
+  domain: ${domain.toString()}''');
+
     _rescaleBuffer(n, 0);
 
     // Generate particles.
@@ -71,6 +85,8 @@ class Simulation {
       _addParticle(new Particle(type, domain.computeRandomPoint(),
           particleTypes[type].displayColor, particleTypes[type].displayRadius));
     }
+
+    logger.info('groupEnd');
   }
 
   /// Unsafe add particle to buffer.
@@ -82,9 +98,17 @@ class Simulation {
 
   /// Add a membrane to the buffer.
   void addMembrane(Membrane membrane) {
+    logger.info('group: addMembrane');
+    logger.info('''
+Add membrane:
+  domain: ${membrane.domain.toString()}''');
+
     _rescaleBuffer(0, membrane.sizeInBytes);
+
     membrane.transfer(buffer, header.membranesOffset + allMembraneBytes);
     membranes.add(membrane);
+
+    logger.info('groupEnd');
   }
 
   /// Remove particle
@@ -183,6 +207,12 @@ class Simulation {
   /// Transfer all dynamic data to a new buffer. This method is primarily used
   /// to resize the byte buffer.
   void transfer(int addParticles, int addMembraneBytes) {
+    logger.info('''
+Transfer to a larger buffer:
+  particle count: ${particles.length}
+  extra particles: $addParticles
+  extra membrane bytes: $addMembraneBytes''');
+
     /// Buffer layout:
     /// - header variables
     ///   * number of bind reactions

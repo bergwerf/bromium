@@ -21,10 +21,12 @@ class BromiumEngine {
   /// Simulation is running
   bool isRunning = false;
 
-  /// Reaction cache.
-  ReactionAlgorithmCache reactionCache;
+  BromiumEngine();
 
-  BromiumEngine(this.data) {
+  /// Load a new simulation.
+  void loadSimulation(Simulation sim) {
+    data = sim;
+
     // Prepare for 3D rendering.
     data.updateBufferHeader();
     renderBuffer.update(data.buffer);

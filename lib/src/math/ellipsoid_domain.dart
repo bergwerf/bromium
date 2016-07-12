@@ -22,6 +22,9 @@ class EllipsoidDomain extends Domain {
             buffer, offset + Float32List.BYTES_PER_ELEMENT * 3));
   }
 
+  String toString() =>
+      'ellipsoid domain {center: ${center.toString()}, semiAxes: ${semiAxes.toString()}}';
+
   int get _sizeInBytes =>
       center.storage.lengthInBytes + semiAxes.storage.lengthInBytes;
 
