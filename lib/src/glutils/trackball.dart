@@ -47,15 +47,15 @@ class Trackball {
 
     canvas.onTouchStart.listen((TouchEvent event) {
       event.preventDefault();
-      final point = event.touches.first.page;
+      final point = event.targetTouches.first.page;
       onPointerDown(point.x, point.y);
     });
 
     canvas.onTouchMove.listen((TouchEvent event) {
       // Multitouch zoom
-      if (event.touches.length > 1) {
-        var distance =
-            event.touches.first.page.distanceTo(event.touches.last.page);
+      if (event.targetTouches.length > 1) {
+        var distance = event.targetTouches.first.page
+            .distanceTo(event.targetTouches.last.page);
 
         if (_mouse.distance > 0) {
           // Apply scaling.
@@ -64,7 +64,7 @@ class Trackball {
         _mouse.distance = distance;
       } else {
         // Single touch rotate
-        final point = event.touches.first.page;
+        final point = event.targetTouches.first.page;
         onPointerMove(point.x, point.y);
       }
     });
@@ -115,7 +115,7 @@ class Trackball {
   void onPointerAway([int nPointers = 0]) {
     _mouse.down = false;
 
-    if (nPointers > 1) {
+    if (nPointers < 2) {
       _mouse.distance = 0.0;
     }
   }
