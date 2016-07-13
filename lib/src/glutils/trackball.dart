@@ -52,10 +52,7 @@ class Trackball {
     });
 
     canvas.onTouchMove.listen((TouchEvent event) {
-      final point = event.touches.first.page;
-      onPointerMove(point.x, point.y);
-
-      // Zooming
+      // Multitouch zoom
       if (event.touches.length > 1) {
         var distance =
             event.touches.first.page.distanceTo(event.touches.last.page);
@@ -65,6 +62,10 @@ class Trackball {
           onZoom(_mouse.distance / distance);
         }
         _mouse.distance = distance;
+      } else {
+        // Single touch rotate
+        final point = event.touches.first.page;
+        onPointerMove(point.x, point.y);
       }
     });
 
