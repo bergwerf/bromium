@@ -62,9 +62,9 @@ class Trackball {
 
         if (_mouse.distance > 0) {
           // Apply scaling.
-          onZoom(distance / _mouse.distance);
-          _mouse.distance = distance;
+          onZoom(_mouse.distance / distance);
         }
+        _mouse.distance = distance;
       }
     });
 
