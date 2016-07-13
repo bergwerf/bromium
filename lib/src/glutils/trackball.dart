@@ -35,35 +35,31 @@ class Trackball {
     _mouse = new _MouseData(0.0);
 
     canvas.onMouseDown.listen((MouseEvent event) {
-      _mouse.down = true;
-      _mouse.lastX = event.client.x;
-      _mouse.lastY = event.client.y;
-    });
-
-    canvas.onMouseUp.listen((MouseEvent event) {
-      _mouse.down = false;
-    });
-
-    canvas.onMouseOut.listen((MouseEvent event) {
-      _mouse.down = false;
+      onPointerDown(event.client.x, event.client.y);
     });
 
     canvas.onMouseMove.listen((MouseEvent event) {
-      if (!_mouse.down) return;
-
-      // Apply rotation to rotationMatrix.
-      var matrix = new Matrix4.identity();
-      matrix.rotateY((event.client.x - _mouse.lastX) / 100);
-      matrix.rotateX((event.client.y - _mouse.lastY) / 100);
-      matrix.multiply(_mouse.rotationMatrix);
-      _mouse.rotationMatrix = matrix;
-
-      _mouse.lastX = event.client.x;
-      _mouse.lastY = event.client.y;
+      onPointerMove(event.client.x, event.client.y);
     });
 
+    canvas.onTouchStart.listen((TouchEvent event) {
+      final point = event.targetTouches.first.page;
+      onPointerDown(point.x, point.y);
+    });
+
+    canvas.onTouchMove.listen((TouchEvent event) {
+      final point = event.targetTouches.first.page;
+      onPointerMove(point.x, point.y);
+    });
+
+    canvas.onMouseUp.listen((_) => onPointerAway());
+    canvas.onMouseOut.listen((_) => onPointerAway());
+    canvas.onTouchLeave.listen((_) => onPointerAway());
+    canvas.onTouchEnd.listen((_) => onPointerAway());
+    canvas.onTouchCancel.listen((_) => onPointerAway());
+
     canvas.onMouseWheel.listen((WheelEvent event) {
-      _mouse.z *= event.deltaY > 0 ? zoomSpeed : (1 / zoomSpeed);
+      onZoom(event.deltaY > 0 ? zoomSpeed : (1 / zoomSpeed));
     });
   }
 
@@ -75,4 +71,32 @@ class Trackball {
 
   /// Set z translation of [_mouse].
   set z(double z) => _mouse.z = z;
+
+  void onPointerDown(num x, num y) {
+    _mouse.down = true;
+    _mouse.lastX = x;
+    _mouse.lastY = y;
+  }
+
+  void onPointerMove(num x, num y) {
+    if (!_mouse.down) return;
+
+    // Apply rotation to rotationMatrix.
+    var matrix = new Matrix4.identity();
+    matrix.rotateY((x - _mouse.lastX) / 100);
+    matrix.rotateX((y - _mouse.lastY) / 100);
+    matrix.multiply(_mouse.rotationMatrix);
+    _mouse.rotationMatrix = matrix;
+
+    _mouse.lastX = x;
+    _mouse.lastY = y;
+  }
+
+  void onPointerAway() {
+    _mouse.down = false;
+  }
+
+  void onZoom(num factor) {
+    _mouse.z *= factor;
+  }
 }
