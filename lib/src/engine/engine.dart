@@ -24,21 +24,29 @@ class BromiumEngine {
   /// Simulation is running
   bool isRunning = false;
 
-  BromiumEngine([this.inIsolate = true]);
+  BromiumEngine({this.inIsolate: true});
 
   /// Load a new simulation.
-  Future loadSimulation(Simulation sim) async {
+  Future<bool> loadSimulation(Simulation sim) async {
     log.group(logger, 'loadSimulation');
     logger.info('Loading new simulation...');
 
+    await pause();
+
+    var result = false;
     if (inIsolate) {
-      await isolate.loadSimulation(sim);
+      result = await isolate.loadSimulation(sim);
     } else {
       runner.loadSimulation(sim);
+      result = true;
     }
-    resume();
 
+    logger.info('Loaded simulation.');
+
+    // Resume and return.
+    resume();
     log.groupEnd();
+    return result;
   }
 
   /// Update render data.
@@ -55,25 +63,81 @@ class BromiumEngine {
 
   /// Pause simulation.
   Future pause() async {
-    logger.info('Pausing engine...');
+    if (isRunning) {
+      logger.info('Pausing engine...');
 
-    if (inIsolate && isolate.isRunning) {
-      await isolate.pause();
-      isRunning = false;
-    } else {
-      isRunning = false;
+      if (inIsolate && isolate.isRunning) {
+        await isolate.pause();
+        isRunning = false;
+      } else {
+        isRunning = false;
+      }
+
+      logger.info('Paused engine.');
     }
-
-    logger.info('Paused engine.');
   }
 
   /// Resume simulation runner.
   void resume() {
-    logger.info('Resuming engine...');
+    if (!isRunning) {
+      logger.info('Resuming engine...');
 
-    isRunning = true;
+      isRunning = true;
+      if (inIsolate) {
+        if (isolate.resume()) {
+          logger.info('Resumed engine.');
+        }
+      } else {
+        logger.info('Resumed engine.');
+      }
+    }
+  }
+
+  /// Switch to rendering in an isolate.
+  Future<bool> switchToIsolate() async {
+    log.group(logger, 'switchToIsolate');
+    logger.info('Switching to isolate...');
+
+    if (!inIsolate) {
+      // Pause.
+      await pause();
+
+      // Get simulation data.
+      var simulation = runner.data;
+
+      // Load simulation and return.
+      inIsolate = true;
+      var result = await loadSimulation(simulation);
+      log.groupEnd();
+      return result;
+    } else {
+      logger.warning('Already rendering in isolate!');
+      log.groupEnd();
+      return false;
+    }
+  }
+
+  /// Switch to rendering on the main thread.
+  Future<bool> switchToMainThread() async {
+    log.group(logger, 'switchToMainThread');
+    logger.info('Switching to main thread...');
+
     if (inIsolate) {
-      isolate.resume();
+      // Pause.
+      await pause();
+
+      // Get simulation data.
+      var simulation = await isolate.retrieveSimulation();
+
+      // Load simulation and return.
+      inIsolate = false;
+      var result = await loadSimulation(simulation);
+      log.groupEnd();
+      return result;
+    } else {
+      logger.warning('Already rendering on main thread!');
+      log.groupEnd();
+      return false;
     }
   }
 
@@ -82,6 +146,7 @@ class BromiumEngine {
     if (inIsolate) {
       logger.info('Retrieving benchmarks from isolate...');
       isolate.retrieveBenchmarks().then((Benchmark benchmark) {
+        logger.info('Retrieved benchmarks.');
         benchmark.printAllMeasurements();
       });
     } else {

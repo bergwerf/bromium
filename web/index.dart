@@ -95,7 +95,11 @@ void main() {
     engine.pause();
   });
   document.querySelector('#toggle-isolates').onClick.listen((_) async {
-    // First the isolate has to compress the simulation and send it back up.
+    if (engine.inIsolate) {
+      engine.switchToMainThread();
+    } else {
+      engine.switchToIsolate();
+    }
   });
   document.querySelector('#print-benchmark').onClick.listen((_) {
     engine.printBenchmarks();

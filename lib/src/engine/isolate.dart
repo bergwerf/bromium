@@ -6,6 +6,11 @@ part of bromium.engine;
 
 /// Isolate controller for running a [SimulationRunner] inside a Dart isolate.
 class SimulationIsolate {
+  // Isolate trigger flags.
+  static const flagRenderBatch = 1;
+  static const flagSendBenchmark = 2;
+  static const flagSendSimulation = 4;
+
   /// Show messages from within the isolate.
   static bool showIsolateLog = true;
 
@@ -30,46 +35,70 @@ class SimulationIsolate {
   /// Number of cycles per batch.
   static const _cyclesPerBatch = 128;
 
-  /// Get benchmarks after the next batch.
-  bool _getBenchmarks = false;
+  /// Run simulation.
+  bool _keepRunning = false;
 
-  /// Run simulation on isolate.
-  bool _run = false;
+  /// Isolate is paused.
+  bool _paused = true;
 
   /// Pause isolate.
   bool _terminate = false;
 
   /// Isolate pause completer.
-  Completer<Null> _pauser;
+  Completer<bool> _pauser;
 
   /// Isolate terminate completer.
-  Completer<Null> _terminator;
+  Completer<bool> _terminator;
 
-  /// Retrieve benchmarks completer
+  /// Retrieve benchmark completer
   Completer<Benchmark> _benchmarkCompleter;
+
+  /// Retrieve simulation completer
+  Completer<Simulation> _simulationCompleter;
 
   /// Find if there is an active isolate.
   bool get activeIsolate => _isolate != null;
 
   /// Find if an isolate is running.
-  bool get isRunning => activeIsolate && _run;
+  bool get isRunning => activeIsolate && !_paused;
 
   /// Retrieve benchmark information.
   Future<Benchmark> retrieveBenchmarks() {
-    _getBenchmarks = true;
-    _benchmarkCompleter = new Completer<Benchmark>();
-    return _benchmarkCompleter.future;
+    logger.info('Retrieving benchmarks...');
+
+    if (activeIsolate) {
+      _sendPort.send(flagSendBenchmark);
+      _benchmarkCompleter = new Completer<Benchmark>();
+      return _benchmarkCompleter.future;
+    } else {
+      logger.severe('No isolate is active!');
+      return new Future<Benchmark>.value();
+    }
+  }
+
+  /// Retrieve simulation data.
+  Future<Simulation> retrieveSimulation() {
+    logger.info('Retrieving simulation...');
+
+    if (activeIsolate) {
+      _sendPort.send(flagSendSimulation);
+      _simulationCompleter = new Completer<Simulation>();
+      return _simulationCompleter.future;
+    } else {
+      logger.severe('No isolate is active!');
+      return new Future<Simulation>.value();
+    }
   }
 
   /// Kill isolate.
-  Future<Null> kill() {
+  Future<bool> kill() {
     logger.info('Killing isolate...');
 
     if (activeIsolate) {
-      if (_run) {
+      if (_keepRunning) {
         // The isolate is running, so we have to escape from the event cycle.
-        _terminator = new Completer<Null>();
-        _run = false;
+        _terminator = new Completer<bool>();
+        _keepRunning = false;
         _terminate = true;
         _isolate.kill();
         return _terminator.future;
@@ -77,44 +106,54 @@ class SimulationIsolate {
         // The isolate is paused, so it should shut down without further issues.
         _isolate.kill();
         _isolate = null;
-        return new Future.value();
+        return new Future<bool>.value(true);
       }
     } else {
-      logger.warning('No isolate is running.');
-      return new Future.value();
+      logger.warning('No isolate is active!');
+      return new Future<bool>.value(false);
     }
   }
 
   /// Pause isolate.
-  Future<Null> pause() {
+  Future<bool> pause() {
     logger.info('Pausing isolate...');
 
-    if (_run) {
-      _pauser = new Completer<Null>();
-      _run = false;
+    if (_keepRunning) {
+      _pauser = new Completer<bool>();
+      _keepRunning = false;
       return _pauser.future;
     } else {
-      logger.warning('No isolate is running.');
-      return new Future.value();
+      logger.warning('No isolate is running!');
+      return new Future<bool>.value(false);
     }
   }
 
   /// Resume isolate.
-  void resume() {
-    if (!_run) {
-      logger.info('Resuming isolate...');
+  bool resume() {
+    logger.info('Resuming isolate...');
 
-      if (activeIsolate) {
-        _computedCycles = 0;
-        _run = true;
+    if (activeIsolate) {
+      if (_sendPort != null) {
+        if (!_keepRunning) {
+          _computedCycles = 0;
+          _terminate = false; // Stop termination.
+          _keepRunning = true;
+          _paused = false;
 
-        if (_sendPort != null) {
-          // Trigger new batch without retrieving benchmarks.
-          _sendPort.send(false);
+          // Trigger new batch.
+          _sendPort.send(flagRenderBatch);
+          return true;
+        } else {
+          logger.warning('Isolate is already running!');
+          return false;
         }
       } else {
-        logger.warning('No isolate is running!');
+        logger.severe('Isolate is active but we have no send port!');
+        return false;
       }
+    } else {
+      logger.warning('No isolate is active!');
+      return false;
     }
   }
 
@@ -123,6 +162,10 @@ class SimulationIsolate {
   Future<bool> loadSimulation(Simulation simulation) async {
     log.group(logger, 'loadSimulation');
     logger.info('Loading new simulation...');
+
+    // Completer for this method. loadSimulation completes when the send port
+    // has been retrieved.
+    var loadingCompleter = new Completer<bool>();
 
     // Prepare some render data untill the isolate has really started up.
     simulation.updateBufferHeader();
@@ -137,44 +180,56 @@ class SimulationIsolate {
     _receivePort = new ReceivePort();
     _receivePort.listen((dynamic msg) {
       if (msg is ByteBuffer) {
+        // Retrieved render data.
         _computedCycles++;
 
         // Trigger new batch.
         if (_computedCycles % _cyclesPerBatch == 0 && _sendPort != null) {
-          if (_run) {
+          if (_keepRunning) {
             // Trigger new batch.
-            _sendPort.send(_getBenchmarks);
-            _getBenchmarks = false;
+            _sendPort.send(flagRenderBatch);
           } else if (_terminate) {
             // Isolate was terminated.
             logger.info('Killed isolate.');
             _isolate = null;
             _terminate = false;
-            _terminator.complete();
+            _paused = true;
+            _terminator.complete(true);
           } else {
             // Isolate was paused.
             logger.info('Paused isolate.');
-            _pauser.complete();
+            _paused = true;
+            _pauser.complete(true);
           }
         }
 
         // Replace old simulation buffer.
         lastBuffer = msg;
       } else if (msg is Benchmark) {
+        logger.info('Retrieved benchmarks.');
+
         // Redirect benchmark to completer.
         _benchmarkCompleter.complete(msg);
+      } else if (msg is SimulationZ) {
+        logger.info('Retrieved compressed simulation.');
+
+        // Redirect unpacked simulation to completer.
+        _simulationCompleter.complete(msg.unpack());
       } else if (msg is SendPort) {
+        logger.info('Retrieved isolate send port.');
+
         // Store send port.
         _sendPort = msg;
 
-        // Trigger first batch.
-        _sendPort.send(false);
+        // Complete the simulation loading.
+        loadingCompleter.complete(true);
       }
     });
 
     // Spawn new isolate.
-    _computedCycles = 0;
-    _run = true;
+    // Note: do not start running by default.
+    _keepRunning = false;
+    _paused = true;
     try {
       logger.info('Spawning isolate...');
       _isolate = await Isolate.spawn(
@@ -190,7 +245,7 @@ class SimulationIsolate {
 
     logger.info('Succesfully spawned isolate.');
     log.groupEnd();
-    return true;
+    return loadingCompleter.future;
   }
 
   /// Isolate simulation runner
@@ -206,15 +261,19 @@ class SimulationIsolate {
 
     // Batch computation mechanism
     final triggerPort = new ReceivePort();
-    triggerPort.listen((bool sendBenchmark) {
-      // Render n frames.
-      for (var i = _cyclesPerBatch; i > 0; i--) {
-        runner.cycle();
-        sendPort.send(runner.getBuffer());
+    triggerPort.listen((int flags) {
+      if (flags & flagRenderBatch != 0) {
+        // Render n frames.
+        for (var i = _cyclesPerBatch; i > 0; i--) {
+          runner.cycle();
+          sendPort.send(runner.getBuffer());
+        }
       }
-
-      if (sendBenchmark) {
+      if (flags & flagSendBenchmark != 0) {
         sendPort.send(runner.benchmark);
+      }
+      if (flags & flagSendSimulation != 0) {
+        sendPort.send(new SimulationZ(simulation));
       }
     });
     sendPort.send(triggerPort.sendPort);
