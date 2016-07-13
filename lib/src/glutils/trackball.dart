@@ -15,6 +15,9 @@ class _MouseData {
   /// Previous x and y coordinates
   int lastX = 0, lastY = 0;
 
+  /// Previous point distance
+  double distance = 0.0;
+
   /// Rotation matrix applied to WebGL camera.
   Matrix4 rotationMatrix = new Matrix4.identity();
 
@@ -43,20 +46,36 @@ class Trackball {
     });
 
     canvas.onTouchStart.listen((TouchEvent event) {
-      final point = event.targetTouches.first.page;
+      event.preventDefault();
+      final point = event.touches.first.page;
       onPointerDown(point.x, point.y);
     });
 
     canvas.onTouchMove.listen((TouchEvent event) {
-      final point = event.targetTouches.first.page;
+      final point = event.touches.first.page;
       onPointerMove(point.x, point.y);
+
+      // Zooming
+      if (event.touches.length > 1) {
+        var distance =
+            event.touches.first.page.distanceTo(event.touches.last.page);
+
+        if (_mouse.distance > 0) {
+          // Apply scaling.
+          onZoom(distance / _mouse.distance);
+          _mouse.distance = distance;
+        }
+      }
     });
 
     canvas.onMouseUp.listen((_) => onPointerAway());
     canvas.onMouseOut.listen((_) => onPointerAway());
-    canvas.onTouchLeave.listen((_) => onPointerAway());
-    canvas.onTouchEnd.listen((_) => onPointerAway());
-    canvas.onTouchCancel.listen((_) => onPointerAway());
+    canvas.onTouchLeave.listen(
+        (TouchEvent event) => onPointerAway(event.targetTouches.length));
+    canvas.onTouchEnd.listen(
+        (TouchEvent event) => onPointerAway(event.targetTouches.length));
+    canvas.onTouchCancel.listen(
+        (TouchEvent event) => onPointerAway(event.targetTouches.length));
 
     canvas.onMouseWheel.listen((WheelEvent event) {
       onZoom(event.deltaY > 0 ? zoomSpeed : (1 / zoomSpeed));
@@ -92,8 +111,12 @@ class Trackball {
     _mouse.lastY = y;
   }
 
-  void onPointerAway() {
+  void onPointerAway([int nPointers = 0]) {
     _mouse.down = false;
+
+    if (nPointers > 1) {
+      _mouse.distance = 0.0;
+    }
   }
 
   void onZoom(num factor) {
