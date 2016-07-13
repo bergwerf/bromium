@@ -10,8 +10,8 @@ void particlesRandomMotionNormal(Simulation sim) {
   OUTER: for (var particle in sim.particles) {
     var random = randomVector3(rng)..sub(new Vector3.all(.5));
     random.scale(particle.stepRadius.get());
-    var motion = particle.envMembrane >= 0
-        ? sim.membranes[particle.envMembrane].speed + random
+    var motion = particle.entered.isNotEmpty
+        ? sim.membranes[particle.entered.last].speed + random
         : random;
 
     // Check motion block due to allowed flux fraction.
@@ -29,12 +29,9 @@ void particlesRandomMotionNormal(Simulation sim) {
         if ((!ip && inward) || (!op && outward)) {
           continue OUTER;
         } else if (inward) {
-          particle.envMembrane = m;
           particle.entered.add(m);
         } else if (outward) {
           particle.entered.remove(m);
-          particle.envMembrane =
-              particle.entered.isEmpty ? -1 : particle.entered.last;
         }
       }
 

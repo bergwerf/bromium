@@ -10,9 +10,10 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:tuple/tuple.dart';
-import 'package:logging/logging.dart';
 import 'package:bromium/structs.dart';
 import 'package:bromium/kinetics.dart';
+import 'package:logging/logging.dart';
+import 'package:bromium/logging.dart' as log;
 
 part 'src/engine/benchmark.dart';
 part 'src/engine/runner.dart';

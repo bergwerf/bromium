@@ -88,8 +88,8 @@ void main() {
     }
   });
 
-  document.querySelector('#run-simulation').onClick.listen((_) {
-    engine.run();
+  document.querySelector('#resume-simulation').onClick.listen((_) {
+    engine.resume();
   });
   document.querySelector('#pause-simulation').onClick.listen((_) {
     engine.pause();

@@ -6,6 +6,9 @@ part of bromium.engine;
 
 /// Isolate controller for running a [SimulationRunner] inside a Dart isolate.
 class SimulationIsolate {
+  /// Show messages from within the isolate.
+  static bool showIsolateLog = true;
+
   /// Most recent render buffer from the isolate.
   ByteBuffer lastBuffer;
 
@@ -45,6 +48,12 @@ class SimulationIsolate {
   /// Retrieve benchmarks completer
   Completer<Benchmark> _benchmarkCompleter;
 
+  /// Find if there is an active isolate.
+  bool get activeIsolate => _isolate != null;
+
+  /// Find if an isolate is running.
+  bool get isRunning => activeIsolate && _run;
+
   /// Retrieve benchmark information.
   Future<Benchmark> retrieveBenchmarks() {
     _getBenchmarks = true;
@@ -56,15 +65,18 @@ class SimulationIsolate {
   Future<Null> kill() {
     logger.info('Killing isolate...');
 
-    if (_isolate != null) {
+    if (activeIsolate) {
       if (_run) {
+        // The isolate is running, so we have to escape from the event cycle.
         _terminator = new Completer<Null>();
         _run = false;
         _terminate = true;
         _isolate.kill();
         return _terminator.future;
       } else {
+        // The isolate is paused, so it should shut down without further issues.
         _isolate.kill();
+        _isolate = null;
         return new Future.value();
       }
     } else {
@@ -91,7 +103,8 @@ class SimulationIsolate {
   void resume() {
     if (!_run) {
       logger.info('Resuming isolate...');
-      if (_isolate != null) {
+
+      if (activeIsolate) {
         _computedCycles = 0;
         _run = true;
 
@@ -108,7 +121,7 @@ class SimulationIsolate {
   /// Load simulation to a new isolate.
   /// Returns if the simulation was loaded succefully.
   Future<bool> loadSimulation(Simulation simulation) async {
-    logger.info('group: loadSimulation');
+    log.group(logger, 'loadSimulation');
     logger.info('Loading new simulation...');
 
     // Prepare some render data untill the isolate has really started up.
@@ -116,7 +129,9 @@ class SimulationIsolate {
     lastBuffer = simulation.buffer;
 
     // Kill current isolate.
-    await kill();
+    if (activeIsolate) {
+      await kill();
+    }
 
     // Setup receive port for the new isolate.
     _receivePort = new ReceivePort();
@@ -162,41 +177,35 @@ class SimulationIsolate {
     _run = true;
     try {
       logger.info('Spawning isolate...');
-
-      // Note: the simulation logger cannot be sent to the isolate, so we have
-      // to temporarily remove it.
-      simulation.removeLogger();
-      var particleData = simulation.compressParticlesList();
-      simulation.particles.clear();
       _isolate = await Isolate.spawn(
           _isolateRunner,
-          new Tuple3<SendPort, Simulation, ByteBuffer>(
-              _receivePort.sendPort, simulation, particleData.buffer));
+          new Tuple2<SendPort, SimulationZ>(
+              _receivePort.sendPort, new SimulationZ(simulation)));
     } catch (e, stackTrace) {
       // Log error and return false.
       logger.severe('Failed to spawn isolate!', e, stackTrace);
-      logger.info('groupEnd');
+      log.groupEnd();
       return false;
     }
 
     logger.info('Succesfully spawned isolate.');
-    logger.info('groupEnd');
+    log.groupEnd();
     return true;
   }
 
   /// Isolate simulation runner
-  static void _isolateRunner(Tuple3<SendPort, Simulation, ByteBuffer> setup) {
-    var sendPort = setup.item1;
-    var runner = new SimulationRunner();
+  static void _isolateRunner(Tuple2<SendPort, SimulationZ> setup) {
+    isolateLog('Started isolate.');
+    isolateLog('Unpacking simulation...');
+    final simulation = setup.item2.unpack();
+    isolateLog('Finished unpacking the simulation.');
 
-    // Repair simulation.
-    setup.item2.addLogger();
-    setup.item2.rebuildParticles(new Int16List.view(setup.item3));
-
-    runner.loadSimulation(setup.item2);
+    final sendPort = setup.item1;
+    final runner = new SimulationRunner();
+    runner.loadSimulation(simulation);
 
     // Batch computation mechanism
-    var triggerPort = new ReceivePort();
+    final triggerPort = new ReceivePort();
     triggerPort.listen((bool sendBenchmark) {
       // Render n frames.
       for (var i = _cyclesPerBatch; i > 0; i--) {
@@ -209,5 +218,12 @@ class SimulationIsolate {
       }
     });
     sendPort.send(triggerPort.sendPort);
+  }
+
+  /// Print isolate message.
+  static void isolateLog(String message) {
+    if (showIsolateLog) {
+      print('[ISOLATE] $message');
+    }
   }
 }

@@ -17,7 +17,7 @@ class Simulation {
   static const membranesCapBytes = 120;
 
   /// Info logger
-  Logger logger;
+  Logger logger = new Logger('Simulation');
 
   /// Byte buffer for data that must be continously streamed to the frontend.
   /// This contains 3D render input and simulation state information this is
@@ -59,8 +59,7 @@ class Simulation {
         unbindReactions = unbindReactions,
         particles = [],
         membranes = [] {
-    addLogger();
-    logger.info('group: Simulation');
+    log.group(logger, 'Simulation');
 
     // Compute particles offset.
     particlesOffset = SimulationHeader.byteCount +
@@ -70,7 +69,7 @@ class Simulation {
     // Transfer all data to a single byte buffer.
     transfer(0, 0);
 
-    logger.info('groupEnd');
+    log.groupEnd();
   }
 
   /// Unsafe add particle to buffer.
@@ -103,7 +102,7 @@ class Simulation {
 
   /// Add new particles by randomly generating [n] positions within [domain].
   void addRandomParticles(int type, Domain domain, int n) {
-    logger.info('group: addRandomParticles');
+    log.group(logger, 'addRandomParticles');
     logger.info('''
 Add $n particles:
   type: $type
@@ -116,12 +115,12 @@ Add $n particles:
       _easyAddParticle(type, domain.computeRandomPoint());
     }
 
-    logger.info('groupEnd');
+    log.groupEnd();
   }
 
   /// Add a membrane to the buffer.
   void addMembrane(Membrane membrane) {
-    logger.info('group: addMembrane');
+    log.group(logger, 'addMembrane');
     logger.info('''
 Add membrane:
   domain: ${membrane.domain.toString()}''');
@@ -136,7 +135,7 @@ Add membrane:
       updateParticleEntered(particle);
     }
 
-    logger.info('groupEnd');
+    log.groupEnd();
   }
 
   /// Remove particle.
@@ -158,17 +157,23 @@ Add membrane:
     final _type = particleTypes[type];
     particle.type = type;
     particle.setColor(_type.displayColor);
-    particle.setRadius(_type.displayRadius);
-    particle.setStepRadius(_type.stepRadius);
+    particle.displayRadius.set(_type.displayRadius);
+    particle.stepRadius.set(_type.stepRadius);
   }
 
   /// Recompute the entered membranes for the given particle using ray
   /// projections.
   void updateParticleEntered(Particle particle) {
+    if (membranes.isEmpty) {
+      return;
+    }
+
+    // Construct ray.
     var ray =
         new Ray.originDirection(particle.position, new Vector3(1.0, .0, .0));
-    var entered = new List<Tuple2<int, double>>();
 
+    // Compute all ray intersections.
+    var entered = new List<Tuple2<int, double>>();
     for (var m = 0; m < membranes.length; m++) {
       final domain = membranes[m].domain;
       if (domain.contains(particle.position)) {
@@ -177,7 +182,7 @@ Add membrane:
       }
     }
 
-    // Sort entered in descending order.
+    // Sort intersections in descending order of distance.
     entered.sort((Tuple2<int, double> a, Tuple2<int, double> b) =>
         b.item2.compareTo(a.item2));
 
@@ -294,6 +299,7 @@ Transfer to a larger buffer:
         allMembraneBytes +
         addMembraneBytes +
         membranesCapBytes;
+    logger.info('New buffer size: $bufferSize bytes');
 
     // Create new buffer.
     var newBuffer = new ByteData(bufferSize).buffer;
@@ -321,6 +327,8 @@ Transfer to a larger buffer:
 
     // Replace the local buffer.
     buffer = newBuffer;
+
+    logger.info('Buffer transfer has finished.');
   }
 
   /// Get the number of bytes in the render buffer that are allocated by
@@ -362,43 +370,5 @@ Transfer to a larger buffer:
   void updateBufferHeader() {
     header.particleCount = particles.length;
     header.membraneCount = membranes.length;
-  }
-
-  void removeLogger() {
-    logger = null;
-  }
-
-  void addLogger() {
-    logger = new Logger('Simulation');
-  }
-
-  Int16List compressParticlesList() {
-    var list = new List<int>();
-    for (var particle in particles) {
-      list.add(particle.type);
-      list.addAll(particle.entered);
-      list.add(-1);
-    }
-    return new Int16List.fromList(list);
-  }
-
-  void rebuildParticles(Int16List compressed) {
-    var offset = particlesOffset;
-    for (var i = 0; i < compressed.length;) {
-      // Read particle data.
-      var type = compressed[i++];
-      var entered = new List<int>();
-      var membrane = 0;
-      while ((membrane = compressed[i++]) != -1) {
-        entered.add(membrane);
-      }
-
-      // Create particle.
-      final particle = new Particle.empty(type, entered);
-      offset = particle.transfer(buffer, offset, false);
-
-      // Add particle.
-      particles.add(particle);
-    }
   }
 }

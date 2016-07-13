@@ -12,6 +12,7 @@ import 'package:bromium/math.dart';
 import 'package:bromium/views.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
+import 'package:bromium/logging.dart' as log;
 
 part 'src/structs/particle_type.dart';
 part 'src/structs/particle.dart';
@@ -19,5 +20,6 @@ part 'src/structs/membrane.dart';
 part 'src/structs/reactions.dart';
 part 'src/structs/simulation.dart';
 part 'src/structs/simulation_header.dart';
+part 'src/structs/simulation_z.dart';
 part 'src/structs/render_buffer.dart';
 part 'src/structs/index.dart';

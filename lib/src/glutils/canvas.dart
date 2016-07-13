@@ -77,8 +77,6 @@ abstract class GlCanvas {
   /// Internal draw cycle
   void _draw(num time) {
     // Clear view
-    //ctx.viewport(0, 0, _viewportWidth, _viewportHeight);
-    ctx.clearColor(0.0, 0.0, 0.0, 1.0);
     ctx.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Run main draw method.

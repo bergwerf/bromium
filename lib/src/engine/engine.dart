@@ -6,8 +6,17 @@ part of bromium.engine;
 
 /// Simulation controller
 class BromiumEngine {
+  /// Info logger
+  final Logger logger = new Logger('BromiumEngine');
+
   /// Render buffer
-  RenderBuffer renderBuffer = new RenderBuffer();
+  final RenderBuffer renderBuffer = new RenderBuffer();
+
+  /// Isolate controller
+  final SimulationIsolate isolate = new SimulationIsolate();
+
+  /// Simulation runner for the main thread
+  final SimulationRunner runner = new SimulationRunner();
 
   /// Run simulation in isolate.
   bool inIsolate = false;
@@ -15,22 +24,21 @@ class BromiumEngine {
   /// Simulation is running
   bool isRunning = false;
 
-  /// Isolate controller
-  SimulationIsolate isolate = new SimulationIsolate();
-
-  /// Simulation runner for the main thread
-  SimulationRunner runner = new SimulationRunner();
-
   BromiumEngine([this.inIsolate = true]);
 
   /// Load a new simulation.
   Future loadSimulation(Simulation sim) async {
+    log.group(logger, 'loadSimulation');
+    logger.info('Loading new simulation...');
+
     if (inIsolate) {
       await isolate.loadSimulation(sim);
     } else {
       runner.loadSimulation(sim);
     }
-    run();
+    resume();
+
+    log.groupEnd();
   }
 
   /// Update render data.
@@ -47,16 +55,22 @@ class BromiumEngine {
 
   /// Pause simulation.
   Future pause() async {
-    if (inIsolate) {
+    logger.info('Pausing engine...');
+
+    if (inIsolate && isolate.isRunning) {
       await isolate.pause();
       isRunning = false;
     } else {
       isRunning = false;
     }
+
+    logger.info('Paused engine.');
   }
 
-  /// Run simulation.
-  void run() {
+  /// Resume simulation runner.
+  void resume() {
+    logger.info('Resuming engine...');
+
     isRunning = true;
     if (inIsolate) {
       isolate.resume();
@@ -66,6 +80,7 @@ class BromiumEngine {
   /// Print benchmarks.
   void printBenchmarks() {
     if (inIsolate) {
+      logger.info('Retrieving benchmarks from isolate...');
       isolate.retrieveBenchmarks().then((Benchmark benchmark) {
         benchmark.printAllMeasurements();
       });

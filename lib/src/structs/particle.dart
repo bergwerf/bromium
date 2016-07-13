@@ -25,7 +25,7 @@ class Particle implements Transferrable {
   Vector3 color;
 
   /// Display radius
-  Float32View radius;
+  Float32View displayRadius;
 
   /// Step radius
   Float32View stepRadius;
@@ -33,19 +33,14 @@ class Particle implements Transferrable {
   /// List containing all entered membranes
   final List<int> entered;
 
-  /// Environment membrane; the particle has the same average motion as this
-  /// membrane.
-  int envMembrane = -1;
-
-  Particle(
-      this.type, this.position, this.color, double radius, double stepRadius)
-      : radius = new Float32View.value(radius),
+  Particle(this.type, this.position, this.color, double displayRadius,
+      double stepRadius)
+      : displayRadius = new Float32View.value(displayRadius),
         stepRadius = new Float32View.value(stepRadius),
-        entered = [];
+        entered = new List<int>();
 
-  Particle.empty(this.type, this.entered)
-      : radius = new Float32View.value(0.0),
-        stepRadius = new Float32View.value(0.0);
+  Particle.raw(this.type, this.position, this.color, this.displayRadius,
+      this.stepRadius, this.entered);
 
   /// Copy the given position into the position view.
   void setPosition(Vector3 _position) {
@@ -57,16 +52,6 @@ class Particle implements Transferrable {
     color.copyFromArray(_color.storage);
   }
 
-  /// Set the radius view to the given value.
-  void setRadius(double r) {
-    radius.set(r);
-  }
-
-  /// Set the step radius view to the given value.
-  void setStepRadius(double r) {
-    stepRadius.set(r);
-  }
-
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     // Create new views.
@@ -74,7 +59,7 @@ class Particle implements Transferrable {
     offset += _position.storage.lengthInBytes;
     var _color = new Vector3.fromBuffer(buffer, offset);
     offset += _color.storage.lengthInBytes;
-    offset = radius.transfer(buffer, offset, copy);
+    offset = displayRadius.transfer(buffer, offset, copy);
     offset = stepRadius.transfer(buffer, offset, copy);
 
     // Copy old data into new buffer.
