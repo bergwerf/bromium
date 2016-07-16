@@ -58,24 +58,12 @@ class Particle implements Transferrable {
 
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    // Create new views.
-    var _position = new Vector3.fromBuffer(buffer, offset);
-    offset += _position.storage.lengthInBytes;
-    var _color = new Vector3.fromBuffer(buffer, offset);
-    offset += _color.storage.lengthInBytes;
+    position = transferVector3(buffer, offset, copy, position);
+    offset += position.storage.lengthInBytes;
+    color = transferVector3(buffer, offset, copy, color);
+    offset += color.storage.lengthInBytes;
     offset = displayRadius.transfer(buffer, offset, copy);
     offset = stepRadius.transfer(buffer, offset, copy);
-
-    // Copy old data into new buffer.
-    if (copy) {
-      _position.copyFromArray(position.storage);
-      _color.copyFromArray(color.storage);
-    }
-
-    // Replace local data.
-    position = _position;
-    color = _color;
-
     return offset;
   }
 }

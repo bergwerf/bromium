@@ -23,11 +23,11 @@ class Membrane implements Transferrable {
   Float32List passOut;
 
   /// Inward stick allowance
-  /// TODO: implement in buffer and kinetics
+  /// TODO: implement in kinetics
   Float32List stickIn;
 
   /// Outward stick allowance
-  /// TODO: implement in buffer and kinetics
+  /// TODO: implement in kinetics
   Float32List stickOut;
 
   /// Contained number of particles per type
@@ -35,7 +35,7 @@ class Membrane implements Transferrable {
   Uint32List insideCount;
 
   /// Sticked number of particles per type
-  /// TODO: implement in buffer and kinetics
+  /// TODO: implement in kinetics
   Uint32List stickedCount;
 
   /// Membrane movement vector
@@ -43,35 +43,32 @@ class Membrane implements Transferrable {
 
   Membrane(this.domain, this.passIn, this.passOut, this.stickIn, this.stickOut,
       int particleCount)
-      : insideCount = new Uint32List(particleCount);
+      : insideCount = new Uint32List(particleCount),
+        stickedCount = new Uint32List(particleCount);
 
   int get sizeInBytes =>
       domain.sizeInBytes +
       passIn.lengthInBytes +
       passOut.lengthInBytes +
-      insideCount.lengthInBytes;
+      stickIn.lengthInBytes +
+      stickOut.lengthInBytes +
+      insideCount.lengthInBytes +
+      stickedCount.lengthInBytes;
 
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    // Create new views.
     offset = domain.transfer(buffer, offset, copy);
-    var _passIn = new Float32List.view(buffer, offset);
+    passIn = transferFloat32List(buffer, offset, copy, passIn);
     offset += passIn.lengthInBytes;
-    var _passOut = new Float32List.view(buffer, offset);
+    passOut = transferFloat32List(buffer, offset, copy, passOut);
     offset += passOut.lengthInBytes;
-    var _concentrations = new Uint32List.view(buffer, offset);
-
-    // Copy old data into new buffer.
-    if (copy) {
-      _passIn.setAll(0, passIn);
-      _passOut.setAll(0, passOut);
-      _concentrations.setAll(0, insideCount);
-    }
-
-    // Replace local data.
-    passIn = _passIn;
-    passOut = _passOut;
-    insideCount = _concentrations;
-
-    return offset + insideCount.lengthInBytes;
+    stickIn = transferFloat32List(buffer, offset, copy, stickIn);
+    offset += stickIn.lengthInBytes;
+    stickOut = transferFloat32List(buffer, offset, copy, stickOut);
+    offset += stickOut.lengthInBytes;
+    insideCount = transferUint32List(buffer, offset, copy, insideCount);
+    offset += insideCount.lengthInBytes;
+    stickedCount = transferUint32List(buffer, offset, copy, stickedCount);
+    offset += stickedCount.lengthInBytes;
+    return offset;
   }
 }

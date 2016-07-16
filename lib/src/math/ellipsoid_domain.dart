@@ -29,22 +29,11 @@ class EllipsoidDomain extends Domain {
       center.storage.lengthInBytes + semiAxes.storage.lengthInBytes;
 
   int _transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    // Create views.
-    var _center = new Vector3.fromBuffer(buffer, offset);
+    center = transferVector3(buffer, offset, copy, center);
     offset += center.storage.lengthInBytes;
-    var _semiAxes = new Vector3.fromBuffer(buffer, offset);
-
-    // Copy old data into new buffer.
-    if (copy) {
-      _center.copyFromArray(center.storage);
-      _semiAxes.copyFromArray(semiAxes.storage);
-    }
-
-    // Replace local data.
-    center = _center;
-    semiAxes = _semiAxes;
-
-    return offset + semiAxes.storage.lengthInBytes;
+    semiAxes = transferVector3(buffer, offset, copy, semiAxes);
+    offset += semiAxes.storage.lengthInBytes;
+    return offset;
   }
 
   Aabb3 computeBoundingBox() =>

@@ -6,5 +6,8 @@ library bromium.views;
 
 import 'dart:typed_data';
 
+import 'package:vector_math/vector_math.dart';
+
 part 'src/views/transferrable.dart';
 part 'src/views/primitives.dart';
+part 'src/views/transfer.dart';
