@@ -32,3 +32,17 @@ Prefer `for-in` loops over `forEach` loops. Always use `for-in` when possible.
 ### Comments
 Meaningless comments such as `/// Constructor` or copied comments from the
 super class should be omitted.
+
+Topics for further research
+---------------------------
+### Optimization of reaction finding
+Currently a voxel based approach is used where all inter-voxel reactions are
+implicitly discarded. Alternative approaches have shown significant lower
+performance. More performance might be gained by caching results from previous
+cycles. A very interesting question is how much the voxel approach hurts the
+accuracy of the entire simulation.
+
+### Accuracy of brownian motion
+Currently a not too accurate approach is used to compute the random motion. Each
+cycle the particle is displaced by a normalized vector that points in a random
+direction times a random number between 0 and 1.
