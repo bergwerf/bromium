@@ -14,8 +14,12 @@ void particlesRandomMotionFast(Simulation sim) {
 
   for (var p = 0, i = 0; i < view.length; p++, i += 5) {
     final r = view[i + 7];
-    view[i++] += (rng.nextDouble() - .5) * r;
-    view[i++] += (rng.nextDouble() - .5) * r;
-    view[i++] += (rng.nextDouble() - .5) * r;
+    final x = rng.nextDouble() - .5;
+    final y = rng.nextDouble() - .5;
+    final z = rng.nextDouble() - .5;
+    final d = sqrt(x * x + y * y + z * z);
+    view[i++] += x / d * r;
+    view[i++] += y / d * r;
+    view[i++] += z / d * r;
   }
 }

@@ -8,8 +8,11 @@ part of bromium.kinetics;
 void particlesRandomMotionNormal(Simulation sim) {
   var rng = new Random();
   OUTER: for (var particle in sim.particles) {
-    var random = randomVector3(rng)..sub(new Vector3.all(.5));
-    random.scale(particle.stepRadius.get());
+    // Note: normalize and randomly scale for a constant max radius.
+    var random = randomVector3(rng)
+      ..sub(new Vector3.all(.5))
+      ..normalize()
+      ..scale(rng.nextDouble() * particle.stepRadius.get());
     var motion = particle.entered.isNotEmpty
         ? sim.membranes[particle.entered.last].speed + random
         : random;
