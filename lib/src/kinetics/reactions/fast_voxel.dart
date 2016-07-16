@@ -53,14 +53,14 @@ void reactionsFastVoxel(Simulation sim) {
   var reactionQueue = new List<Tuple3<int, int, int>>();
   for (var r in sim.bindReactions) {
     // Skip if one of the particles is not in the simulation.
-    if (list[r.particleA] == null || list[r.particleB] == null) {
+    if (list[r.particleA.type] == null || list[r.particleB.type] == null) {
       continue;
     }
 
     // Get reactant with smallest number of particles.
-    final ab = list[r.particleA].length < list[r.particleB].length;
-    final a = ab ? r.particleA : r.particleB;
-    final b = ab ? r.particleB : r.particleA;
+    final ab = list[r.particleA.type].length < list[r.particleB.type].length;
+    final a = ab ? r.particleA.type : r.particleB.type;
+    final b = ab ? r.particleB.type : r.particleA.type;
 
     // Iterate through reactant a and b simultaneously.
     REACTION: for (var ai = 0, bi = 0; ai < list[a].length; ai++) {
@@ -81,7 +81,7 @@ void reactionsFastVoxel(Simulation sim) {
       if (list[b][bi].n == vn && rng.nextDouble() < r.probability) {
         // Queue bind reaction.
         reactionQueue.add(new Tuple3<int, int, int>(
-            list[a][ai].i, list[b][bi].i, r.particleC));
+            list[a][ai].i, list[b][bi].i, r.particleC.type));
 
         // Move bi forward.
         bi++;

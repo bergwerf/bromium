@@ -18,12 +18,23 @@ Simulation createEnzymeDemo() {
   // Setup reactions.
   var bindRxn = new Index<BindReaction>();
   var unbindRxn = new Index<UnbindReaction>();
-  bindRxn['step 1'] =
-      new BindReaction(p['N-a'], p['enzyme'], p['enzyme-N'], 0.1);
-  bindRxn['step 2'] =
-      new BindReaction(p['N-a'], p['enzyme-N'], p['enzyme-NN'], 1.0);
-  unbindRxn['step 3'] =
-      new UnbindReaction(p['enzyme-NN'], [p['N-b'], p['enzyme']], 0.1);
+  bindRxn['step 1'] = new BindReaction(
+      new ReactionParticle(p['N-a'], Membrane.inside),
+      new ReactionParticle(p['enzyme'], Membrane.inside),
+      new ReactionParticle(p['enzyme-N'], Membrane.inside),
+      0.1);
+  bindRxn['step 2'] = new BindReaction(
+      new ReactionParticle(p['N-a'], Membrane.inside),
+      new ReactionParticle(p['enzyme-N'], Membrane.inside),
+      new ReactionParticle(p['enzyme-NN'], Membrane.inside),
+      1.0);
+  unbindRxn['step 3'] = new UnbindReaction(
+      new ReactionParticle(p['enzyme-NN'], Membrane.inside),
+      [
+        new ReactionParticle(p['N-b'], Membrane.inside),
+        new ReactionParticle(p['enzyme'], Membrane.inside)
+      ],
+      0.1);
 
   // Create cell membrane.
   var cellMembrane = new Membrane(
@@ -38,6 +49,20 @@ Simulation createEnzymeDemo() {
       p.mappedFloat32List({
         'N-a': .0,
         'N-b': 1.0,
+        'enzyme': .0,
+        'enzyme-N': .0,
+        'enzyme-NN': .0,
+      }),
+      p.mappedFloat32List({
+        'N-a': .0,
+        'N-b': .0,
+        'enzyme': .0,
+        'enzyme-N': .0,
+        'enzyme-NN': .0,
+      }),
+      p.mappedFloat32List({
+        'N-a': .0,
+        'N-b': .0,
         'enzyme': .0,
         'enzyme-N': .0,
         'enzyme-NN': .0,

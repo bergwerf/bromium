@@ -9,8 +9,8 @@ void reactionsUnbindRandom(Simulation sim) {
   var unbind = new Map<int, List<Tuple2<int, double>>>();
   for (var i = 0; i < sim.unbindReactions.length; i++) {
     final r = sim.unbindReactions[i];
-    unbind.putIfAbsent(r.particleA, () => new List<Tuple2<int, double>>());
-    unbind[r.particleA].add(new Tuple2<int, double>(i, r.probability));
+    unbind.putIfAbsent(r.particleA.type, () => new List<Tuple2<int, double>>());
+    unbind[r.particleA.type].add(new Tuple2<int, double>(i, r.probability));
   }
 
   // Iterate through all particles.

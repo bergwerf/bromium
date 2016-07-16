@@ -33,6 +33,10 @@ class Particle implements Transferrable {
   /// List containing all entered membranes
   final List<int> entered;
 
+  /// Stick membrane. If the particle is sticked to a membrane this integer is
+  /// set to the membrane index. Else it is set to -1.
+  int sticked;
+
   Particle(this.type, this.position, this.color, double displayRadius,
       double stepRadius)
       : displayRadius = new Float32View.value(displayRadius),

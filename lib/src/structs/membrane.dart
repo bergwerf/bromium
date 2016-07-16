@@ -8,51 +8,70 @@ part of bromium.structs;
 ///
 /// All membrane information is included in the binary stream.
 class Membrane implements Transferrable {
+  /// Relative to membrane locations
+  static const inside = 0;
+  static const sticked = 1;
+  static const outside = 2;
+
   /// Membrane volume
   final Domain domain;
 
-  /// Inward flux fraction that is allowed per type
-  Float32List ffIn;
+  /// Inward pass allowance
+  Float32List passIn;
 
-  /// Outward flux fraction that is allowed per type
-  Float32List ffOut;
+  /// Outward pass allowance
+  Float32List passOut;
+
+  /// Inward stick allowance
+  /// TODO: implement in buffer and kinetics
+  Float32List stickIn;
+
+  /// Outward stick allowance
+  /// TODO: implement in buffer and kinetics
+  Float32List stickOut;
 
   /// Contained number of particles per type
-  Uint32List concentrations;
+  /// TODO: implement in kinetics
+  Uint32List insideCount;
+
+  /// Sticked number of particles per type
+  /// TODO: implement in buffer and kinetics
+  Uint32List stickedCount;
 
   /// Membrane movement vector
   Vector3 speed = new Vector3.zero();
 
-  Membrane(this.domain, this.ffIn, this.ffOut, int particleCount)
-      : concentrations = new Uint32List(particleCount);
+  Membrane(this.domain, this.passIn, this.passOut, this.stickIn, this.stickOut,
+      int particleCount)
+      : insideCount = new Uint32List(particleCount);
 
   int get sizeInBytes =>
       domain.sizeInBytes +
-      ffIn.lengthInBytes +
-      ffOut.lengthInBytes +
-      concentrations.lengthInBytes;
+      passIn.lengthInBytes +
+      passOut.lengthInBytes +
+      insideCount.lengthInBytes;
 
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     // Create new views.
     offset = domain.transfer(buffer, offset, copy);
-    var _ffIn = new Float32List.view(buffer, offset);
-    offset += ffIn.lengthInBytes;
-    var _ffOut = new Float32List.view(buffer, offset);
-    offset += ffOut.lengthInBytes;
+    var _passIn = new Float32List.view(buffer, offset);
+    offset += passIn.lengthInBytes;
+    var _passOut = new Float32List.view(buffer, offset);
+    offset += passOut.lengthInBytes;
     var _concentrations = new Uint32List.view(buffer, offset);
 
     // Copy old data into new buffer.
     if (copy) {
-      _ffIn.setAll(0, ffIn);
-      _ffOut.setAll(0, ffOut);
-      _concentrations.setAll(0, concentrations);
+      _passIn.setAll(0, passIn);
+      _passOut.setAll(0, passOut);
+      _concentrations.setAll(0, insideCount);
     }
 
     // Replace local data.
-    ffIn = _ffIn;
-    ffOut = _ffOut;
-    concentrations = _concentrations;
+    passIn = _passIn;
+    passOut = _passOut;
+    insideCount = _concentrations;
 
-    return offset + concentrations.lengthInBytes;
+    return offset + insideCount.lengthInBytes;
   }
 }

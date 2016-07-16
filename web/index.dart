@@ -11,6 +11,7 @@ import 'package:logging/logging.dart';
 import 'devtools.dart' as console;
 import 'demos/redblue.dart';
 import 'demos/enzyme.dart';
+import 'demos/transport.dart';
 
 void main() {
   // Setup logging.
@@ -77,6 +78,9 @@ void main() {
         break;
       case 'enzyme':
         simulation = createEnzymeDemo();
+        break;
+      case 'transport':
+        simulation = createTransportDemo();
         break;
     }
 

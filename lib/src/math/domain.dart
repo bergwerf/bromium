@@ -40,7 +40,7 @@ abstract class Domain implements Transferrable {
 
   /// Compute a random point within the domain.
   /// The default implementation uses [computeBoundingBox] and [contains].
-  Vector3 computeRandomPoint([Random rng, List<Domain> cavities]) {
+  Vector3 computeRandomPoint({Random rng, List<Domain> cavities: const []}) {
     rng = rng == null ? new Random() : rng;
     var point = new Vector3.zero();
     var bbox = computeBoundingBox();
@@ -52,7 +52,7 @@ abstract class Domain implements Transferrable {
 
       // Check if the domain contains the point and exclude cavities.
       containsPoint = contains(point);
-      if (containsPoint && cavities != null) {
+      if (containsPoint && cavities.isNotEmpty) {
         for (var cavity in cavities) {
           if (cavity.contains(point)) {
             containsPoint = false;

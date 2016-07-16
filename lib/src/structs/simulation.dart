@@ -101,7 +101,8 @@ class Simulation {
   }
 
   /// Add new particles by randomly generating [n] positions within [domain].
-  void addRandomParticles(int type, Domain domain, int n) {
+  void addRandomParticles(int type, Domain domain, int n,
+      {List<Domain> cavities: const []}) {
     log.group(logger, 'addRandomParticles');
     logger.info('''
 Add $n particles:
@@ -112,7 +113,7 @@ Add $n particles:
 
     // Generate particles.
     for (; n > 0; n--) {
-      _easyAddParticle(type, domain.computeRandomPoint());
+      _easyAddParticle(type, domain.computeRandomPoint(cavities: cavities));
     }
 
     log.groupEnd();
@@ -233,18 +234,18 @@ Add membrane:
   }
 
   /// Unbind particle into products
-  void unbindParticle(int p, List<int> products) {
+  void unbindParticle(int p, List<ReactionParticle> products) {
     /// If products.isNotEmpty, particle p can be replaced with products.first.
     if (products.isNotEmpty) {
       // Add first product.
-      final type = products.first;
+      final type = products.first.type;
       final particle = particles[p];
       editParticleType(particle, type);
 
       // Add other reaction products.
       _rescaleBuffer(products.length - 1, 0);
       for (var i = 1; i < products.length; i++) {
-        _easyAddParticle(products[i], particle.position, particle.entered);
+        _easyAddParticle(products[i].type, particle.position, particle.entered);
       }
     } else {
       /// Remove particle p.

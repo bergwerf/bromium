@@ -18,8 +18,8 @@ void particlesRandomMotionNormal(Simulation sim) {
     // TODO: delay computation by computing movement distance until hit.
     var m = 0;
     for (var membrane in sim.membranes) {
-      var ip = rng.nextDouble() < membrane.ffIn[particle.type];
-      var op = rng.nextDouble() < membrane.ffOut[particle.type];
+      var ip = rng.nextDouble() < membrane.passIn[particle.type];
+      var op = rng.nextDouble() < membrane.passOut[particle.type];
       if (!(ip && op)) {
         var before = particle.entered.contains(m);
         var after = membrane.domain.contains(particle.position + motion);

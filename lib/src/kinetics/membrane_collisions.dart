@@ -21,8 +21,8 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
     for (var i = 0; i < sim.particles.length; i++) {
       final particle = sim.particles[i];
 
-      var ip = rng.nextDouble() < membrane.ffIn[particle.type];
-      var op = rng.nextDouble() < membrane.ffOut[particle.type];
+      var ip = rng.nextDouble() < membrane.passIn[particle.type];
+      var op = rng.nextDouble() < membrane.passOut[particle.type];
 
       if (oldDomain.contains(particle.position)) {
         if (!newDomain.contains(particle.position)) {
