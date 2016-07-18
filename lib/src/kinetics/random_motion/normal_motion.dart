@@ -8,41 +8,47 @@ part of bromium.kinetics;
 void particlesRandomMotionNormal(Simulation sim) {
   var rng = new Random();
   OUTER: for (var particle in sim.particles) {
-    // Note: normalize and randomly scale for a constant max radius.
-    var random = randomVector3(rng)
-      ..sub(new Vector3.all(.5))
-      ..normalize()
-      ..scale(rng.nextDouble() * particle.stepRadius.get());
-    var motion = particle.entered.isNotEmpty
-        ? sim.membranes[particle.entered.last].speed + random
-        : random;
+    if (particle.sticked != -1) {
+      // Sticked particles are displaced by computing a surface normal and
+      // projecting the displacement.
+    } else {
+      // Normal random motion is computed by scaling a normalized random vector
+      // by a random value and the motion radius.
+      var random = randomVector3(rng)
+        ..sub(new Vector3.all(.5))
+        ..normalize()
+        ..scale(rng.nextDouble() * particle.stepRadius.get());
+      var motion = particle.entered.isNotEmpty
+          ? sim.membranes[particle.entered.last].speed + random
+          : random;
 
-    // Check motion block due to allowed flux fraction.
-    // TODO: delay computation by computing movement distance until hit.
-    var m = 0;
-    for (var membrane in sim.membranes) {
-      var ip = rng.nextDouble() < membrane.passIn[particle.type];
-      var op = rng.nextDouble() < membrane.passOut[particle.type];
-      if (!(ip && op)) {
-        var before = particle.entered.contains(m);
-        var after = membrane.domain.contains(particle.position + motion);
-        var inward = !before && after;
-        var outward = before && !after;
+      // Check motion block due to allowed flux fraction.
+      // TODO: delay computation by computing movement distance until hit.
+      var m = 0;
+      for (var membrane in sim.membranes) {
+        final mayEnter = membrane.mayEnter(particle.type);
+        final mayLeave = membrane.mayLeave(particle.type);
+        if (!(mayEnter && mayLeave)) {
+          final before = particle.hasEntered(m);
+          final after = membrane.domain.contains(particle.position + motion);
+          final entered = !before && after;
+          final left = before && !after;
 
-        if ((!ip && inward) || (!op && outward)) {
-          continue OUTER;
-        } else if (inward) {
-          particle.entered.add(m);
-        } else if (outward) {
-          particle.entered.remove(m);
+          if ((!mayEnter && entered) || (!mayLeave && left)) {
+            continue OUTER;
+          } else if (entered) {
+            particle.pushEntered(m);
+          } else if (left) {
+            particle.popEntered(m);
+          }
         }
+
+        // Move to the next membrane.
+        m++;
       }
 
-      // Move to the next membrane.
-      m++;
+      // Apply motion.
+      particle.position.add(random);
     }
-
-    // Apply motion.
-    particle.position.add(random);
   }
 }

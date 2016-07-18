@@ -10,8 +10,6 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
   // surface).
   var poff = 0.01;
 
-  var rng = new Random();
-
   // Loop through all updated membranes.
   updatedMembranes.forEach((int m, Domain newDomain) {
     final membrane = sim.membranes[m];
@@ -21,12 +19,9 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
     for (var i = 0; i < sim.particles.length; i++) {
       final particle = sim.particles[i];
 
-      var ip = rng.nextDouble() < membrane.passIn[particle.type];
-      var op = rng.nextDouble() < membrane.passOut[particle.type];
-
       if (oldDomain.contains(particle.position)) {
         if (!newDomain.contains(particle.position)) {
-          if (op) {
+          if (membrane.mayLeave(particle.type)) {
             // Inner particle has legally moved outward.
             particle.entered.remove(m);
           } else {
@@ -36,7 +31,7 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
           }
         }
       } else if (newDomain.contains(particle.position)) {
-        if (ip) {
+        if (membrane.mayEnter(particle.type)) {
           // Outer particle has legally moved inward.
           particle.entered.add(m);
         } else {

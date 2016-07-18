@@ -10,7 +10,7 @@ import 'dart:typed_data';
 import 'package:vector_math/vector_math.dart';
 import 'package:bromium/views.dart';
 
-part 'src/math/vector_utils.dart';
+part 'src/math/utils.dart';
 part 'src/math/domain.dart';
 part 'src/math/aabb_domain.dart';
 part 'src/math/aabb_ray.dart';

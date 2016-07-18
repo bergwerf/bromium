@@ -4,6 +4,12 @@
 
 part of bromium.math;
 
+/// Global random function.
+final _rng = new Random();
+
+/// Generate a random number between 0 and 1.
+double rand() => _rng.nextDouble();
+
 /// Generate a random vector between (0, 0, 0) and (1, 1, 1).
 Vector3 randomVector3(Random rng) {
   return new Vector3(rng.nextDouble(), rng.nextDouble(), rng.nextDouble());

@@ -16,11 +16,11 @@ class Membrane implements Transferrable {
   /// Membrane volume
   final Domain domain;
 
-  /// Inward pass allowance
-  Float32List passIn;
+  /// Enter allowance per particle type
+  Float32List enterP;
 
-  /// Outward pass allowance
-  Float32List passOut;
+  /// Leave allowance per particle type
+  Float32List leaveP;
 
   /// Inward stick allowance
   /// TODO: implement in kinetics
@@ -41,15 +41,21 @@ class Membrane implements Transferrable {
   /// Membrane movement vector
   Vector3 speed = new Vector3.zero();
 
-  Membrane(this.domain, this.passIn, this.passOut, this.stickIn, this.stickOut,
+  Membrane(this.domain, this.enterP, this.leaveP, this.stickIn, this.stickOut,
       int particleCount)
       : insideCount = new Uint32List(particleCount),
         stickedCount = new Uint32List(particleCount);
 
+  /// Decide if the given particle type may enter.
+  bool mayEnter(int type) => enterP[type] == 0 ? false : rand() < enterP[type];
+
+  /// Decide if the given particle type may leave.
+  bool mayLeave(int type) => leaveP[type] == 0 ? false : rand() < leaveP[type];
+
   int get sizeInBytes =>
       domain.sizeInBytes +
-      passIn.lengthInBytes +
-      passOut.lengthInBytes +
+      enterP.lengthInBytes +
+      leaveP.lengthInBytes +
       stickIn.lengthInBytes +
       stickOut.lengthInBytes +
       insideCount.lengthInBytes +
@@ -57,10 +63,10 @@ class Membrane implements Transferrable {
 
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     offset = domain.transfer(buffer, offset, copy);
-    passIn = transferFloat32List(buffer, offset, copy, passIn);
-    offset += passIn.lengthInBytes;
-    passOut = transferFloat32List(buffer, offset, copy, passOut);
-    offset += passOut.lengthInBytes;
+    enterP = transferFloat32List(buffer, offset, copy, enterP);
+    offset += enterP.lengthInBytes;
+    leaveP = transferFloat32List(buffer, offset, copy, leaveP);
+    offset += leaveP.lengthInBytes;
     stickIn = transferFloat32List(buffer, offset, copy, stickIn);
     offset += stickIn.lengthInBytes;
     stickOut = transferFloat32List(buffer, offset, copy, stickOut);

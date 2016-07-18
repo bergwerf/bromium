@@ -30,12 +30,12 @@ class Particle implements Transferrable {
   /// Step radius
   Float32View stepRadius;
 
-  /// List containing all entered membranes
-  final List<int> entered;
-
   /// Stick membrane. If the particle is sticked to a membrane this integer is
   /// set to the membrane index. Else it is set to -1.
-  int sticked;
+  int sticked = -1;
+
+  /// List containing all entered membranes
+  final List<int> entered;
 
   Particle(this.type, this.position, this.color, double displayRadius,
       double stepRadius)
@@ -44,7 +44,7 @@ class Particle implements Transferrable {
         entered = new List<int>();
 
   Particle.raw(this.type, this.position, this.color, this.displayRadius,
-      this.stepRadius, this.entered);
+      this.stepRadius, this.sticked, this.entered);
 
   /// Copy the given position into the position view.
   void setPosition(Vector3 _position) {
@@ -55,6 +55,15 @@ class Particle implements Transferrable {
   void setColor(Vector3 _color) {
     color.copyFromArray(_color.storage);
   }
+
+  /// Check if the particle has entered the given membrane.
+  bool hasEntered(int membrane) => entered.contains(membrane);
+
+  /// Push new entered membrane.
+  void pushEntered(int membrane) => entered.add(membrane);
+
+  /// Remove entered membrane (leave membrane).
+  bool popEntered(int membrane) => entered.remove(membrane);
 
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {

@@ -20,6 +20,7 @@ class SimulationZ {
     var list = new List<int>();
     for (var particle in _strippedSimulation.particles) {
       list.add(particle.type);
+      list.add(particle.sticked);
       list.addAll(particle.entered);
       list.add(-1);
     }
@@ -40,8 +41,9 @@ class SimulationZ {
 
       for (var i = 0; i < _hiddenParticleData.length;) {
         // Read compressed particle data.
-        var type = _hiddenParticleData[i++];
-        var entered = new List<int>();
+        final type = _hiddenParticleData[i++];
+        final sticked = _hiddenParticleData[i++];
+        final entered = new List<int>();
         var membrane = 0;
         while ((membrane = _hiddenParticleData[i++]) != -1) {
           entered.add(membrane);
@@ -58,8 +60,8 @@ class SimulationZ {
         offset += displayRadius.sizeInBytes;
 
         // Add particle.
-        _strippedSimulation.particles.add(new Particle.raw(
-            type, position, color, displayRadius, stepRadius, entered));
+        _strippedSimulation.particles.add(new Particle.raw(type, position,
+            color, displayRadius, stepRadius, sticked, entered));
       }
 
       return _strippedSimulation;
