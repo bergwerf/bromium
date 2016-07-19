@@ -19,12 +19,12 @@ Bromium consists of the following set of smaller libraries:
 - `bromium.renderer` Simulation 3D renderer
 - `bromium.editor` Scene editor for Bromium
 
-Conventions
------------
+Code conventions
+----------------
 ### Sanity checks
 It is discouraged to add sanity checks to data structures (for example to detect
 impossible reactions). This makes the code more complex and less readable.
-Instead the code should be more resilient towards incorrect data. 
+Instead the code should be more resilient towards incorrect data.
 
 ### Types
 In almost all circumstances it is preferred to use types from the `vector_math`
@@ -47,10 +47,17 @@ Topics for further research
 Currently a voxel based approach is used where all inter-voxel reactions are
 implicitly discarded. Alternative approaches have shown significant lower
 performance. More performance might be gained by caching results from previous
-cycles. A very interesting question is how much the voxel approach hurts the
+cycles, or by using a different voxel number computation such as a Z-order
+curve. A very interesting question is how much the voxel approach hurts the
 accuracy of the entire simulation.
 
 ### Accuracy of brownian motion
 Currently a not too accurate approach is used to compute the random motion. Each
 cycle the particle is displaced by a normalized vector that points in a random
 direction times a random number between 0 and 1.
+
+### Membrane protein motion
+Membrane proteins can be simulated using sticky particles. Currently there is no
+implementation to simulate membrane protein dynamics. The amount of motion that
+should be applied to sticky particles to simulate accurate membrane dynamics has
+yet to be researched.
