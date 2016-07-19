@@ -5,6 +5,7 @@
 part of bromium.engine;
 
 /// Helper for measuring performance
+/// TODO: dummy benchmark as lightweight replacement.
 class Benchmark {
   /// Stopwatch for mircosecond measurements.
   Stopwatch time = new Stopwatch();

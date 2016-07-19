@@ -21,6 +21,11 @@ Bromium consists of the following set of smaller libraries:
 
 Conventions
 -----------
+### Sanity checks
+It is discouraged to add sanity checks to data structures (for example to detect
+impossible reactions). This makes the code more complex and less readable.
+Instead the code should be more resilient towards incorrect data. 
+
 ### Types
 In almost all circumstances it is preferred to use types from the `vector_math`
 library to keep the code more readable. Array to vector conversion should be
@@ -32,6 +37,9 @@ Prefer `for-in` loops over `forEach` loops. Always use `for-in` when possible.
 ### Comments
 Meaningless comments such as `/// Constructor` or copied comments from the
 super class should be omitted.
+
+### Error messages
+Error messages should be full sentences.
 
 Topics for further research
 ---------------------------

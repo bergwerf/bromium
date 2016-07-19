@@ -56,12 +56,12 @@ class SimulationZ {
         offset += color.storage.lengthInBytes;
         final displayRadius = new Float32View(buffer, offset);
         offset += displayRadius.sizeInBytes;
-        final stepRadius = new Float32View(buffer, offset);
+        final speed = new Float32View(buffer, offset);
         offset += displayRadius.sizeInBytes;
 
         // Add particle.
         _strippedSimulation.particles.add(new Particle.raw(type, position,
-            color, displayRadius, stepRadius, sticked, entered));
+            color, displayRadius, speed, sticked, entered));
       }
 
       return _strippedSimulation;

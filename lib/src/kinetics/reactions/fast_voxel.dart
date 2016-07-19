@@ -49,9 +49,10 @@ void reactionsFastVoxel(Simulation sim) {
   }
 
   // Iterate through reactions.
-  var rng = new Random();
-  var reactionQueue = new List<Tuple3<int, int, int>>();
-  for (var r in sim.bindReactions) {
+  var reactionQueue = new List<BindReactionItem>();
+  for (var ridx = 0; ridx < sim.bindReactions.length; ridx++) {
+    final r = sim.bindReactions[ridx];
+
     // Skip if one of the particles is not in the simulation.
     if (list[r.particleA.type] == null || list[r.particleB.type] == null) {
       continue;
@@ -78,10 +79,12 @@ void reactionsFastVoxel(Simulation sim) {
 
       // Check if the next b voxel is equal to the current a voxel.
       // If so randomly decide to proceed the reaction.
-      if (list[b][bi].n == vn && rng.nextDouble() < r.probability) {
+      final ap = sim.particles[list[a][ai].i];
+      final bp = sim.particles[list[b][bi].i];
+      if (list[b][bi].n == vn && r.tryReaction(ab ? ap : bp, ab ? bp : ap)) {
         // Queue bind reaction.
-        reactionQueue.add(new Tuple3<int, int, int>(
-            list[a][ai].i, list[b][bi].i, r.particleC.type));
+        reactionQueue
+            .add(new BindReactionItem(list[a][ai].i, list[b][bi].i, ridx));
 
         // Move bi forward.
         bi++;

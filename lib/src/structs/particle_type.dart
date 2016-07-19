@@ -11,12 +11,12 @@ class ParticleType {
   /// Display color
   final Vector3 displayColor;
 
-  /// Random walk step radius
-  final double stepRadius;
+  /// Random walk speed
+  final double speed;
 
-  /// Particle display radius
-  final double displayRadius;
+  /// Particle radius
+  final double radius;
 
-  ParticleType(Vector4 color, this.stepRadius, this.displayRadius)
+  ParticleType(Vector4 color, this.speed, this.radius)
       : displayColor = color.rgb;
 }

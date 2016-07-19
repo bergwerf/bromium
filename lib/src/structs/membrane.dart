@@ -16,35 +16,42 @@ class Membrane implements Transferrable {
   /// Membrane volume
   final Domain domain;
 
-  /// Enter allowance per particle type
+  /// Enter probability per particle type
   Float32List enterP;
 
-  /// Leave allowance per particle type
+  /// Leave probability per particle type
   Float32List leaveP;
 
-  /// Inward stick allowance
-  /// TODO: implement in kinetics
-  Float32List stickIn;
+  /// Stick on enter probability per particle type
+  Float32List enterStickP;
 
-  /// Outward stick allowance
-  /// TODO: implement in kinetics
-  Float32List stickOut;
+  /// Stick on leave probability per particle type
+  Float32List leaveStickP;
 
   /// Contained number of particles per type
-  /// TODO: implement in kinetics
   Uint32List insideCount;
 
   /// Sticked number of particles per type
-  /// TODO: implement in kinetics
   Uint32List stickedCount;
 
   /// Membrane movement vector
   Vector3 speed = new Vector3.zero();
 
-  Membrane(this.domain, this.enterP, this.leaveP, this.stickIn, this.stickOut,
-      int particleCount)
+  Membrane(this.domain, this.enterP, this.leaveP, this.enterStickP,
+      this.leaveStickP, int particleCount)
       : insideCount = new Uint32List(particleCount),
         stickedCount = new Uint32List(particleCount);
+
+  /// Decide if the given particle type sticks.
+  bool stick(int type, bool enters, bool leaves) {
+    if (enters) {
+      return enterStickP[type] == 0 ? false : rand() < enterStickP[type];
+    } else if (leaves) {
+      return leaveStickP[type] == 0 ? false : rand() < leaveStickP[type];
+    } else {
+      return false;
+    }
+  }
 
   /// Decide if the given particle type may enter.
   bool mayEnter(int type) => enterP[type] == 0 ? false : rand() < enterP[type];
@@ -56,8 +63,8 @@ class Membrane implements Transferrable {
       domain.sizeInBytes +
       enterP.lengthInBytes +
       leaveP.lengthInBytes +
-      stickIn.lengthInBytes +
-      stickOut.lengthInBytes +
+      enterStickP.lengthInBytes +
+      leaveStickP.lengthInBytes +
       insideCount.lengthInBytes +
       stickedCount.lengthInBytes;
 
@@ -67,10 +74,10 @@ class Membrane implements Transferrable {
     offset += enterP.lengthInBytes;
     leaveP = transferFloat32List(buffer, offset, copy, leaveP);
     offset += leaveP.lengthInBytes;
-    stickIn = transferFloat32List(buffer, offset, copy, stickIn);
-    offset += stickIn.lengthInBytes;
-    stickOut = transferFloat32List(buffer, offset, copy, stickOut);
-    offset += stickOut.lengthInBytes;
+    enterStickP = transferFloat32List(buffer, offset, copy, enterStickP);
+    offset += enterStickP.lengthInBytes;
+    leaveStickP = transferFloat32List(buffer, offset, copy, leaveStickP);
+    offset += leaveStickP.lengthInBytes;
     insideCount = transferUint32List(buffer, offset, copy, insideCount);
     offset += insideCount.lengthInBytes;
     stickedCount = transferUint32List(buffer, offset, copy, stickedCount);

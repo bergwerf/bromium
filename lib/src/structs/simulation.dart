@@ -85,10 +85,10 @@ class Simulation {
   /// Utility for [_addParticle] with only a [type] and [position]. Also
   /// computes the entered membranes. You can specify the entered mebmranes to
   /// prevent an number of expensive ray projections.
-  void _easyAddParticle(int type, Vector3 position, [List<int> entered]) {
+  Particle _easyAddParticle(int type, Vector3 position, [List<int> entered]) {
     final _type = particleTypes[type];
-    final particle = new Particle(type, position, _type.displayColor,
-        _type.displayRadius, _type.stepRadius);
+    final particle = new Particle(
+        type, position, _type.displayColor, _type.radius, _type.speed);
     _addParticle(particle);
 
     // Set entered membranes.
@@ -98,6 +98,8 @@ class Simulation {
       // Compute entered membranes using ray projection.
       updateParticleEntered(particle);
     }
+
+    return particle;
   }
 
   /// Add new particles by randomly generating [n] positions within [domain].
@@ -158,8 +160,28 @@ Add membrane:
     final _type = particleTypes[type];
     particle.type = type;
     particle.setColor(_type.displayColor);
-    particle.displayRadius.set(_type.displayRadius);
-    particle.stepRadius.set(_type.stepRadius);
+    particle.radius = _type.radius;
+    particle.speed = _type.speed;
+  }
+
+  /// Edit the given particle location relative to the given membrane.
+  void editParticleLocation(Particle particle, int membrane, int location) {
+    switch (location) {
+      case Membrane.sticked:
+        particle.popEntered(membrane);
+        particle.stickTo(membrane, membranes[membrane].domain);
+        break;
+
+      case Membrane.inside:
+        particle.pushEntered(membrane);
+        particle.sticked = -1;
+        break;
+
+      case Membrane.outside:
+        particle.popEntered(membrane);
+        particle.sticked = -1;
+        break;
+    }
   }
 
   /// Recompute the entered membranes for the given particle using ray
@@ -194,42 +216,63 @@ Add membrane:
     }
   }
 
-  /// Bind two particles.
-  void bindParticles(int a, int b, int type) {
-    /// As a general rule, the new position will be the position of the particle
-    /// with the largest display radius.
-    final largest = particleTypes[particles[a].type].displayRadius >
-        particleTypes[particles[b].type].displayRadius ? a : b;
+  /// Bind two particles
+  ///
+  /// Note that [a] and [b] do not necessarily correspond to
+  /// [BindReaction.particleA] and [BindReaction.particleB] since they might be
+  /// swapped in both the kinetics algorithm and in [applyBindReactions].
+  void bindParticles(int a, int b, int r) {
+    final particleA = particles[a];
+    final particleB = particles[b];
+    final particleC = bindReactions[r].particleC;
 
-    /// Set particle a to the new type.
-    ///
-    /// Note that we have to do this before removing b or the index of particle
-    /// a might have changed (only if a is the last particle).
-    final particle = particles[a];
-    editParticleType(particle, type);
-    particle.setPosition(particles[largest].position);
+    // Set particle a to the new type.
+    editParticleType(particleA, particleC.type);
 
-    /// Remove particle b.
+    // If particle C is sticked and particle A and B are also sticked, the
+    // position must be interpolated and the sticked property is already set.
+    //
+    // If particle C is sticked but only particle A or B is sticked, the
+    // position and sticked property of particle C must be set to the same
+    // values as the initially sticked particle.
+    if (particleC.sticked &&
+        !(bindReactions[r].particleA.sticked &&
+            bindReactions[r].particleB.sticked)) {
+      // If particle A is sticked the position and sticked property are already
+      // set correctly.
+      if (!particleA.isSticked) {
+        particleA.sticked = particleB.sticked;
+        particleA.setPosition(particleB.position);
+      }
+    } else {
+      // Linearly interpolate between the two particles using their radius as
+      // weights.
+      var result = new Vector3.zero();
+      final weight = particleA.radius + particleB.radius;
+      Vector3.mix(particleA.position, particleB.position,
+          1 / weight * particleB.radius, result);
+      particleA.setPosition(result);
+    }
+
+    // Remove particle b.
     removeParticle(b);
   }
 
   /// Apply multiple bind reactions (takes care of index displacement).
-  void applyBindReactions(List<Tuple3<int, int, int>> rxns) {
-    // In all reactions set item1 to the smallest of {item1, item2}.
+  void applyBindReactions(List<BindReactionItem> rxns) {
+    // In all reactions set a to the smallest of {a, b}.
     for (var i = 0; i < rxns.length; i++) {
-      if (rxns[i].item1 > rxns[i].item2) {
-        rxns[i] = new Tuple3<int, int, int>(
-            rxns[i].item2, rxns[i].item1, rxns[i].item3);
+      if (rxns[i].a > rxns[i].b) {
+        rxns[i] = new BindReactionItem(rxns[i].b, rxns[i].a, rxns[i].r);
       }
     }
 
-    // Sort reactions in descending order using item2.
-    rxns.sort((Tuple3<int, int, int> a, Tuple3<int, int, int> b) =>
-        b.item2 - a.item2);
+    // Sort reactions in descending order using b.
+    rxns.sort((BindReactionItem a, BindReactionItem b) => b.b - a.b);
 
     // Apply reactions
     for (var rxn in rxns) {
-      bindParticles(rxn.item1, rxn.item2, rxn.item3);
+      bindParticles(rxn.a, rxn.b, rxn.r);
     }
   }
 
@@ -237,15 +280,29 @@ Add membrane:
   void unbindParticle(int p, List<ReactionParticle> products) {
     /// If products.isNotEmpty, particle p can be replaced with products.first.
     if (products.isNotEmpty) {
-      // Add first product.
-      final type = products.first.type;
+      // Resolve context membrane.
       final particle = particles[p];
-      editParticleType(particle, type);
+      var membrane = -1;
+      if (particle.isSticked) {
+        membrane = particle.sticked;
+      } else if (particle.entered.isNotEmpty) {
+        membrane = particle.entered.last;
+      }
+
+      // Add first product.
+      editParticleType(particle, products.first.type);
+      editParticleLocation(particle, membrane, products.first.relativeLocation);
 
       // Add other reaction products.
       _rescaleBuffer(products.length - 1, 0);
+
+      // Note that i = 0 is already stored in the unbinding particle.
       for (var i = 1; i < products.length; i++) {
-        _easyAddParticle(products[i].type, particle.position, particle.entered);
+        final product = products[i];
+        editParticleLocation(
+            _easyAddParticle(product.type, particle.position, particle.entered),
+            membrane,
+            product.relativeLocation);
       }
     } else {
       /// Remove particle p.
