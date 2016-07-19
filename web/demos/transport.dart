@@ -15,9 +15,9 @@ Simulation createTransportDemo() {
   p['ADP'] = new ParticleType(Colors.blue, 0.04, 0.01);
   p['P'] = new ParticleType(Colors.gray, 0.05, 0.005);
   p['nutrient'] = new ParticleType(Colors.green, 0.05, 0.03);
-  p['channel'] = new ParticleType(Colors.yellow, 0.01, 0.06);
-  p['bounded-channel'] = new ParticleType(Colors.lightGreen, 0.01, 0.06);
-  p['active-bounded-channel'] = new ParticleType(Colors.cyan, 0.01, 0.06);
+  p['channel'] = new ParticleType(Colors.yellow, 0.02, 0.06);
+  p['bounded-channel'] = new ParticleType(Colors.lightGreen, 0.02, 0.06);
+  p['active-bounded-channel'] = new ParticleType(Colors.cyan, 0.02, 0.06);
 
   // Setup reactions.
   var bindRxn = new Index<BindReaction>();
