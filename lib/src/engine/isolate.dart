@@ -18,7 +18,7 @@ class SimulationIsolate {
   ByteBuffer lastBuffer;
 
   /// Info logger
-  final Logger logger = new Logger('SimulationIsolate');
+  final Logger logger = new Logger('bromium.engine.SimulationIsolate');
 
   /// Primary isolate.
   Isolate _isolate;

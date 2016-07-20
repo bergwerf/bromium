@@ -7,7 +7,7 @@ part of bromium.engine;
 /// Simulation controller
 class BromiumEngine {
   /// Info logger
-  final Logger logger = new Logger('BromiumEngine');
+  final Logger logger = new Logger('bromium.engine.BromiumEngine');
 
   /// Render buffer
   final RenderBuffer renderBuffer = new RenderBuffer();

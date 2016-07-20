@@ -34,7 +34,7 @@ class SimulationZ {
       return _strippedSimulation;
     } else {
       // Add new logger.
-      _strippedSimulation.logger = new Logger('Simulation');
+      _strippedSimulation.logger = new Logger('bromium.structs.Simulation');
 
       final buffer = _strippedSimulation.buffer;
       var offset = _strippedSimulation.particlesOffset;
@@ -60,8 +60,8 @@ class SimulationZ {
         offset += displayRadius.sizeInBytes;
 
         // Add particle.
-        _strippedSimulation.particles.add(new Particle.raw(type, position,
-            color, displayRadius, speed, sticked, entered));
+        _strippedSimulation.particles.add(new Particle.raw(
+            type, position, color, displayRadius, speed, sticked, entered));
       }
 
       return _strippedSimulation;

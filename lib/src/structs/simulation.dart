@@ -17,7 +17,7 @@ class Simulation {
   static const membranesCapBytes = 120;
 
   /// Info logger
-  Logger logger = new Logger('Simulation');
+  Logger logger = new Logger('bromium.structs.Simulation');
 
   /// Byte buffer for data that must be continously streamed to the frontend.
   /// This contains 3D render input and simulation state information this is

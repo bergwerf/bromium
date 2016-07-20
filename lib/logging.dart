@@ -6,7 +6,7 @@ library bromium.logging;
 
 import 'package:logging/logging.dart';
 
-final _groupLogger = new Logger('GroupLogger');
+final _groupLogger = new Logger('bromium.logging.GroupLogger');
 
 /// Start log group.
 void group(Logger logger, String name) {
