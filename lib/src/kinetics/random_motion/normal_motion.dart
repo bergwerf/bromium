@@ -15,13 +15,10 @@ void particlesRandomMotionNormal(Simulation sim) {
     } else {
       // Normal random motion is computed by scaling a normalized random vector
       // by a random value and the motion radius.
-      var random = randomVector3(rng)
+      final motion = randomVector3(rng)
         ..sub(new Vector3.all(.5))
         ..normalize()
         ..scale(rng.nextDouble() * particle.speed);
-      var motion = particle.entered.isNotEmpty
-          ? sim.membranes[particle.entered.last].speed + random
-          : random;
 
       // Check motion block due to allowed flux fraction.
       // TODO: delay computation by computing movement distance until hit.
@@ -58,7 +55,7 @@ void particlesRandomMotionNormal(Simulation sim) {
       }
 
       // Apply motion.
-      particle.position.add(random);
+      particle.position.add(motion);
     }
   }
 }

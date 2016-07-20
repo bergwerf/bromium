@@ -35,6 +35,12 @@ class Membrane implements Transferrable {
   Uint32List stickedCount;
 
   /// Membrane movement vector
+  ///
+  /// Membrane dynamics have not yet been implemented. However, here is an idea
+  /// on what to do with particles inside the membrane when it is moving: move
+  /// all particles with the same ammount as the membrane each cycle. This will
+  /// make sure there are no collisions with inner particles, and it retains the
+  /// particle random motion relative to the membrane.
   Vector3 speed = new Vector3.zero();
 
   Membrane(this.domain, this.enterP, this.leaveP, this.enterStickP,
