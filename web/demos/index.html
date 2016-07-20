@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport">
+    <title>Bromium</title>
+  </head>
+  <body>
+    <select id="simulation-select" value="">
+      <option disabled selected value>Demo simulations</option>
+      <option value="redblue-1m">Red blue 1M</option>
+      <option value="redblue-100k">Red blue 100k</option>
+      <option value="redblue-10k">Red blue 10k</option>
+      <option value="enzyme">Enzyme</option>
+      <option value="transport">Active transport</option>
+    </select>
+    <button id="resume-simulation">Resume simulation</button>
+    <button id="pause-simulation">Pause simulation</button>
+    <button id="toggle-isolates">Toggle isolates</button>
+    <button id="print-benchmark">Print benchmarks</button>
+    <br/>
+    <br/>
+    <canvas id="bromium-canvas" width="720" height="480"></canvas>
+    <script src="index.dart" type="application/dart"></script>
+    <script src="packages/browser/dart.js"></script>
+  </body>
+</html>

@@ -1,0 +1,137 @@
+:root {
+  /* Global variables */
+  --backround: #444;
+  --foreground: #eee;
+  --bar-size: 40px;
+  --control-width: 400px;
+
+  /* Mixins */
+  --mono-font: {
+    font-family: 'Droid Sans Mono', monospace;
+  }
+}
+
+body {
+  margin: 0;
+  color: #eee;
+  font-family: 'Open Sans';
+}
+
+#control-panel {
+  position: absolute;
+  width: var(--control-width);
+  height: 100%;
+  background: var(--backround);
+}
+
+#view-panel {
+  position: absolute;
+  left: var(--control-width);
+  right: 0;
+  height: 100%;
+}
+
+#control-bar {
+  position: absolute;
+  height: var(--bar-size);
+  width: 100%;
+  background: rgba(0, 0, 0, .3);
+}
+
+.bromium-btn {
+  display: inline-block;
+  height: var(--bar-size);
+  padding: 8px 16px;
+  font-size: 16pt;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.bromium-btn:hover {
+  background: rgba(255, 255, 255, .2);
+  text-shadow: 0 0 4px rgba(0, 0, 0, .8);
+}
+
+.bromium-btn:active {
+  background: rgba(255, 255, 255, .25);
+  text-shadow: 0 0 4px rgba(0, 0, 0, .4);
+}
+
+#tabs-bar {
+  position: absolute;
+  top: var(--bar-size);
+  bottom: 0;
+  width: var(--bar-size);
+  background: rgba(0, 0, 0, .7);
+}
+
+.tab-header {
+  margin: 2px 0 2px 5px;
+  padding: 18px 10px;
+  @apply --mono-font;
+  font-size: 11pt;
+  background: var(--backround);
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+
+  /* Rotated and mirrored text trick */
+  display: block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.tab-header.inactive {
+  box-shadow: inset 10px 0 8px -5px rgba(0, 0, 0, 1);
+  background: #333;
+}
+
+.tab-header.inactive:hover {
+  background: var(--backround);
+}
+
+#tabs-panel {
+  position: absolute;
+  top: var(--bar-size);
+  left: var(--bar-size);
+  bottom: 0;
+  width: calc(var(--control-width) - var(--bar-size));
+  background: var(--backround);
+}
+
+.tab-panel {
+  position: absolute;
+  width: 100%;
+}
+
+.tab-panel.hidden {
+  display: none;
+}
+
+.tab-item {
+  margin: 10px;
+  padding: 10px;
+  background: #777;
+  border-radius: 5px;
+}
+
+.item-line {
+  display: flex;
+  padding: 5px;
+}
+
+.item-line > span {
+  flex-grow: 1;
+  padding: 5px;
+  @apply --mono-font;
+  font-size: 10pt;
+}
+
+.item-line > input {
+  padding: 5px 10px;
+  background: #555;
+  @apply --mono-font;
+  color: var(--foreground);
+  border: none;
+  outline: none;
+  border-radius: 4px;
+}

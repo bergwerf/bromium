@@ -9,6 +9,16 @@ dependencies:
   tuple:        ^1.0.0
   vector_math:  ^2.0.3
   logging:      ^0.11.3
+
+# Stuff to get the web UI working.
 dev_dependencies:
   js:           ^0.6.0
   browser:      ^0.10.0+2
+  postcss_transformer: ^0.1.1
+  dart_to_js_script_rewriter: ^0.1.0
+transformers:
+  - dart_to_js_script_rewriter
+  - postcss_transformer:
+      arguments:
+      - use: postcss-apply
+      - use: postcss-css-variables
