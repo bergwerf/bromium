@@ -53,7 +53,7 @@ abstract class Domain implements Transferrable {
       // Check if the domain contains the point and exclude cavities.
       containsPoint = contains(point);
       if (containsPoint && cavities.isNotEmpty) {
-        for (var cavity in cavities) {
+        for (final cavity in cavities) {
           if (cavity.contains(point)) {
             containsPoint = false;
             break;

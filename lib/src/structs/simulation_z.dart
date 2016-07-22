@@ -18,7 +18,7 @@ class SimulationZ {
 
     // Compress particles.
     var list = new List<int>();
-    for (var particle in _strippedSimulation.particles) {
+    for (final particle in _strippedSimulation.particles) {
       list.add(particle.type);
       list.add(particle.sticked);
       list.addAll(particle.entered);

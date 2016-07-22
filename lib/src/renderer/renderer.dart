@@ -119,7 +119,7 @@ class BromiumWebGLRenderer extends GlCanvas {
 
     // Draw all membranes.
     var membranes = engine.renderBuffer.generateMembraneDomains();
-    for (var membrane in membranes) {
+    for (final membrane in membranes) {
       if (membrane is AabbDomain) {
         cubeGeometry.transform =
             viewMatrix * GlCube.computeTransform(membrane.data);

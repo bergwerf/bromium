@@ -17,7 +17,6 @@ Bromium consists of the following set of smaller libraries:
 - `bromium.gpgpu` Helpers for GPU computations using WebGL
 - `bromium.glutils` WebGL utility library
 - `bromium.renderer` Simulation 3D renderer
-- `bromium.editor` Scene editor for Bromium
 
 Code conventions
 ----------------
@@ -33,6 +32,7 @@ minimized.
 
 ### Loops
 Prefer `for-in` loops over `forEach` loops. Always use `for-in` when possible.
+Also use final in loops when applicable (e.g. `for (final thing in things)`).
 
 ### Comments
 Meaningless comments such as `/// Constructor` or copied comments from the

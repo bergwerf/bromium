@@ -72,7 +72,7 @@ abstract class _GlBuffer<D extends List> {
   /// Link all attributes.
   void linkAll(GlShader shaderProgram) {
     bind();
-    for (var ptr in _attribs) {
+    for (final ptr in _attribs) {
       _ctx.vertexAttribPointer(shaderProgram.attributes[ptr.attrib], ptr.size,
           ptr.type, false, ptr.stride, ptr.offset);
     }

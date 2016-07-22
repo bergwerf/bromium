@@ -18,7 +18,7 @@ void reactionsUnbindRandom(Simulation sim) {
   for (var i = 0; i < sim.particles.length; i++) {
     final type = sim.particles[i].type;
     if (unbind.containsKey(type)) {
-      for (var r in unbind[type]) {
+      for (final r in unbind[type]) {
         if (rng.nextDouble() < r.item2) {
           sim.unbindParticle(i, sim.unbindReactions[r.item1].products);
 

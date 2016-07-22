@@ -2,13 +2,9 @@
 // Use of this source code is governed by an AGPL-3.0-style license
 // that can be found in the LICENSE file.
 
-import 'dart:html';
 import 'dart:async';
 
-import 'package:bromium/engine.dart';
-import 'package:bromium/renderer.dart';
-
-import 'ui.dart';
+import 'ui/ui.dart';
 import 'devtools.dart' as console;
 
 Future main() async {

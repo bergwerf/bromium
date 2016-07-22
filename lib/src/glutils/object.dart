@@ -50,7 +50,7 @@ class GlObject {
     _ctx.uniformMatrix4fv(shaderProgram.uViewMatrix, false, transform.storage);
 
     // Link all buffers.
-    for (var buffer in buffers) {
+    for (final buffer in buffers) {
       buffer.linkAll(shaderProgram);
     }
   }

@@ -134,7 +134,7 @@ Add membrane:
     membranes.add(membrane);
 
     /// Update the entered membranes for all particles.
-    for (var particle in particles) {
+    for (final particle in particles) {
       updateParticleEntered(particle);
     }
 
@@ -211,7 +211,7 @@ Add membrane:
 
     // Updated entered membranes.
     particle.entered.clear();
-    for (var tuple in entered) {
+    for (final tuple in entered) {
       particle.entered.add(tuple.item1);
     }
   }
@@ -271,7 +271,7 @@ Add membrane:
     rxns.sort((BindReactionItem a, BindReactionItem b) => b.b - a.b);
 
     // Apply reactions
-    for (var rxn in rxns) {
+    for (final rxn in rxns) {
       bindParticles(rxn.a, rxn.b, rxn.r);
     }
   }
@@ -367,19 +367,19 @@ Transfer to a larger buffer:
     header.membranesOffset = membranesOffset;
 
     // Transfer reactions and particles.
-    for (var bindReaction in bindReactions) {
+    for (final bindReaction in bindReactions) {
       offset = bindReaction.transfer(newBuffer, offset);
     }
-    for (var unbindReaction in unbindReactions) {
+    for (final unbindReaction in unbindReactions) {
       offset = unbindReaction.transfer(newBuffer, offset);
     }
-    for (var particle in particles) {
+    for (final particle in particles) {
       offset = particle.transfer(newBuffer, offset);
     }
 
     // Skip particles cap and transfer membranes.
     offset = membranesOffset;
-    for (var membrane in membranes) {
+    for (final membrane in membranes) {
       offset = membrane.transfer(newBuffer, offset);
     }
 
@@ -393,7 +393,7 @@ Transfer to a larger buffer:
   /// membranes.
   int get allMembraneBytes {
     int count = 0;
-    for (var membrane in membranes) {
+    for (final membrane in membranes) {
       count += membrane.sizeInBytes;
     }
     return count;
