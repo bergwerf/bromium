@@ -73,7 +73,7 @@ void setupUi() {
   });
 
   // Run the simulation.
-  $('#btn-run').onClick.listen((_) async {
+  $('#btn-reload').onClick.listen((_) async {
     // Pause engine and renderer.
     await engine.pause();
 
@@ -106,10 +106,24 @@ void setupUi() {
     await engine.loadSimulation(simulation);
     renderer.focus(bbox);
     renderer.start();
+    $('#btn-pause-run').text = 'Pause';
   });
 
   // Pause the simulation.
-  $('#btn-pause').onClick.listen((_) {
-    engine.pause();
+  final pauseRunBtn = $('#btn-pause-run');
+  pauseRunBtn.onClick.listen((_) async {
+    if (engine.isRunning) {
+      if (engine.inIsolate) {
+        pauseRunBtn.text = 'Pausing...';
+        pauseRunBtn.classes.add('disabled');
+      }
+
+      await engine.pause();
+      pauseRunBtn.text = 'Run';
+      pauseRunBtn.classes.remove('disabled');
+    } else {
+      await engine.resume();
+      pauseRunBtn.text = 'Pause';
+    }
   });
 }
