@@ -24,6 +24,9 @@ class Index<E> {
   /// Retrieve element by label.
   E at(String label) => data[_index[label]];
 
+  /// Check if the given label is contained in the index.
+  bool contains(String label) => _index.containsKey(label);
+
   /// Get number of elements.
   int get length => data.length;
 

@@ -41,7 +41,7 @@ class ParticleTypeItem extends Item {
           new SimpleEntry('Color', new ColorDataElement())
         ]);
 
-  ParticleType getParticleType() {
+  ParticleType get data {
     final data = collectData();
     return new ParticleType(data['Color'].xyz, data['Speed'], data['Radius']);
   }
@@ -89,7 +89,7 @@ class MembraneItem extends Item {
     return map;
   }
 
-  Membrane getMembrane(Index<ParticleType> particleIndex) {
+  Membrane createMembrane(Index<ParticleType> particleIndex) {
     final data = collectData();
 
     // Create domain.
@@ -120,25 +120,148 @@ class MembraneItem extends Item {
   }
 }
 
+/// Convert location string to number.
+const _convertMembraneLocation = const {
+  'inside': Membrane.inside,
+  'sticked': Membrane.sticked,
+  'outside': Membrane.outside
+};
+
+/// Data item for a bind reaction
+class BindReactionItem extends Item {
+  BindReactionItem()
+      : super([
+          new SimpleEntry('Particle A', new InputDataElement(type: 'text')),
+          new SimpleEntry('A location',
+              new ChoiceDataElement(['inside', 'sticked', 'outside'])),
+          new SimpleEntry('Particle B', new InputDataElement(type: 'text')),
+          new SimpleEntry('B location',
+              new ChoiceDataElement(['inside', 'sticked', 'outside'])),
+          new SimpleEntry('Particle C', new InputDataElement(type: 'text')),
+          new SimpleEntry('C location',
+              new ChoiceDataElement(['inside', 'sticked', 'outside'])),
+          new SimpleEntry(
+              'Probability', new NumericDataElement(step: 0.01, min: 0, max: 1))
+        ]);
+
+  BindReaction createBindReaction(Index<ParticleType> particleIndex) {
+    final data = collectData();
+    return new BindReaction(
+        new ReactionParticle(particleIndex[data['Particle A']],
+            _convertMembraneLocation[data['A location']]),
+        new ReactionParticle(particleIndex[data['Particle B']],
+            _convertMembraneLocation[data['B location']]),
+        new ReactionParticle(particleIndex[data['Particle C']],
+            _convertMembraneLocation[data['C location']]),
+        data['Probability']);
+  }
+}
+
+/// Data item for an unbind reaction
+class UnbindReactionItem extends Item {
+  UnbindReactionItem()
+      : super([
+          new SimpleEntry('Particle', new InputDataElement(type: 'text')),
+          new SimpleEntry('Location',
+              new ChoiceDataElement(['inside', 'sticked', 'outside'])),
+          new MultiSplitEntry(
+              'Products',
+              100,
+              new ChoiceDataElement(['inside', 'sticked', 'outside']),
+              new InputDataElement(type: 'text')),
+          new SimpleEntry(
+              'Probability', new NumericDataElement(step: 0.01, min: 0, max: 1))
+        ]);
+
+  UnbindReaction createUnbindReaction(Index<ParticleType> particleIndex) {
+    final data = collectData();
+
+    // Parse products.
+    final productsData = data['Products'] as List<Tuple2<String, String>>;
+    final products = new List<ReactionParticle>.generate(
+        productsData.length,
+        (int i) => new ReactionParticle(particleIndex[productsData[i].item2],
+            _convertMembraneLocation[productsData[i].item1]));
+
+    // Create unbind reaction.
+    return new UnbindReaction(
+        new ReactionParticle(particleIndex[data['Particle']],
+            _convertMembraneLocation[data['Location']]),
+        products,
+        data['Probability']);
+  }
+}
+
+/// Data item for a domain
+class DomainItem extends Item {
+  DomainItem()
+      : super([
+          new SimpleEntry('Label', new InputDataElement(type: 'text')),
+          new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
+          new SimpleEntry('Center', new Vector3DataElement()),
+          new SimpleEntry('Semi-axes', new Vector3DataElement())
+        ]);
+
+  Domain get data {
+    final data = collectData();
+
+    // Create domain.
+    switch (data['Type']) {
+      case 'AABB':
+        return new AabbDomain(
+            new Aabb3.centerAndHalfExtents(data['Center'], data['Semi-axes']));
+
+      case 'Ellipsoid':
+        return new EllipsoidDomain(data['Center'], data['Semi-axes']);
+
+      default:
+        return null;
+    }
+  }
+}
+
 /// Data item for a simulation setup entry
 class SimulationSetupItem extends Item {
   SimulationSetupItem()
       : super([
           new SimpleEntry('Particle', new InputDataElement(type: 'text')),
           new SimpleEntry('Number', new NumericDataElement(min: 1)),
-          new SimpleEntry('Domain', new InputDataElement(type: 'text'))
+          new SimpleEntry('Domain', new InputDataElement(type: 'text')),
+          new SimpleEntry('Cavities', new InputDataElement(type: 'text'))
         ]);
 
-  void applyToSimulation(Simulation simulation,
-      Index<ParticleType> particleIndex, Index<Membrane> membraneIndex) {
+  Domain _resolveDomain(
+      String label, Index<Membrane> membraneIndex, Index<Domain> domainIndex) {
+    if (membraneIndex.contains(label)) {
+      return membraneIndex.at(label).domain;
+    } else if (domainIndex.contains(label)) {
+      return domainIndex.at(label);
+    } else {
+      return null;
+    }
+  }
+
+  void applyToSimulation(
+      Simulation simulation,
+      Index<ParticleType> particleIndex,
+      Index<Membrane> membraneIndex,
+      Index<Domain> domainIndex) {
     final data = collectData();
 
     // Resolve particle type.
     final particleType = particleIndex[data['Particle']];
 
     // Resolve domain.
-    final domain = membraneIndex.at(data['Domain']).domain;
+    final domain = _resolveDomain(data['Domain'], membraneIndex, domainIndex);
 
-    simulation.addRandomParticles(particleType, domain, data['Number']);
+    // Resolve cavities.
+    final cavityLabels = (data['Cavities'] as String).split(',');
+    final cavities = new List<Domain>.generate(
+        cavityLabels.length,
+        (int i) =>
+            _resolveDomain(cavityLabels[i].trim(), membraneIndex, domainIndex));
+
+    simulation.addRandomParticles(particleType, domain, data['Number'],
+        cavities: cavities);
   }
 }

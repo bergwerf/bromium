@@ -26,6 +26,9 @@ Element $(String selectors) => document.querySelector(selectors);
 // Data items
 final particleTypes = new List<ParticleTypeItem>();
 final membranes = new List<MembraneItem>();
+final bindReactions = new List<BindReactionItem>();
+final unbindReactions = new List<UnbindReactionItem>();
+final domains = new List<DomainItem>();
 final setup = new List<SimulationSetupItem>();
 
 // Engine and renderer
@@ -47,7 +50,8 @@ void setupUi() {
   final tabs = new Tabs($('#tabs-bar'), $('#tabs-panel'));
   tabs.addTab('Particles');
   tabs.addTab('Membranes');
-  tabs.addTab('Reactions');
+  tabs.addTab('Bind reactions');
+  tabs.addTab('Unbind reactions');
   tabs.addTab('Domains');
   tabs.addTab('Setup');
   tabs.selectTab('Particles');
@@ -65,6 +69,21 @@ void setupUi() {
         tabs.currentTabPanel.append(membranes.last.node);
         break;
 
+      case 'Bind reactions':
+        bindReactions.add(new BindReactionItem());
+        tabs.currentTabPanel.append(bindReactions.last.node);
+        break;
+
+      case 'Unbind reactions':
+        unbindReactions.add(new UnbindReactionItem());
+        tabs.currentTabPanel.append(unbindReactions.last.node);
+        break;
+
+      case 'Domains':
+        domains.add(new DomainItem());
+        tabs.currentTabPanel.append(domains.last.node);
+        break;
+
       case 'Setup':
         setup.add(new SimulationSetupItem());
         tabs.currentTabPanel.append(setup.last.node);
@@ -80,19 +99,37 @@ void setupUi() {
     // Get particle types.
     final particleIndex = new Index<ParticleType>();
     for (final item in particleTypes) {
-      particleIndex[item.get('Label')] = item.getParticleType();
+      particleIndex[item.get('Label')] = item.data;
     }
 
     // Get membranes.
     final membraneIndex = new Index<Membrane>();
     for (final item in membranes) {
-      membraneIndex[item.get('Label')] = item.getMembrane(particleIndex);
+      membraneIndex[item.get('Label')] = item.createMembrane(particleIndex);
+    }
+
+    // Get bind reactions.
+    final bindReactionList = new List<BindReaction>.generate(
+        bindReactions.length,
+        (int i) => bindReactions[i].createBindReaction(particleIndex));
+
+    // Get unbind reactions.
+    final unbindReactionList = new List<UnbindReaction>.generate(
+        unbindReactions.length,
+        (int i) => unbindReactions[i].createUnbindReaction(particleIndex));
+
+    // Get domains.
+    final domainIndex = new Index<Domain>();
+    for (final item in domains) {
+      domainIndex[item.get('Label')] = item.data;
     }
 
     // Setup simulation.
-    final simulation = new Simulation(particleIndex.data, [], []);
+    final simulation = new Simulation(
+        particleIndex.data, bindReactionList, unbindReactionList);
     for (final item in setup) {
-      item.applyToSimulation(simulation, particleIndex, membraneIndex);
+      item.applyToSimulation(
+          simulation, particleIndex, membraneIndex, domainIndex);
     }
 
     // Load membranes.
