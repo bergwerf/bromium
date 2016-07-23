@@ -18,6 +18,9 @@ abstract class GlCanvas {
   /// Viewport dimensions
   int _viewportWidth, _viewportHeight;
 
+  /// Camera field of view
+  double fov;
+
   /// WebGL context
   gl.RenderingContext ctx;
 
@@ -34,7 +37,7 @@ abstract class GlCanvas {
   bool _pause = true;
 
   /// Construct from document ID.
-  GlCanvas.fromId(this.canvas, [double fov = defaultFov]) {
+  GlCanvas.fromId(this.canvas, [this.fov = defaultFov]) {
     // Get WebGL context.
     ctx = canvas.getContext('webgl');
 
@@ -52,8 +55,14 @@ abstract class GlCanvas {
     ctx.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // Create projection matrix.
+    updateViewport();
+  }
+
+  // Fit the WebGL scene in the current canvas dimensions.
+  void updateViewport() {
     _viewportWidth = canvas.clientWidth;
     _viewportHeight = canvas.clientHeight;
+    ctx.viewport(0, 0, _viewportWidth, _viewportHeight);
     projection = makePerspectiveMatrix(
         radians(fov), _viewportWidth / _viewportHeight, 0.001, 1000.0);
   }

@@ -120,22 +120,26 @@ class BromiumWebGLRenderer extends GlCanvas {
     // Draw all membranes.
     var membranes = engine.renderBuffer.generateMembraneDomains();
     for (final membrane in membranes) {
+      var geometry;
       if (membrane is AabbDomain) {
         cubeGeometry.transform =
             viewMatrix * GlCube.computeTransform(membrane.data);
-        cubeGeometry.draw();
+        geometry = cubeGeometry;
       } else if (membrane is EllipsoidDomain) {
         sphereGeometry.transform = viewMatrix *
             GlSphere.computeTransform(membrane.center, membrane.semiAxes);
+        geometry = sphereGeometry;
+      }
+      if (geometry != null) {
         gridShader.use();
         ctx.cullFace(gl.BACK);
         ctx.uniform4fv(gridShader.uniforms['uLineColor'],
             new Vector4(1.0, 1.0, 1.0, 0.3).storage);
-        sphereGeometry.draw(drawWireframe: false);
+        geometry.draw(drawWireframe: false);
         ctx.cullFace(gl.FRONT);
         ctx.uniform4fv(gridShader.uniforms['uLineColor'],
             new Vector4(1.0, 1.0, 1.0, 1.0).storage);
-        sphereGeometry.draw(drawWireframe: false);
+        geometry.draw(drawWireframe: false);
       }
     }
   }

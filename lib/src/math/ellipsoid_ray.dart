@@ -25,18 +25,20 @@ List<double> computeRayEllipsoidIntersection(Ray ray, EllipsoidDomain e) {
   /// - `B = b^2 c^2 2 xO xD + a^2 c^2 2 yO yD + a^2 b^2 2 zO zD`
   /// - `C = b^2 c^2 xO^2 + a^2 c^2 yO^2 + a^2 b^2 zO^2 - a^2 b^2 c^2`
 
-  var asq = e.semiAxes.x * e.semiAxes.x;
-  var bsq = e.semiAxes.y * e.semiAxes.y;
-  var csq = e.semiAxes.z * e.semiAxes.z;
-  var ab = asq * bsq, ac = asq * csq, bc = bsq * csq;
+  final asq = e.semiAxes.x * e.semiAxes.x;
+  final bsq = e.semiAxes.y * e.semiAxes.y;
+  final csq = e.semiAxes.z * e.semiAxes.z;
+  final ab = asq * bsq, ac = asq * csq, bc = bsq * csq;
 
-  var xO = ray.origin.x, yO = ray.origin.y, zO = ray.origin.z;
-  var xD = ray.direction.x, yD = ray.direction.y, zD = ray.direction.z;
+  // Translate ray origin so that the ellipsoid center is at (0, 0, 0).
+  final zeroOrigin = ray.origin - e.center;
+  final xO = zeroOrigin.x, yO = zeroOrigin.y, zO = zeroOrigin.z;
+  final xD = ray.direction.x, yD = ray.direction.y, zD = ray.direction.z;
 
-  var A = bc * xD * xD + ac * yD * yD + ab * zD * zD;
-  var B = bc * 2 * xO * xD + ac * 2 * yO * yD + ab * 2 * zO * zD;
-  var C = bc * xO * xO + ac * yO * yO + ab * zO * zO - asq * bsq * csq;
-  var D = B * B - 4 * A * C;
+  final A = bc * xD * xD + ac * yD * yD + ab * zD * zD;
+  final B = bc * 2 * xO * xD + ac * 2 * yO * yD + ab * 2 * zO * zD;
+  final C = bc * xO * xO + ac * yO * yO + ab * zO * zO - asq * bsq * csq;
+  final D = B * B - 4 * A * C;
 
   if (D < 0) {
     return null;

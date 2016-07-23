@@ -59,11 +59,15 @@ class Tabs {
     }
   }
 
-  DivElement get currentTabPanel {
+  Tab get current {
     if (_current >= 0 && _current < tabs.length) {
-      return tabs[_current].panelElement;
+      return tabs[_current];
     } else {
       return null;
     }
   }
+
+  String get currentLabel => current.label;
+
+  DivElement get currentTabPanel => current.panelElement;
 }

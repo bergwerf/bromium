@@ -30,7 +30,6 @@ void main() {
       document.querySelector('#simulation-select');
   simulationSelector.onChange.listen((_) async {
     await engine.pause();
-    renderer.pause();
 
     var simulation;
     switch (simulationSelector.value) {

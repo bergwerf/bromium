@@ -10,7 +10,7 @@ import 'package:vector_math/vector_math.dart';
 
 Simulation createTransportDemo() {
   // Setup particle dictionary.
-  var p = new Index<ParticleType>();
+  final p = new Index<ParticleType>();
   p['ATP'] = new ParticleType(Colors.red, 0.04, 0.01);
   p['ADP'] = new ParticleType(Colors.blue, 0.04, 0.01);
   p['P'] = new ParticleType(Colors.gray, 0.05, 0.005);
@@ -20,8 +20,8 @@ Simulation createTransportDemo() {
   p['active-bounded-channel'] = new ParticleType(Colors.cyan, 0.02, 0.06);
 
   // Setup reactions.
-  var bindRxn = new Index<BindReaction>();
-  var unbindRxn = new Index<UnbindReaction>();
+  final bindRxn = new Index<BindReaction>();
+  final unbindRxn = new Index<UnbindReaction>();
   bindRxn['step 1'] = new BindReaction(
       new ReactionParticle(p['channel'], Membrane.sticked),
       new ReactionParticle(p['nutrient'], Membrane.outside),
@@ -43,7 +43,7 @@ Simulation createTransportDemo() {
       0.5);
 
   // Create cell membrane.
-  var cellMembrane = new Membrane(
+  final cellMembrane = new Membrane(
       new EllipsoidDomain(new Vector3(.0, .0, .0), new Vector3(2.0, 1.0, 1.0)),
       new Float32List.fromList(new List<double>.filled(7, 0.0)),
       new Float32List.fromList(new List<double>.filled(7, 0.0)),
@@ -60,7 +60,7 @@ Simulation createTransportDemo() {
       p.length);
 
   // Setup simulation.
-  var simulation = new Simulation(p.data, bindRxn.data, unbindRxn.data);
+  final simulation = new Simulation(p.data, bindRxn.data, unbindRxn.data);
   simulation.addRandomParticles(p['ATP'], cellMembrane.domain, 8000);
   simulation.addRandomParticles(p['channel'], cellMembrane.domain, 1000);
   simulation.addRandomParticles(

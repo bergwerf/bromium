@@ -37,8 +37,8 @@ class GlSphere extends GlGeometry {
   /// ellipsoid.
   static Matrix4 computeTransform(Vector3 center, Vector3 semiAxes) {
     var mat = new Matrix4.identity();
-    mat.scale(semiAxes.x, semiAxes.y, semiAxes.z);
     mat.translate(center.x, center.y, center.z);
+    mat.scale(semiAxes.x, semiAxes.y, semiAxes.z);
     return mat;
   }
 

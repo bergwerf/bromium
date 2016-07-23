@@ -65,7 +65,27 @@ class NumericDataElement extends InputDataElement {
   NumericDataElement clone() =>
       new NumericDataElement(step: step, min: min, max: max);
 
-  double get data => double.parse(node.value);
+  num get data => num.parse(node.value);
+}
+
+/// Data element for Vector3 input
+class Vector3DataElement extends InputDataElement {
+  Vector3DataElement() : super(type: 'text');
+
+  Vector3DataElement clone() => new Vector3DataElement();
+
+  Vector3 get data {
+    final vector = new Vector3.zero();
+    var i = 0;
+    for (final match in node.value.split(',')) {
+      vector.storage[i] = double.parse(match);
+      i++;
+      if (i == 3) {
+        return vector;
+      }
+    }
+    return vector;
+  }
 }
 
 /// Data element for hex color input

@@ -8,7 +8,7 @@ import 'package:vector_math/vector_math.dart';
 
 Simulation createEnzymeDemo() {
   // Setup particle dictionary.
-  var p = new Index<ParticleType>();
+  final p = new Index<ParticleType>();
   p['N-a'] = new ParticleType(Colors.red, 0.02, 0.02);
   p['N-b'] = new ParticleType(Colors.blue, 0.03, 0.01);
   p['enzyme'] = new ParticleType(Colors.green, 0.01, 0.05);
@@ -16,8 +16,8 @@ Simulation createEnzymeDemo() {
   p['enzyme-NN'] = new ParticleType(Colors.cyan, 0.01, 0.05);
 
   // Setup reactions.
-  var bindRxn = new Index<BindReaction>();
-  var unbindRxn = new Index<UnbindReaction>();
+  final bindRxn = new Index<BindReaction>();
+  final unbindRxn = new Index<UnbindReaction>();
   bindRxn['step 1'] = new BindReaction(
       new ReactionParticle(p['N-a'], Membrane.inside),
       new ReactionParticle(p['enzyme'], Membrane.inside),
@@ -37,7 +37,7 @@ Simulation createEnzymeDemo() {
       0.1);
 
   // Create cell membrane.
-  var cellMembrane = new Membrane(
+  final cellMembrane = new Membrane(
       new EllipsoidDomain(new Vector3(.0, .0, .0), new Vector3(2.0, 1.0, 1.0)),
       p.mappedFloat32List({
         'N-a': .0,
@@ -70,7 +70,7 @@ Simulation createEnzymeDemo() {
       p.length);
 
   // Setup simulation.
-  var simulation = new Simulation(p.data, bindRxn.data, unbindRxn.data);
+  final simulation = new Simulation(p.data, bindRxn.data, unbindRxn.data);
   simulation.addRandomParticles(p['N-a'], cellMembrane.domain, 20000);
   simulation.addRandomParticles(p['enzyme'], cellMembrane.domain, 500);
   simulation.addMembrane(cellMembrane);

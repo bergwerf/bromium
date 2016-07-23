@@ -50,6 +50,7 @@ class MultiSplitEntry extends DataEntry {
     node = new TableRowElement()
       ..append(new TableCellElement()
         ..append(new SpanElement()
+          ..style.width = '${colAWidth}px'
           ..classes.add('label')
           ..text = '$label:'))
       ..append(new TableCellElement()

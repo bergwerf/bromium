@@ -35,9 +35,9 @@ class GlCube extends GlGeometry {
   /// Compute transformation to transform the standard cube into the given AABB.
   static Matrix4 computeTransform(Aabb3 aabb) {
     var mat = new Matrix4.identity();
-    mat.scale(aabb.max.x - aabb.min.x, aabb.max.y - aabb.min.y,
-        aabb.max.z - aabb.min.z);
+    final scale = aabb.max - aabb.min;
     mat.translate(aabb.min.x, aabb.min.y, aabb.min.z);
+    mat.scale(scale.x, scale.y, scale.z);
     return mat;
   }
 

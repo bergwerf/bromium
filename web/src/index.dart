@@ -13,11 +13,4 @@ Future main() async {
 
   // Setup logging.
   console.setupLogging();
-
-  // Create engine.
-  /*var engine = new BromiumEngine();
-
-  // Setup WebGL renderer.
-  var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
-  var renderer = new BromiumWebGLRenderer(engine, canvas);*/
 }
