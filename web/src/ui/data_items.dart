@@ -12,7 +12,7 @@ class Item extends CustomElement {
 
   bool removed = false;
 
-  Item(String title, this.entries) {
+  Item(String title, Map<String, dynamic> data, this.entries) {
     node = new DivElement()..classes.add('tab-item');
     node.append(new SpanElement()
       ..classes.add('item-title')
@@ -27,6 +27,7 @@ class Item extends CustomElement {
     final table = new TableElement();
     for (final entry in entries) {
       table.append(entry.node);
+      entry.loadData(data);
     }
     node.append(table);
   }
@@ -39,13 +40,26 @@ class Item extends CustomElement {
     return map;
   }
 
-  String get(String label) => collectData()[label];
+  dynamic get(String label) {
+    for (final entry in entries) {
+      if (entry.label == label) {
+        return entry.data;
+      }
+    }
+    return null;
+  }
 }
 
 /// Data item for a single particle type
 class ParticleTypeItem extends Item {
-  ParticleTypeItem()
-      : super('Particle type', [
+  ParticleTypeItem(
+      [Map<String, dynamic> data = const {
+        'Label': '',
+        'Speed': 0.01,
+        'Radius': 0.01,
+        'Color': null
+      }])
+      : super('Particle type', data, [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Speed', new NumericDataElement(step: 0.001, min: 0)),
           new SimpleEntry(
@@ -61,8 +75,18 @@ class ParticleTypeItem extends Item {
 
 /// Data item for a single membrane
 class MembraneItem extends Item {
-  MembraneItem()
-      : super('Membrane', [
+  MembraneItem(
+      [Map<String, dynamic> data = const {
+        'Label': '',
+        'Type': 'Ellipsoid',
+        'Center': null,
+        'Semi-axes': null,
+        'Enter': const [],
+        'Leave': const [],
+        'Stick on enter': const [],
+        'Stick on leave': const []
+      }])
+      : super('Membrane', data, [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
@@ -71,22 +95,26 @@ class MembraneItem extends Item {
               'Enter',
               100,
               new NumericDataElement(step: 0.001, min: 0),
-              new InputDataElement(type: 'text')),
+              new InputDataElement(type: 'text'),
+              data),
           new MultiSplitEntry(
               'Leave',
               100,
               new NumericDataElement(step: 0.001, min: 0),
-              new InputDataElement(type: 'text')),
+              new InputDataElement(type: 'text'),
+              data),
           new MultiSplitEntry(
               'Stick on enter',
               100,
               new NumericDataElement(step: 0.001, min: 0),
-              new InputDataElement(type: 'text')),
+              new InputDataElement(type: 'text'),
+              data),
           new MultiSplitEntry(
               'Stick on leave',
               100,
               new NumericDataElement(step: 0.001, min: 0),
-              new InputDataElement(type: 'text'))
+              new InputDataElement(type: 'text'),
+              data)
         ]);
 
   /// Generate map from MultiSplitEntry tuples.
@@ -141,8 +169,17 @@ const _convertMembraneLocation = const {
 
 /// Data item for a bind reaction
 class BindReactionItem extends Item {
-  BindReactionItem()
-      : super('Bind reaction', [
+  BindReactionItem(
+      [Map<String, dynamic> data = const {
+        'Particle A': '',
+        'A location': 'outside',
+        'Particle B': '',
+        'B location': 'outside',
+        'Particle C': '',
+        'C location': 'outside',
+        'Probability': 1
+      }])
+      : super('Bind reaction', data, [
           new SimpleEntry('Particle A', new InputDataElement(type: 'text')),
           new SimpleEntry('A location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
@@ -171,8 +208,14 @@ class BindReactionItem extends Item {
 
 /// Data item for an unbind reaction
 class UnbindReactionItem extends Item {
-  UnbindReactionItem()
-      : super('Unbind reaction', [
+  UnbindReactionItem(
+      [Map<String, dynamic> data = const {
+        'Particle': '',
+        'Location': 'outside',
+        'Products': const [],
+        'Probability': 1
+      }])
+      : super('Unbind reaction', data, [
           new SimpleEntry('Particle', new InputDataElement(type: 'text')),
           new SimpleEntry('Location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
@@ -180,7 +223,8 @@ class UnbindReactionItem extends Item {
               'Products',
               100,
               new ChoiceDataElement(['inside', 'sticked', 'outside']),
-              new InputDataElement(type: 'text')),
+              new InputDataElement(type: 'text'),
+              data),
           new SimpleEntry(
               'Probability', new NumericDataElement(step: 0.01, min: 0, max: 1))
         ]);
@@ -206,8 +250,14 @@ class UnbindReactionItem extends Item {
 
 /// Data item for a domain
 class DomainItem extends Item {
-  DomainItem()
-      : super('Domain', [
+  DomainItem(
+      [Map<String, dynamic> data = const {
+        'Label': '',
+        'Type': 'Ellipsoid',
+        'Center': null,
+        'Semi-axes': null
+      }])
+      : super('Domain', data, [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
@@ -234,8 +284,14 @@ class DomainItem extends Item {
 
 /// Data item for a simulation setup entry
 class SimulationSetupItem extends Item {
-  SimulationSetupItem()
-      : super('Fill particles', [
+  SimulationSetupItem(
+      [Map<String, dynamic> data = const {
+        'Particle': '',
+        'Number': 0,
+        'Domain': '',
+        'Cavities': ''
+      }])
+      : super('Fill particles', data, [
           new SimpleEntry('Particle', new InputDataElement(type: 'text')),
           new SimpleEntry('Number', new NumericDataElement(min: 1)),
           new SimpleEntry('Domain', new InputDataElement(type: 'text')),
@@ -268,10 +324,16 @@ class SimulationSetupItem extends Item {
 
     // Resolve cavities.
     final cavityLabels = (data['Cavities'] as String).split(',');
-    final cavities = new List<Domain>.generate(
-        cavityLabels.length,
-        (int i) =>
-            _resolveDomain(cavityLabels[i].trim(), membraneIndex, domainIndex));
+    final cavities = new List<Domain>();
+    for (final cavity in cavityLabels) {
+      if (cavity.isNotEmpty) {
+        final domain =
+            _resolveDomain(cavity.trim(), membraneIndex, domainIndex);
+        if (domain != null) {
+          cavities.add(domain);
+        }
+      }
+    }
 
     simulation.addRandomParticles(particleType, domain, data['Number'],
         cavities: cavities);
