@@ -10,8 +10,20 @@ class Item extends CustomElement {
 
   final List<DataEntry> entries;
 
-  Item(this.entries) {
+  bool removed = false;
+
+  Item(String title, this.entries) {
     node = new DivElement()..classes.add('tab-item');
+    node.append(new SpanElement()
+      ..classes.add('item-title')
+      ..text = title);
+    node.append(new ButtonElement()
+      ..innerHtml = '&times;'
+      ..style.float = 'right'
+      ..onClick.listen((_) {
+        node.remove();
+        removed = true;
+      }));
     final table = new TableElement();
     for (final entry in entries) {
       table.append(entry.node);
@@ -33,7 +45,7 @@ class Item extends CustomElement {
 /// Data item for a single particle type
 class ParticleTypeItem extends Item {
   ParticleTypeItem()
-      : super([
+      : super('Particle type', [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Speed', new NumericDataElement(step: 0.001, min: 0)),
           new SimpleEntry(
@@ -50,7 +62,7 @@ class ParticleTypeItem extends Item {
 /// Data item for a single membrane
 class MembraneItem extends Item {
   MembraneItem()
-      : super([
+      : super('Membrane', [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
@@ -130,7 +142,7 @@ const _convertMembraneLocation = const {
 /// Data item for a bind reaction
 class BindReactionItem extends Item {
   BindReactionItem()
-      : super([
+      : super('Bind reaction', [
           new SimpleEntry('Particle A', new InputDataElement(type: 'text')),
           new SimpleEntry('A location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
@@ -160,7 +172,7 @@ class BindReactionItem extends Item {
 /// Data item for an unbind reaction
 class UnbindReactionItem extends Item {
   UnbindReactionItem()
-      : super([
+      : super('Unbind reaction', [
           new SimpleEntry('Particle', new InputDataElement(type: 'text')),
           new SimpleEntry('Location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
@@ -195,7 +207,7 @@ class UnbindReactionItem extends Item {
 /// Data item for a domain
 class DomainItem extends Item {
   DomainItem()
-      : super([
+      : super('Domain', [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
@@ -223,7 +235,7 @@ class DomainItem extends Item {
 /// Data item for a simulation setup entry
 class SimulationSetupItem extends Item {
   SimulationSetupItem()
-      : super([
+      : super('Fill particles', [
           new SimpleEntry('Particle', new InputDataElement(type: 'text')),
           new SimpleEntry('Number', new NumericDataElement(min: 1)),
           new SimpleEntry('Domain', new InputDataElement(type: 'text')),

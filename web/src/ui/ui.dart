@@ -99,28 +99,45 @@ void setupUi() {
     // Get particle types.
     final particleIndex = new Index<ParticleType>();
     for (final item in particleTypes) {
+      if (item.removed) {
+        continue;
+      }
       particleIndex[item.get('Label')] = item.data;
     }
 
     // Get membranes.
     final membraneIndex = new Index<Membrane>();
     for (final item in membranes) {
+      if (item.removed) {
+        continue;
+      }
       membraneIndex[item.get('Label')] = item.createMembrane(particleIndex);
     }
 
     // Get bind reactions.
-    final bindReactionList = new List<BindReaction>.generate(
-        bindReactions.length,
-        (int i) => bindReactions[i].createBindReaction(particleIndex));
+    final bindReactionList = new List<BindReaction>();
+    for (final item in bindReactions) {
+      if (item.removed) {
+        continue;
+      }
+      bindReactionList.add(item.createBindReaction(particleIndex));
+    }
 
     // Get unbind reactions.
-    final unbindReactionList = new List<UnbindReaction>.generate(
-        unbindReactions.length,
-        (int i) => unbindReactions[i].createUnbindReaction(particleIndex));
+    final unbindReactionList = new List<UnbindReaction>();
+    for (final item in unbindReactions) {
+      if (item.removed) {
+        continue;
+      }
+      unbindReactionList.add(item.createUnbindReaction(particleIndex));
+    }
 
     // Get domains.
     final domainIndex = new Index<Domain>();
     for (final item in domains) {
+      if (item.removed) {
+        continue;
+      }
       domainIndex[item.get('Label')] = item.data;
     }
 
@@ -128,6 +145,9 @@ void setupUi() {
     final simulation = new Simulation(
         particleIndex.data, bindReactionList, unbindReactionList);
     for (final item in setup) {
+      if (item.removed) {
+        continue;
+      }
       item.applyToSimulation(
           simulation, particleIndex, membraneIndex, domainIndex);
     }
