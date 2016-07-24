@@ -31,8 +31,14 @@ library to keep the code more readable. Array to vector conversion should be
 minimized.
 
 ### Loops
-Prefer `for-in` loops over `forEach` loops. Always use `for-in` when possible.
-Also use final in loops when applicable (e.g. `for (final thing in things)`).
+Prefer for-in loops over forEach loops. For-in loops look cleaner and are
+not officially closures.
+
+### Final
+Use final in for loops when possible (e.g. `for (final thing in things)`). Do
+not use final in method or function arguments. These are almost always final and
+adding final to all final arguments would add a lot of code. Besides, it's not a
+common practice to add final to arguments.
 
 ### Comments
 Meaningless comments such as `/// Constructor` or copied comments from the
