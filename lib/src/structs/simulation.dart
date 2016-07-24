@@ -156,6 +156,7 @@ Add membrane:
   }
 
   /// Edit the given particle type.
+  /// TODO: update Membrane inside and sticked particle count.
   void editParticleType(Particle particle, int type) {
     final _type = particleTypes[type];
     particle.type = type;
@@ -165,6 +166,7 @@ Add membrane:
   }
 
   /// Edit the given particle location relative to the given membrane.
+  /// TODO: update Membrane inside and sticked particle count.
   void editParticleLocation(Particle particle, int membrane, int location) {
     switch (location) {
       case Membrane.sticked:

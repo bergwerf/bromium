@@ -233,27 +233,30 @@ void setupUi() {
   if (window.localStorage.containsKey('BromiumData')) {
     final data = fromJsonExtra(JSON.decode(window.localStorage['BromiumData']));
     for (final item in data['Particles']) {
-      particleTypes.add(new ParticleTypeItem(item as Map<String, dynamic>));
+      particleTypes
+          .add(new ParticleTypeItem(new Map<String, dynamic>.from(item)));
       tabs.tabs[0].panelElement.append(particleTypes.last.node);
     }
     for (final item in data['Membranes']) {
-      membranes.add(new MembraneItem(item as Map<String, dynamic>));
+      membranes.add(new MembraneItem(new Map<String, dynamic>.from(item)));
       tabs.tabs[1].panelElement.append(membranes.last.node);
     }
     for (final item in data['BindReactions']) {
-      bindReactions.add(new BindReactionItem(item as Map<String, dynamic>));
+      bindReactions
+          .add(new BindReactionItem(new Map<String, dynamic>.from(item)));
       tabs.tabs[2].panelElement.append(bindReactions.last.node);
     }
     for (final item in data['UnbindReactions']) {
-      unbindReactions.add(new UnbindReactionItem(item as Map<String, dynamic>));
+      unbindReactions
+          .add(new UnbindReactionItem(new Map<String, dynamic>.from(item)));
       tabs.tabs[3].panelElement.append(unbindReactions.last.node);
     }
     for (final item in data['Domains']) {
-      domains.add(new DomainItem(item as Map<String, dynamic>));
+      domains.add(new DomainItem(new Map<String, dynamic>.from(item)));
       tabs.tabs[4].panelElement.append(domains.last.node);
     }
     for (final item in data['Setup']) {
-      setup.add(new SimulationSetupItem(item as Map<String, dynamic>));
+      setup.add(new SimulationSetupItem(new Map<String, dynamic>.from(item)));
       tabs.tabs[5].panelElement.append(setup.last.node);
     }
   }
