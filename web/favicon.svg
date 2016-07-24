@@ -16,7 +16,6 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   inkscape:export-filename="/home/herman/Pictures/bromium.png"
    inkscape:export-xdpi="180"
    inkscape:export-ydpi="180"
    sodipodi:docname="favicon.svg">
@@ -157,7 +156,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
