@@ -57,16 +57,20 @@ class InputDataElement extends DataElement {
 
   InputDataElement clone() => new InputDataElement(type: node.type);
 
-  dynamic get value => node.value;
+  dynamic get value {
+    print(node.value);
+    return node.value;
+  }
+
   set value(dynamic value) => node.value = value;
 }
 
 /// Data element for numeric data input
-class NumericDataElement extends InputDataElement {
+class _NumericDataElement extends InputDataElement {
   /// Numeric input step size, and min/max value
   final num step, min, max;
 
-  NumericDataElement(
+  _NumericDataElement(
       {this.step: 1, this.min: null, this.max: null, num value: 0})
       : super(type: 'number') {
     node.step = step.toString();
@@ -77,12 +81,31 @@ class NumericDataElement extends InputDataElement {
       node.max = max.toString();
     }
   }
+}
 
-  NumericDataElement clone() =>
-      new NumericDataElement(step: step, min: min, max: max);
+/// Data element for integer input
+class IntDataElement extends _NumericDataElement {
+  IntDataElement({int step: 1, int min: null, int max: null, num value: 0})
+      : super(step: step, min: min, max: max);
 
-  num get value => num.parse(node.value);
-  set value(num value) => node.value = value.toString();
+  IntDataElement clone() =>
+      new IntDataElement(step: step, min: this.min, max: this.min);
+
+  int get value => int.parse(node.value);
+  set value(int value) => node.value = value.toString();
+}
+
+/// Data element for floating point input
+class FloatDataElement extends _NumericDataElement {
+  FloatDataElement(
+      {double step: 1.0, double min: null, double max: null, num value: 0})
+      : super(step: step, min: min, max: max);
+
+  FloatDataElement clone() =>
+      new FloatDataElement(step: step, min: this.min, max: this.min);
+
+  double get value => double.parse(node.value);
+  set value(double value) => node.value = value.toString();
 }
 
 /// Data element for Vector3 input

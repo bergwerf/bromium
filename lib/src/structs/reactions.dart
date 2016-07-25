@@ -106,11 +106,11 @@ class BindReaction extends Reaction {
 }
 
 /// Bind reaction information for queueing reactions.
-class BindReactionItem {
+class BindRxnItem {
   // Particle A index, particle B index, reaction index.
   final int a, b, r;
 
-  BindReactionItem(this.a, this.b, this.r);
+  BindRxnItem(this.a, this.b, this.r);
 }
 
 /// Data structure for A -> B + C + ... style reactions

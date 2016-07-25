@@ -261,16 +261,16 @@ Add membrane:
   }
 
   /// Apply multiple bind reactions (takes care of index displacement).
-  void applyBindReactions(List<BindReactionItem> rxns) {
+  void applyBindReactions(List<BindRxnItem> rxns) {
     // In all reactions set a to the smallest of {a, b}.
     for (var i = 0; i < rxns.length; i++) {
       if (rxns[i].a > rxns[i].b) {
-        rxns[i] = new BindReactionItem(rxns[i].b, rxns[i].a, rxns[i].r);
+        rxns[i] = new BindRxnItem(rxns[i].b, rxns[i].a, rxns[i].r);
       }
     }
 
     // Sort reactions in descending order using b.
-    rxns.sort((BindReactionItem a, BindReactionItem b) => b.b - a.b);
+    rxns.sort((BindRxnItem a, BindRxnItem b) => b.b - a.b);
 
     // Apply reactions
     for (final rxn in rxns) {
@@ -351,18 +351,18 @@ Transfer to a larger buffer:
     /// - membranes + cap
 
     // Compute new buffer size.
-    var membranesOffset = SimulationHeader.byteCount +
+    final membranesOffset = SimulationHeader.byteCount +
         Reaction.byteCount * (bindReactions.length + unbindReactions.length) +
         Particle.byteCount * (particles.length + addParticles + particlesCap);
 
-    var bufferSize = membranesOffset +
+    final bufferSize = membranesOffset +
         allMembraneBytes +
         addMembraneBytes +
         membranesCapBytes;
     logger.info('New buffer size: $bufferSize bytes');
 
     // Create new buffer.
-    var newBuffer = new ByteData(bufferSize).buffer;
+    final newBuffer = new ByteData(bufferSize).buffer;
 
     // Transfer header.
     var offset = header.transfer(newBuffer, 0);

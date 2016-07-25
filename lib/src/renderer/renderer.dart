@@ -28,8 +28,7 @@ class BromiumWebGLRenderer extends GlCanvas {
   GlSphere sphereGeometry;
 
   /// Constructor
-  BromiumWebGLRenderer(this.engine, CanvasElement canvas)
-      : super.fromId(canvas) {
+  BromiumWebGLRenderer(this.engine, CanvasElement canvas) : super(canvas) {
     // Load shader extensions.
     ctx.getExtension('OES_standard_derivatives');
     //ctx.getExtension('EXT_frag_depth');

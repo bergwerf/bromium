@@ -44,7 +44,7 @@ class SimpleEntry extends DataEntry {
             ..append(elm.node));
 
   void loadData(Map<String, dynamic> data) {
-    if (data[label] != null) {
+    if (data.containsKey(label) && data[label] != null) {
       element.value = data[label];
     }
   }

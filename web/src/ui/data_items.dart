@@ -24,11 +24,15 @@ class Item extends CustomElement {
         node.remove();
         removed = true;
       }));
+
+    // Add all entries to a table.
     final table = new TableElement();
     for (final entry in entries) {
       table.append(entry.node);
       entry.loadData(data);
     }
+
+    // Add table to the node.
     node.append(table);
   }
 
@@ -51,8 +55,8 @@ class Item extends CustomElement {
 }
 
 /// Data item for a single particle type
-class ParticleTypeItem extends Item {
-  ParticleTypeItem(
+class PTypeItem extends Item {
+  PTypeItem(
       [Map<String, dynamic> data = const {
         'Label': '',
         'Speed': 0.01,
@@ -61,9 +65,9 @@ class ParticleTypeItem extends Item {
       }])
       : super('Particle type', data, [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
-          new SimpleEntry('Speed', new NumericDataElement(step: 0.001, min: 0)),
+          new SimpleEntry('Speed', new FloatDataElement(step: 0.001, min: 0.0)),
           new SimpleEntry(
-              'Radius', new NumericDataElement(step: 0.001, min: 0)),
+              'Radius', new FloatDataElement(step: 0.001, min: 0.0)),
           new SimpleEntry('Color', new ColorDataElement())
         ]);
 
@@ -94,32 +98,32 @@ class MembraneItem extends Item {
           new MultiSplitEntry(
               'Enter',
               100,
-              new NumericDataElement(step: 0.001, min: 0),
+              new FloatDataElement(step: 0.01, min: 0.0),
               new InputDataElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Leave',
               100,
-              new NumericDataElement(step: 0.001, min: 0),
+              new FloatDataElement(step: 0.01, min: 0.0),
               new InputDataElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Stick on enter',
               100,
-              new NumericDataElement(step: 0.001, min: 0),
+              new FloatDataElement(step: 0.01, min: 0.0),
               new InputDataElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Stick on leave',
               100,
-              new NumericDataElement(step: 0.001, min: 0),
+              new FloatDataElement(step: 0.01, min: 0.0),
               new InputDataElement(type: 'text'),
               data)
         ]);
 
   /// Generate map from MultiSplitEntry tuples.
-  static Map<String, num> _generateMap(List<Tuple2<num, String>> list) {
-    final map = new Map<String, num>();
+  static Map<String, double> _generateMap(List<Tuple2> list) {
+    final map = new Map<String, double>();
     for (final item in list) {
       // Skip empty items.
       if (item.item2.isNotEmpty) {
@@ -149,13 +153,13 @@ class MembraneItem extends Item {
     return new Membrane(
         domain,
         particleIndex.mappedFloat32List(
-            _generateMap(data['Enter'] as List<Tuple2<num, String>>)),
+            _generateMap(data['Enter'] as List<Tuple2<double, String>>)),
         particleIndex.mappedFloat32List(
-            _generateMap(data['Leave'] as List<Tuple2<num, String>>)),
-        particleIndex.mappedFloat32List(
-            _generateMap(data['Stick on enter'] as List<Tuple2<num, String>>)),
-        particleIndex.mappedFloat32List(
-            _generateMap(data['Stick on leave'] as List<Tuple2<num, String>>)),
+            _generateMap(data['Leave'] as List<Tuple2<double, String>>)),
+        particleIndex.mappedFloat32List(_generateMap(
+            data['Stick on enter'] as List<Tuple2<double, String>>)),
+        particleIndex.mappedFloat32List(_generateMap(
+            data['Stick on leave'] as List<Tuple2<double, String>>)),
         particleIndex.length);
   }
 }
@@ -168,8 +172,8 @@ const _convertMembraneLocation = const {
 };
 
 /// Data item for a bind reaction
-class BindReactionItem extends Item {
-  BindReactionItem(
+class BindRxnItem extends Item {
+  BindRxnItem(
       [Map<String, dynamic> data = const {
         'Particle A': '',
         'A location': 'outside',
@@ -189,8 +193,8 @@ class BindReactionItem extends Item {
           new SimpleEntry('Particle C', new InputDataElement(type: 'text')),
           new SimpleEntry('C location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
-          new SimpleEntry(
-              'Probability', new NumericDataElement(step: 0.01, min: 0, max: 1))
+          new SimpleEntry('Probability',
+              new FloatDataElement(step: 0.01, min: 0.0, max: 1.0))
         ]);
 
   BindReaction createBindReaction(Index<ParticleType> particleIndex) {
@@ -207,8 +211,8 @@ class BindReactionItem extends Item {
 }
 
 /// Data item for an unbind reaction
-class UnbindReactionItem extends Item {
-  UnbindReactionItem(
+class UnbindRxnItem extends Item {
+  UnbindRxnItem(
       [Map<String, dynamic> data = const {
         'Particle': '',
         'Location': 'outside',
@@ -225,8 +229,8 @@ class UnbindReactionItem extends Item {
               new ChoiceDataElement(['inside', 'sticked', 'outside']),
               new InputDataElement(type: 'text'),
               data),
-          new SimpleEntry(
-              'Probability', new NumericDataElement(step: 0.01, min: 0, max: 1))
+          new SimpleEntry('Probability',
+              new FloatDataElement(step: 0.01, min: 0.0, max: 1.0))
         ]);
 
   UnbindReaction createUnbindReaction(Index<ParticleType> particleIndex) {
@@ -283,8 +287,8 @@ class DomainItem extends Item {
 }
 
 /// Data item for a simulation setup entry
-class SimulationSetupItem extends Item {
-  SimulationSetupItem(
+class SetupItem extends Item {
+  SetupItem(
       [Map<String, dynamic> data = const {
         'Particle': '',
         'Number': 0,
@@ -293,7 +297,7 @@ class SimulationSetupItem extends Item {
       }])
       : super('Fill particles', data, [
           new SimpleEntry('Particle', new InputDataElement(type: 'text')),
-          new SimpleEntry('Number', new NumericDataElement(min: 1)),
+          new SimpleEntry('Number', new IntDataElement(min: 1)),
           new SimpleEntry('Domain', new InputDataElement(type: 'text')),
           new SimpleEntry('Cavities', new InputDataElement(type: 'text'))
         ]);

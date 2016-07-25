@@ -36,8 +36,7 @@ abstract class GlCanvas {
   /// Render controls
   bool _pause = true;
 
-  /// Construct from document ID.
-  GlCanvas.fromId(this.canvas, [this.fov = defaultFov]) {
+  GlCanvas(this.canvas, [this.fov = defaultFov]) {
     // Get WebGL context.
     ctx = canvas.getContext('webgl');
 

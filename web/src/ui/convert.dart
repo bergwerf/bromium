@@ -64,19 +64,13 @@ dynamic _jsonToDartClass(dynamic object) {
           fromJsonExtra(object['item1']), fromJsonExtra(object['item2']));
 
     case 'Vector2':
-      return new Vector2.array(new List<double>.generate(
-          object['storage'].length,
-          (int i) => object['storage'][i].toDouble()));
+      return new Vector2.array(object['storage'] as List<double>);
 
     case 'Vector3':
-      return new Vector3.array(new List<double>.generate(
-          object['storage'].length,
-          (int i) => object['storage'][i].toDouble()));
+      return new Vector3.array(object['storage'] as List<double>);
 
     case 'Vector4':
-      return new Vector4.array(new List<double>.generate(
-          object['storage'].length,
-          (int i) => object['storage'][i].toDouble()));
+      return new Vector4.array(object['storage'] as List<double>);
 
     default:
       return null;

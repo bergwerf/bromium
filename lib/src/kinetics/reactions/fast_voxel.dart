@@ -49,7 +49,7 @@ void reactionsFastVoxel(Simulation sim) {
   }
 
   // Iterate through reactions.
-  var reactionQueue = new List<BindReactionItem>();
+  var reactionQueue = new List<BindRxnItem>();
   for (var ridx = 0; ridx < sim.bindReactions.length; ridx++) {
     final r = sim.bindReactions[ridx];
 
@@ -84,7 +84,7 @@ void reactionsFastVoxel(Simulation sim) {
       if (list[b][bi].n == vn && r.tryReaction(ab ? ap : bp, ab ? bp : ap)) {
         // Queue bind reaction.
         reactionQueue
-            .add(new BindReactionItem(list[a][ai].i, list[b][bi].i, ridx));
+            .add(new BindRxnItem(list[a][ai].i, list[b][bi].i, ridx));
 
         // Move bi forward.
         bi++;
