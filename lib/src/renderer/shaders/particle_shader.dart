@@ -18,7 +18,7 @@ varying vec3 spherePosition;
 varying vec2 impostorPosition;
 
 void main(void) {
-  vec2 imp = vec2(aImposterPosition.x, aImposterPosition.y * uViewportRatio);
+  vec2 imp = vec2(aImposterPosition.x / uViewportRatio, aImposterPosition.y);
   vec4 position = uViewMatrix * vec4(aParticlePosition, 1.0);
 
   sphereColor = aParticleColor;
