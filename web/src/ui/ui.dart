@@ -67,8 +67,8 @@ void setupUi() {
   // Run the simulation.
   final reloadBtn = $('#btn-reload');
   reloadBtn.onClick.listen((_) async {
-    reloadBtn.text = 'Reloading...';
     reloadBtn.classes.add('disabled');
+    reloadBtn.children.first.classes.add('fa-spin');
 
     // Pause engine.
     await engine.pause();
@@ -125,8 +125,8 @@ void setupUi() {
 
     // Update buttons.
     $('#btn-pause-run').text = 'Pause';
-    reloadBtn.text = 'Reload';
     reloadBtn.classes.remove('disabled');
+    reloadBtn.children.first.classes.remove('fa-spin');
   });
 
   // Pause the simulation.

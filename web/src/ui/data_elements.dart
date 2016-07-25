@@ -89,7 +89,7 @@ class IntDataElement extends _NumericDataElement {
       : super(step: step, min: min, max: max);
 
   IntDataElement clone() =>
-      new IntDataElement(step: step, min: this.min, max: this.min);
+      new IntDataElement(step: step, min: this.min, max: this.max);
 
   int get value => int.parse(node.value);
   set value(int value) => node.value = value.toString();
@@ -102,7 +102,7 @@ class FloatDataElement extends _NumericDataElement {
       : super(step: step, min: min, max: max);
 
   FloatDataElement clone() =>
-      new FloatDataElement(step: step, min: this.min, max: this.min);
+      new FloatDataElement(step: step, min: this.min, max: this.max);
 
   double get value => double.parse(node.value);
   set value(double value) => node.value = value.toString();

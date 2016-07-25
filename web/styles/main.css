@@ -3,7 +3,7 @@
   --backround: #444;
   --foreground: #eee;
   --bar-size: 40px;
-  --control-width: 400px;
+  --control-width: 410px;
 
   /* Mixins */
   --mono-font: {

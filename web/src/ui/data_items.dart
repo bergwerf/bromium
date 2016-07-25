@@ -98,25 +98,25 @@ class MembraneItem extends Item {
           new MultiSplitEntry(
               'Enter',
               100,
-              new FloatDataElement(step: 0.01, min: 0.0),
+              new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
               new InputDataElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Leave',
               100,
-              new FloatDataElement(step: 0.01, min: 0.0),
+              new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
               new InputDataElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Stick on enter',
               100,
-              new FloatDataElement(step: 0.01, min: 0.0),
+              new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
               new InputDataElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Stick on leave',
               100,
-              new FloatDataElement(step: 0.01, min: 0.0),
+              new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
               new InputDataElement(type: 'text'),
               data)
         ]);
