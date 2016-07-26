@@ -51,6 +51,12 @@ class Tab<I extends Item> {
     }
   }
 
+  /// Clear all items.
+  void clear() {
+    _items.clear();
+    panelElement.children.clear();
+  }
+
   /// Get all items that have not been removed.
   List<I> get items {
     final dst = new List<I>();

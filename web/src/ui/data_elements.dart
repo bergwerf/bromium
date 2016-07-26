@@ -58,7 +58,6 @@ class InputDataElement extends DataElement {
   InputDataElement clone() => new InputDataElement(type: node.type);
 
   dynamic get value {
-    print(node.value);
     return node.value;
   }
 

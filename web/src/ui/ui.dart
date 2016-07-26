@@ -17,6 +17,7 @@ import 'package:bromium/structs.dart';
 import 'package:bromium/renderer.dart';
 import 'package:vector_math/vector_math.dart';
 
+part 'fileutils.dart';
 part 'convert.dart';
 part 'data_elements.dart';
 part 'data_entries.dart';
@@ -73,6 +74,13 @@ class BromiumUi {
     tabs.select('Particles');
 
     // Bind events.
+    btnSave.onClick.listen((_) {
+      final data = new Blob([generateJsonConfig()], 'application/json');
+      saveAs(data, 'bromium.json');
+    });
+    btnLoad.onClick.listen((_) async {
+      loadJsonConfig(await openFile('application/json'));
+    });
     btnUpdate.onClick.listen((_) => updateSimulation());
     btnPauseRun.onClick.listen((_) => pauseRunSimulation());
 
@@ -102,6 +110,15 @@ class BromiumUi {
 
   /// Load configuration from JSON string.
   void loadJsonConfig(String json) {
+    // Clear old data.
+    pTypeTab.clear();
+    membraneTab.clear();
+    bindRxnTab.clear();
+    unbindRxnTab.clear();
+    domainTab.clear();
+    setupTab.clear();
+
+    // Load new data.
     final data = fromJsonExtra(JSON.decode(json));
     pTypeTab.loadItems(data['Particles'] as List);
     membraneTab.loadItems(data['Membranes'] as List);
