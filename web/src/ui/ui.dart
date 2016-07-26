@@ -6,6 +6,7 @@ library bromium.ui;
 
 import 'dart:html';
 import 'dart:math';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -25,23 +26,15 @@ part 'tabs.dart';
 // ignore: non_constant_identifier_names
 Element $(String selectors) => document.querySelector(selectors);
 
-// Set the canvas size to the #view-panel size
-void resizeCanvas(CanvasElement canvas, BromiumWebGLRenderer renderer) {
-  canvas.width = $('#view-panel').clientWidth;
-  canvas.height = $('#view-panel').clientHeight;
-  renderer.updateViewport();
-}
+class BromiumUi {
+  final Tabs tabs;
+  final ButtonElement btnSave, btnLoad, btnUpdate, btnAdd, btnPauseRun;
+  final DivElement viewPanel;
+  final CanvasElement canvas;
+  final BromiumEngine engine;
+  BromiumWebGLRenderer renderer;
 
-void setupUi() {
-  final engine = new BromiumEngine();
-  final canvas = $('#bromium-canvas') as CanvasElement;
-  final renderer = new BromiumWebGLRenderer(engine, canvas);
-
-  // Auto-fit canvas.
-  window.onResize.listen((_) => resizeCanvas(canvas, renderer));
-  resizeCanvas(canvas, renderer);
-
-  // Create tabs.
+  /// Tabs
   final pTypeTab =
       new Tab<PTypeItem>('Particles', (data) => new PTypeItem(data));
   final membraneTab =
@@ -54,21 +47,74 @@ void setupUi() {
       new Tab<DomainItem>('Domains', (data) => new DomainItem(data));
   final setupTab = new Tab<SetupItem>('Setup', (data) => new SetupItem(data));
 
-  // Add tabs to tab controller.
-  final tabs = new Tabs($('#tabs-bar'), $('#tabs-panel'), $('#btn-add-item'));
-  tabs.add(pTypeTab);
-  tabs.add(membraneTab);
-  tabs.add(bindRxnTab);
-  tabs.add(unbindRxnTab);
-  tabs.add(domainTab);
-  tabs.add(setupTab);
-  tabs.select('Particles');
+  BromiumUi()
+      : tabs = new Tabs($('#tabs-bar'), $('#tabs-panel'), $('#btn-add')),
+        btnSave = $('#btn-save'),
+        btnLoad = $('#btn-load'),
+        btnUpdate = $('#btn-update'),
+        btnAdd = $('#btn-add'),
+        btnPauseRun = $('#btn-pause-run'),
+        viewPanel = $('#view-panel'),
+        canvas = $('#bromium-canvas') as CanvasElement,
+        engine = new BromiumEngine() {
+    renderer = new BromiumWebGLRenderer(engine, canvas);
 
-  // Run the simulation.
-  final reloadBtn = $('#btn-reload');
-  reloadBtn.onClick.listen((_) async {
-    reloadBtn.classes.add('disabled');
-    reloadBtn.children.first.classes.add('fa-spin');
+    // Auto-fit canvas.
+    window.onResize.listen((_) => resizeCanvas());
+    resizeCanvas();
+
+    // Create tab controller.
+    tabs.add(pTypeTab);
+    tabs.add(membraneTab);
+    tabs.add(bindRxnTab);
+    tabs.add(unbindRxnTab);
+    tabs.add(domainTab);
+    tabs.add(setupTab);
+    tabs.select('Particles');
+
+    // Bind events.
+    btnUpdate.onClick.listen((_) => updateSimulation());
+    btnPauseRun.onClick.listen((_) => pauseRunSimulation());
+
+    // Local storage integration.
+    // Save the current settings to the local storage on quit.
+    window.onUnload.listen((_) {
+      window.localStorage['BromiumData'] = generateJsonConfig();
+    });
+
+    // Load the settings that are in the local storage.
+    if (window.localStorage.containsKey('BromiumData')) {
+      loadJsonConfig(window.localStorage['BromiumData']);
+    }
+  }
+
+  /// Export configuration as JSON string.
+  String generateJsonConfig() {
+    return JSON.encode({
+      'Particles': toJsonExtra(pTypeTab.collectData()),
+      'Membranes': toJsonExtra(membraneTab.collectData()),
+      'BindReactions': toJsonExtra(bindRxnTab.collectData()),
+      'UnbindReactions': toJsonExtra(unbindRxnTab.collectData()),
+      'Domains': toJsonExtra(domainTab.collectData()),
+      'Setup': toJsonExtra(setupTab.collectData())
+    });
+  }
+
+  /// Load configuration from JSON string.
+  void loadJsonConfig(String json) {
+    final data = fromJsonExtra(JSON.decode(json));
+    pTypeTab.loadItems(data['Particles'] as List);
+    membraneTab.loadItems(data['Membranes'] as List);
+    bindRxnTab.loadItems(data['BindReactions'] as List);
+    unbindRxnTab.loadItems(data['UnbindReactions'] as List);
+    domainTab.loadItems(data['Domains'] as List);
+    setupTab.loadItems(data['Setup'] as List);
+  }
+
+  /// Update the simulation.
+  Future updateSimulation() async {
+    btnUpdate.classes.add('disabled');
+    btnUpdate.children.first.classes.add('fa-spin');
 
     // Pause engine.
     await engine.pause();
@@ -124,49 +170,32 @@ void setupUi() {
     renderer.start();
 
     // Update buttons.
-    $('#btn-pause-run').text = 'Pause';
-    reloadBtn.classes.remove('disabled');
-    reloadBtn.children.first.classes.remove('fa-spin');
-  });
+    btnPauseRun.text = 'Pause';
+    btnUpdate.classes.remove('disabled');
+    btnUpdate.children.first.classes.remove('fa-spin');
+  }
 
-  // Pause the simulation.
-  final pauseRunBtn = $('#btn-pause-run');
-  pauseRunBtn.onClick.listen((_) async {
+  /// Pause/run the simulation.
+  Future pauseRunSimulation() async {
     if (engine.isRunning) {
       if (engine.inIsolate) {
-        pauseRunBtn.text = 'Pausing...';
-        pauseRunBtn.classes.add('disabled');
+        btnPauseRun.text = 'Pausing...';
+        btnPauseRun.classes.add('disabled');
       }
 
       await engine.pause();
-      pauseRunBtn.text = 'Run';
-      pauseRunBtn.classes.remove('disabled');
+      btnPauseRun.text = 'Run';
+      btnPauseRun.classes.remove('disabled');
     } else {
       await engine.resume();
-      pauseRunBtn.text = 'Pause';
+      btnPauseRun.text = 'Pause';
     }
-  });
+  }
 
-  // Save the current settings to the local storage on quit.
-  window.onUnload.listen((_) {
-    window.localStorage['BromiumData'] = JSON.encode({
-      'Particles': toJsonExtra(pTypeTab.collectData()),
-      'Membranes': toJsonExtra(membraneTab.collectData()),
-      'BindReactions': toJsonExtra(bindRxnTab.collectData()),
-      'UnbindReactions': toJsonExtra(unbindRxnTab.collectData()),
-      'Domains': toJsonExtra(domainTab.collectData()),
-      'Setup': toJsonExtra(setupTab.collectData())
-    });
-  });
-
-  // Load the settings that are in the local storage.
-  if (window.localStorage.containsKey('BromiumData')) {
-    final data = fromJsonExtra(JSON.decode(window.localStorage['BromiumData']));
-    pTypeTab.loadItems(data['Particles'] as List);
-    membraneTab.loadItems(data['Membranes'] as List);
-    bindRxnTab.loadItems(data['BindReactions'] as List);
-    unbindRxnTab.loadItems(data['UnbindReactions'] as List);
-    domainTab.loadItems(data['Domains'] as List);
-    setupTab.loadItems(data['Setup'] as List);
+  /// Set the canvas size to the [viewPanel] size.
+  void resizeCanvas() {
+    canvas.width = viewPanel.clientWidth;
+    canvas.height = viewPanel.clientHeight;
+    renderer.updateViewport();
   }
 }

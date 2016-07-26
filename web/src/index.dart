@@ -9,7 +9,7 @@ import 'devtools.dart' as console;
 
 Future main() async {
   // Setup UI.
-  setupUi();
+  new BromiumUi();
 
   // Setup logging.
   console.setupLogging();
