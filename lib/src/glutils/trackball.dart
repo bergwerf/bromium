@@ -92,6 +92,11 @@ class Trackball {
   /// Set z translation of [_mouse].
   set z(double z) => _mouse.z = z;
 
+  /// Reset rotation matix.
+  void resetRotation() {
+    _mouse.rotationMatrix.setIdentity();
+  }
+
   void onPointerDown(num x, num y) {
     _mouse.down = true;
     _mouse.lastX = x;

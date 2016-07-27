@@ -131,60 +131,70 @@ class BromiumUi {
   /// Update the simulation.
   Future updateSimulation() async {
     btnUpdate.classes.add('disabled');
-    btnUpdate.children.first.classes.add('fa-spin');
+    btnUpdate.children.first
+      ..classes.add('fa-spin')
+      ..style.color = 'inherit';
 
     // Pause engine.
     await engine.pause();
 
-    // Get particle types.
-    final particleIndex = new Index<ParticleType>();
-    for (final item in pTypeTab.items) {
-      particleIndex[item.get('Label')] = item.data;
-    }
+    // TODO: do more validation and use a error messasing system.
+    try {
+      // Get particle types.
+      final particleIndex = new Index<ParticleType>();
+      for (final item in pTypeTab.items) {
+        particleIndex[item.get('Label')] = item.data;
+      }
 
-    // Get membranes.
-    final membraneIndex = new Index<Membrane>();
-    for (final item in membraneTab.items) {
-      membraneIndex[item.get('Label')] = item.createMembrane(particleIndex);
-    }
+      // Get membranes.
+      final membraneIndex = new Index<Membrane>();
+      for (final item in membraneTab.items) {
+        membraneIndex[item.get('Label')] = item.createMembrane(particleIndex);
+      }
 
-    // Get bind reactions.
-    final bindReactionList = new List<BindReaction>();
-    for (final item in bindRxnTab.items) {
-      bindReactionList.add(item.createBindReaction(particleIndex));
-    }
+      // Get bind reactions.
+      final bindReactionList = new List<BindReaction>();
+      for (final item in bindRxnTab.items) {
+        bindReactionList.add(item.createBindReaction(particleIndex));
+      }
 
-    // Get unbind reactions.
-    final unbindReactionList = new List<UnbindReaction>();
-    for (final item in unbindRxnTab.items) {
-      unbindReactionList.add(item.createUnbindReaction(particleIndex));
-    }
+      // Get unbind reactions.
+      final unbindReactionList = new List<UnbindReaction>();
+      for (final item in unbindRxnTab.items) {
+        unbindReactionList.add(item.createUnbindReaction(particleIndex));
+      }
 
-    // Get domains.
-    final domainIndex = new Index<Domain>();
-    for (final item in domainTab.items) {
-      domainIndex[item.get('Label')] = item.data;
-    }
+      // Get domains.
+      final domainIndex = new Index<Domain>();
+      for (final item in domainTab.items) {
+        domainIndex[item.get('Label')] = item.data;
+      }
 
-    // Setup simulation.
-    final simulation = new Simulation(
-        particleIndex.data, bindReactionList, unbindReactionList);
-    for (final item in setupTab.items) {
-      item.applyToSimulation(
-          simulation, particleIndex, membraneIndex, domainIndex);
-    }
+      // Setup simulation.
+      final simulation = new Simulation(
+          particleIndex.data, bindReactionList, unbindReactionList);
+      for (final item in setupTab.items) {
+        item.applyToSimulation(
+            simulation, particleIndex, membraneIndex, domainIndex);
+      }
 
-    // Load membranes.
-    // TODO: batch load membranes.
-    for (final membrane in membraneIndex.data) {
-      simulation.addMembrane(membrane);
-    }
+      // Load membranes.
+      // TODO: batch load membranes.
+      for (final membrane in membraneIndex.data) {
+        simulation.addMembrane(membrane);
+      }
 
-    // Load the simulation.
-    var bbox = simulation.particlesBoundingBox();
-    await engine.loadSimulation(simulation);
-    renderer.focus(bbox);
-    renderer.start();
+      // Load the simulation.
+      var bbox = simulation.particlesBoundingBox();
+      await engine.loadSimulation(simulation);
+      renderer.trackball.resetRotation();
+      renderer.focus(bbox);
+      renderer.start();
+    } catch (e) {
+      // When there is an error, just terminate the updating and make the
+      // refresh icon red.
+      btnUpdate.children.first.style.color = '#a00';
+    }
 
     // Update buttons.
     btnPauseRun.text = 'Pause';
