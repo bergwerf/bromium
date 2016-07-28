@@ -21,17 +21,21 @@ class Voxel {
     final z = (vec.z * vpu).truncate() + 65536;
     return 17179869184 * x + 131072 * y + z;
   }
-}
 
-class VoxelSortCache extends ReactionAlgorithmCache {
-  List<List<int>> order;
+  /// Compute z-order number.
+  static int computeZNumber(Vector3 vec, int vpu) {
+    final x = (vec.x * vpu).truncate();
+    final y = (vec.y * vpu).truncate();
+    final z = (vec.z * vpu).truncate();
+    return interleave3xInt32inUint64(x, y, z);
+  }
 }
 
 void reactionsFastVoxel(Simulation sim) {
-  var list = new List<List<Voxel>>(sim.particleTypes.length);
-  var vpu = fastVoxelReactionVPU;
+  final list = new List<List<Voxel>>(sim.particleTypes.length);
+  final vpu = fastVoxelReactionVPU;
 
-  // Compute Z-order curve coordinates.
+  // Create voxels.
   for (var i = 0; i < sim.particles.length; i++) {
     final p = sim.particles[i];
     if (list[p.type] == null) {
