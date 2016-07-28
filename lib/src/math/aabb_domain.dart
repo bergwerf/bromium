@@ -52,6 +52,17 @@ class AabbDomain extends Domain {
 
   bool contains(Vector3 point) => data.containsVector3(point);
 
+  double minSurfaceToPoint(Vector3 point) {
+    return [
+      (data.min.x - point.x).abs(),
+      (data.min.y - point.y).abs(),
+      (data.min.z - point.z).abs(),
+      (data.max.x - point.x).abs(),
+      (data.max.y - point.y).abs(),
+      (data.max.z - point.z).abs()
+    ].reduce(min);
+  }
+
   List<double> computeRayIntersections(Ray ray) =>
       computeRayAabbIntersections(ray, data);
 }

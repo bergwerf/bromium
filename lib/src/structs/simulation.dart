@@ -87,8 +87,8 @@ class Simulation {
   /// prevent an number of expensive ray projections.
   Particle _easyAddParticle(int type, Vector3 position, [List<int> entered]) {
     final _type = particleTypes[type];
-    final particle = new Particle(
-        type, position, _type.displayColor, _type.radius, _type.speed);
+    final particle = new Particle(type, position, _type.displayColor,
+        _type.speed, _type.radius, membranes.length);
     _addParticle(particle);
 
     // Set entered membranes.
@@ -133,9 +133,14 @@ Add membrane:
     membrane.transfer(buffer, header.membranesOffset + allMembraneBytes);
     membranes.add(membrane);
 
-    /// Update the entered membranes for all particles.
+    // Update all particles to integrate the new membrane into the simulation.
     for (final particle in particles) {
+      // Update the particle.entered array (the particle might already be
+      // inside).
       updateParticleEntered(particle);
+
+      // Add membrane index to particle.minSteps.
+      particle.minSteps.add(0);
     }
 
     log.groupEnd();

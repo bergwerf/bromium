@@ -68,6 +68,11 @@ abstract class Domain implements Transferrable {
   /// Internal method for [contains]
   bool contains(Vector3 point);
 
+  /// Estimate the minimum distance to go from the given [point] to any point on
+  /// the surface. This can be the exact smallest distance or a lower boundary.
+  /// The return value should always be a positive number.
+  double minSurfaceToPoint(Vector3 point);
+
   /// Internal method for [computeRayIntersections]
   List<double> computeRayIntersections(Ray ray);
 

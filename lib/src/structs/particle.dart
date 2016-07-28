@@ -10,7 +10,7 @@ part of bromium.structs;
 /// [entered] array is only used for optimization.
 class Particle implements Transferrable {
   /// Number of floats each particle allocates in a byte buffer
-  static const floatCount = 8;
+  static const floatCount = 7;
 
   /// Number of bytes each particle allocates in a byte buffer
   static const byteCount = Float32List.BYTES_PER_ELEMENT * floatCount;
@@ -24,11 +24,11 @@ class Particle implements Transferrable {
   /// Display color
   Vector3 color;
 
+  /// Speed
+  double speed;
+
   /// Radius
   Float32View _radius;
-
-  /// Speed
-  Float32View _speed;
 
   /// Stick membrane. If the particle is sticked to a membrane this integer is
   /// set to the membrane index. Else it is set to -1.
@@ -37,13 +37,23 @@ class Particle implements Transferrable {
   /// List containing all entered membranes
   final List<int> entered;
 
-  Particle(this.type, this.position, this.color, double radius, double speed)
-      : _radius = new Float32View.value(radius),
-        _speed = new Float32View.value(speed),
-        entered = new List<int>();
+  /// Optimization for [particlesRandomMotionNormal]: the optimization works by
+  /// skipping some parts for particles that are far removed from the membrane.
+  /// The approach that was tested works by computing the minimal number of
+  /// steps the particle needs to reach the membrane and skipping that number of
+  /// cycles. In practice this causes bumps in the simulation time and does not
+  /// significantly speed up the simulations that were tested.
+  final List<int> minSteps;
 
-  Particle.raw(this.type, this.position, this.color, this._radius, this._speed,
-      this.sticked, this.entered);
+  Particle(this.type, this.position, this.color, this.speed, double radius,
+      int membraneCount)
+      : _radius = new Float32View.value(radius),
+        entered = new List<int>(),
+        minSteps = new List<int>.filled(membraneCount, 0, growable: true);
+
+  Particle.raw(this.type, this.position, this.color, this.speed, this._radius,
+      this.sticked, this.entered, int membraneCount)
+      : minSteps = new List<int>.filled(membraneCount, 0, growable: true);
 
   /// Copy the given position into the position view.
   void setPosition(Vector3 _position) {
@@ -83,8 +93,6 @@ class Particle implements Transferrable {
   // Interface for radius and speed.
   double get radius => _radius.get();
   set radius(double value) => _radius.set(value);
-  double get speed => _speed.get();
-  set speed(double value) => _speed.set(value);
 
   /// Check if the particle is sticked to a membrane.
   bool get isSticked => sticked != -1;
@@ -96,7 +104,6 @@ class Particle implements Transferrable {
     color = transferVector3(buffer, offset, copy, color);
     offset += color.storage.lengthInBytes;
     offset = _radius.transfer(buffer, offset, copy);
-    offset = _speed.transfer(buffer, offset, copy);
     return offset;
   }
 }

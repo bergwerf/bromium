@@ -38,6 +38,7 @@ class SimulationZ {
 
       final buffer = _strippedSimulation.buffer;
       var offset = _strippedSimulation.particlesOffset;
+      final membraneCount = _strippedSimulation.membranes.length;
 
       for (var i = 0; i < _hiddenParticleData.length;) {
         // Read compressed particle data.
@@ -54,14 +55,19 @@ class SimulationZ {
         offset += position.storage.lengthInBytes;
         final color = new Vector3.fromBuffer(buffer, offset);
         offset += color.storage.lengthInBytes;
-        final displayRadius = new Float32View(buffer, offset);
-        offset += displayRadius.sizeInBytes;
-        final speed = new Float32View(buffer, offset);
-        offset += displayRadius.sizeInBytes;
+        final radius = new Float32View(buffer, offset);
+        offset += radius.sizeInBytes;
 
         // Add particle.
         _strippedSimulation.particles.add(new Particle.raw(
-            type, position, color, displayRadius, speed, sticked, entered));
+            type,
+            position,
+            color,
+            _strippedSimulation.particleTypes[type].speed,
+            radius,
+            sticked,
+            entered,
+            membraneCount));
       }
 
       return _strippedSimulation;

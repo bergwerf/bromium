@@ -19,6 +19,9 @@ double float32To64(double value) {
 List<double> _from32To64FloatList(Float32List src) =>
     new List<double>.generate(src.length, (int i) => float32To64(src[i]));
 
+List<double> _fromJsonToFloat32List(List<num> src) =>
+    new List<double>.generate(src.length, (int i) => src[i].toDouble());
+
 dynamic toJsonExtra(dynamic object) {
   if (object is Map) {
     return new Map.fromIterable(object.keys,
@@ -64,13 +67,16 @@ dynamic _jsonToDartClass(dynamic object) {
           fromJsonExtra(object['item1']), fromJsonExtra(object['item2']));
 
     case 'Vector2':
-      return new Vector2.array(object['storage'] as List<double>);
+      return new Vector2.array(
+          _fromJsonToFloat32List(object['storage'] as List<num>));
 
     case 'Vector3':
-      return new Vector3.array(object['storage'] as List<double>);
+      return new Vector3.array(
+          _fromJsonToFloat32List(object['storage'] as List<num>));
 
     case 'Vector4':
-      return new Vector4.array(object['storage'] as List<double>);
+      return new Vector4.array(
+          _fromJsonToFloat32List(object['storage'] as List<num>));
 
     default:
       return null;

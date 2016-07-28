@@ -14,3 +14,10 @@ double rand() => _rng.nextDouble();
 Vector3 randomVector3(Random rng) {
   return new Vector3(rng.nextDouble(), rng.nextDouble(), rng.nextDouble());
 }
+
+/// Generate a random unit vector.
+void randomUnitVector3(Random rng, Vector3 dst) {
+  final phi = PI * rng.nextDouble();
+  final theta = 2 * PI * rng.nextDouble();
+  dst.setValues(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
+}
