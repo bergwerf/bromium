@@ -17,7 +17,11 @@ Vector3 randomVector3(Random rng) {
 
 /// Generate a random unit vector.
 void randomUnitVector3(Random rng, Vector3 dst) {
-  final phi = PI * rng.nextDouble();
-  final theta = 2 * PI * rng.nextDouble();
-  dst.setValues(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
+  double x, y, z;
+  do {
+    x = rng.nextDouble() - .5;
+    y = rng.nextDouble() - .5;
+    z = rng.nextDouble() - .5;
+  } while (sqrt(x * x + y * y + z * z) >= 0.25);
+  dst.setValues(2.0 * x, 2.0 * y, 2.0 * z);
 }

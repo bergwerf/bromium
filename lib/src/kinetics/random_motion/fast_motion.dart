@@ -15,7 +15,7 @@ void particlesRandomMotionFast(Simulation sim) {
   final motion = new Vector3.zero();
   for (var p = 0, i = 0; i < view.length; p++, i += 4) {
     randomUnitVector3(rng, motion);
-    final r = rng.nextDouble() * sim.particles[p].speed;
+    final r = sim.particles[p].speed;
     view[i++] += motion.x * r;
     view[i++] += motion.y * r;
     view[i++] += motion.z * r;

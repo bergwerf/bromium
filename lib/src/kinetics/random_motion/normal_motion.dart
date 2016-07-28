@@ -20,7 +20,7 @@ void particlesRandomMotionNormal(Simulation sim) {
       // Normal random motion is computed by scaling a normalized random vector
       // by a random value and the motion radius.
       randomUnitVector3(rng, motion);
-      motion.scale(rng.nextDouble() * particle.speed);
+      motion.scale(particle.speed);
       motion.add(particle.position);
 
       // Check motion block due to allowed flux fraction.
