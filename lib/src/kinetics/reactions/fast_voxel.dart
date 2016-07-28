@@ -4,7 +4,7 @@
 
 part of bromium.kinetics;
 
-// Voxels per unit when using the fast voxel reaction algorithm.
+/// Voxels per unit when using the fast voxel reaction algorithm.
 const fastVoxelReactionVPU = 10;
 
 class Voxel {
@@ -31,7 +31,14 @@ class Voxel {
   }
 }
 
-void reactionsFastVoxel(Simulation sim) {
+/// Fast bind reaction algorithm
+///
+/// It has been attempted to use caching to speed up reaction voxel sorting.
+/// Z-order curve numbers could be used to better preserve locality. However, it
+/// turns out that caching the two dimensional voxel list takes too many extra
+/// operations to really speed things up. Parallel sorting might be a more
+/// efficient optimization.
+void reactionsBindVoxelFast(Simulation sim) {
   final list = new List<List<Voxel>>(sim.particleTypes.length);
   final vpu = fastVoxelReactionVPU;
 
@@ -87,8 +94,7 @@ void reactionsFastVoxel(Simulation sim) {
       final bp = sim.particles[list[b][bi].i];
       if (list[b][bi].n == vn && r.tryReaction(ab ? ap : bp, ab ? bp : ap)) {
         // Queue bind reaction.
-        reactionQueue
-            .add(new BindRxnItem(list[a][ai].i, list[b][bi].i, ridx));
+        reactionQueue.add(new BindRxnItem(list[a][ai].i, list[b][bi].i, ridx));
 
         // Move bi forward.
         bi++;

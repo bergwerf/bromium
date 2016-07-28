@@ -44,7 +44,7 @@ Simulation createTransportDemo() {
 
   // Create cell membrane.
   final cellMembrane = new Membrane(
-      new EllipsoidDomain(new Vector3(.0, .0, .0), new Vector3(2.0, 1.0, 1.0)),
+      new SphereDomain(new Vector3(.0, .0, .0), 1.0),
       new Float32List.fromList(new List<double>.filled(7, 0.0)),
       new Float32List.fromList(new List<double>.filled(7, 0.0)),
       new Float32List.fromList(new List<double>.filled(7, 0.0)),
@@ -64,9 +64,7 @@ Simulation createTransportDemo() {
   simulation.addRandomParticles(p['ATP'], cellMembrane.domain, 8000);
   simulation.addRandomParticles(p['channel'], cellMembrane.domain, 1000);
   simulation.addRandomParticles(
-      p['nutrient'],
-      new EllipsoidDomain(new Vector3(.0, .0, .0), new Vector3(3.0, 1.5, 1.5)),
-      5000,
+      p['nutrient'], new SphereDomain(new Vector3(.0, .0, .0), 1.5), 5000,
       cavities: [cellMembrane.domain]);
   simulation.addMembrane(cellMembrane);
   return simulation;

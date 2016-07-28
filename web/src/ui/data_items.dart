@@ -145,7 +145,14 @@ class MembraneItem extends Item {
         break;
 
       case 'Ellipsoid':
-        domain = new EllipsoidDomain(data['Center'], data['Semi-axes']);
+        // In the special case all semi-axes are the same, we create a sphere
+        // domain.
+        final semiAxes = data['Semi-axes'] as Vector3;
+        if (semiAxes.x == semiAxes.y && semiAxes.y == semiAxes.z) {
+          domain = new SphereDomain(data['Center'], semiAxes.x);
+        } else {
+          domain = new EllipsoidDomain(data['Center'], semiAxes);
+        }
         break;
     }
 

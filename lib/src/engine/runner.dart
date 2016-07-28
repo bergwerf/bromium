@@ -43,7 +43,7 @@ class SimulationRunner {
     // Find bind reactions using the fast voxel method.
     if (data.bindReactions.isNotEmpty) {
       benchmark.start('reactionsFastVoxel');
-      reactionsFastVoxel(data);
+      reactionsBindVoxelFast(data);
       benchmark.end('reactionsFastVoxel');
     }
 

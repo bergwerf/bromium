@@ -11,7 +11,6 @@ class AabbDomain extends Domain {
 
   AabbDomain(this.data) : super(DomainType.aabb);
 
-  /// Construct from buffer.
   factory AabbDomain.fromBuffer(ByteBuffer buffer, int offset) {
     return new AabbDomain(new Aabb3.fromBuffer(buffer, offset));
   }

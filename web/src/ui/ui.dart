@@ -195,6 +195,9 @@ class BromiumUi {
       // When there is an error, just terminate the updating and make the
       // refresh icon red.
       btnUpdate.children.first.style.color = '#a00';
+
+      // Print error.
+      print(e);
     }
 
     // Update buttons.

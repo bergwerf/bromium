@@ -5,7 +5,7 @@
 part of bromium.math;
 
 /// Available [Domain] types
-enum DomainType { aabb, ellipsoid }
+enum DomainType { aabb, sphere, ellipsoid }
 
 /// A particle domain for the BromiumEngine
 abstract class Domain implements Transferrable {
@@ -25,6 +25,8 @@ abstract class Domain implements Transferrable {
     switch (type) {
       case DomainType.aabb:
         return new AabbDomain.fromBuffer(buffer, offset);
+      case DomainType.sphere:
+        return new SphereDomain.fromBuffer(buffer, offset);
       case DomainType.ellipsoid:
         return new EllipsoidDomain.fromBuffer(buffer, offset);
       default:

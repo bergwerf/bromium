@@ -124,6 +124,11 @@ class BromiumWebGLRenderer extends GlCanvas {
         cubeGeometry.transform =
             viewMatrix * GlCube.computeTransform(membrane.data);
         geometry = cubeGeometry;
+      } else if (membrane is SphereDomain) {
+        sphereGeometry.transform = viewMatrix *
+            GlSphere.computeTransform(
+                membrane.center, new Vector3.all(membrane.radius));
+        geometry = sphereGeometry;
       } else if (membrane is EllipsoidDomain) {
         sphereGeometry.transform = viewMatrix *
             GlSphere.computeTransform(membrane.center, membrane.semiAxes);

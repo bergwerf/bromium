@@ -14,5 +14,6 @@ part 'src/math/utils.dart';
 part 'src/math/domain.dart';
 part 'src/math/aabb_domain.dart';
 part 'src/math/aabb_ray.dart';
+part 'src/math/sphere_domain.dart';
 part 'src/math/ellipsoid_domain.dart';
 part 'src/math/ellipsoid_ray.dart';

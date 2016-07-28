@@ -116,19 +116,26 @@ class Vector3DataElement extends InputDataElement {
   Vector3 get value {
     final vector = new Vector3.zero();
     final values = node.value.split(',');
-    for (var i = 0, j = 0; i < 3 && i < values.length; i++) {
-      if (values[i].isNotEmpty) {
-        try {
-          var value = double.parse(values[i]);
 
-          vector.storage[j] = value;
-          j++;
-        } catch (e) {
-          continue;
+    // In the special case there is only one value, use the value for all three
+    // vector dimensions.
+    if (values.length == 1) {
+      return new Vector3.all(double.parse(values.first));
+    } else {
+      for (var i = 0, j = 0; i < 3 && i < values.length; i++) {
+        if (values[i].isNotEmpty) {
+          try {
+            var value = double.parse(values[i]);
+
+            vector.storage[j] = value;
+            j++;
+          } catch (e) {
+            continue;
+          }
         }
       }
+      return vector;
     }
-    return vector;
   }
 
   set value(Vector3 value) => node.value =

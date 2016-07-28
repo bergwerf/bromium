@@ -20,7 +20,6 @@ class EllipsoidDomain extends Domain {
     semiAxes = _semiAxes;
   }
 
-  /// Construct from buffer.
   factory EllipsoidDomain.fromBuffer(ByteBuffer buffer, int offset) {
     return new EllipsoidDomain(
         new Vector3.fromBuffer(buffer, offset),
