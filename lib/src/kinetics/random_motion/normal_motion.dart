@@ -24,7 +24,6 @@ void particlesRandomMotionNormal(Simulation sim) {
       motion.add(particle.position);
 
       // Check motion block due to allowed flux fraction.
-      // TODO: delay computation by computing movement distance until hit.
       final type = particle.type;
       for (var m = 0; m < sim.membranes.length; m++) {
         // Check if the particle can already possibly hit the membrane.

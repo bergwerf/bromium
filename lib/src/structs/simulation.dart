@@ -147,6 +147,7 @@ Add membrane:
   }
 
   /// Remove particle.
+  /// TODO: update Membrane inside and sticked particle count.
   void removeParticle(int p) {
     /// Swap particle p with the last particle unless p is the last particle.
     if (p < particles.length - 1) {
