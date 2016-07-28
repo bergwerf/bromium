@@ -12,14 +12,12 @@ void particlesRandomMotionFast(Simulation sim) {
   var view = new Float32List.view(sim.buffer, sim.particlesOffset,
       sim.particles.length * Particle.floatCount);
 
-  for (var p = 0, i = 0; i < view.length; p++, i += 5) {
-    final r = view[i + 7];
-    final x = rng.nextDouble() - .5;
-    final y = rng.nextDouble() - .5;
-    final z = rng.nextDouble() - .5;
-    final d = sqrt(x * x + y * y + z * z);
-    view[i++] += x / d * r;
-    view[i++] += y / d * r;
-    view[i++] += z / d * r;
+  final motion = new Vector3.zero();
+  for (var p = 0, i = 0; i < view.length; p++, i += 4) {
+    randomUnitVector3(rng, motion);
+    final r = rng.nextDouble() * sim.particles[p].speed;
+    view[i++] += motion.x * r;
+    view[i++] += motion.y * r;
+    view[i++] += motion.z * r;
   }
 }
