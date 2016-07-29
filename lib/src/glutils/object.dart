@@ -22,7 +22,7 @@ class GlObject {
   GlIndexBuffer indexBuffer;
 
   /// All object data buffers
-  List<_GlBuffer> buffers = new List<_GlBuffer>();
+  List<_GlBuffer> buffers = new List();
 
   GlObject(this._ctx);
 

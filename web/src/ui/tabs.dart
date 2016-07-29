@@ -14,7 +14,7 @@ class Tab<I extends Item> {
 
   final DivElement panelElement;
 
-  final List<I> _items = new List<I>();
+  final List<I> _items = new List();
 
   final _GenerateItem<I> itemGenerator;
 
@@ -42,6 +42,7 @@ class Tab<I extends Item> {
   void addItem([Map<String, dynamic> data = null]) {
     _items.add(itemGenerator(data == null ? new Map<String, dynamic>() : data));
     panelElement.append(_items.last.node);
+    _items.last.addedToDom();
   }
 
   /// Load a list of items.

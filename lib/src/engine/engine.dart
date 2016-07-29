@@ -12,6 +12,9 @@ class BromiumEngine {
   /// Render buffer
   final RenderBuffer renderBuffer = new RenderBuffer();
 
+  /// Render buffer update index
+  int dataIdx = -1;
+
   /// Isolate controller
   final SimulationIsolate isolate = new SimulationIsolate();
 
@@ -24,7 +27,24 @@ class BromiumEngine {
   /// Simulation is running
   bool isRunning = false;
 
-  BromiumEngine({this.inIsolate: true});
+  /// Particle counting data stream
+  Stream<List<Tuple2<Uint32List, Uint32List>>> particleCountStream;
+
+  /// Stream controller for [particleCountStream]
+  final StreamController<List<Tuple2<Uint32List, Uint32List>>>
+      _particleCountStreamCtrl = new StreamController();
+
+  BromiumEngine({this.inIsolate: true}) {
+    // Setup particle count stream.
+    particleCountStream = _particleCountStreamCtrl.stream;
+
+    // Setup isolate stream listener.
+    isolate.bufferStream.listen((ByteBuffer data) {
+      renderBuffer.update(data);
+      dataIdx++;
+      _particleCountStreamCtrl.add(renderBuffer.getParticleCounts());
+    });
+  }
 
   /// Load a new simulation.
   Future<bool> loadSimulation(Simulation sim) async {
@@ -49,16 +69,12 @@ class BromiumEngine {
     return result;
   }
 
-  /// Update render data.
-  void update() {
-    if (isRunning) {
-      if (inIsolate) {
-        renderBuffer.update(isolate.lastBuffer);
-      } else {
-        runner.cycle();
-        renderBuffer.update(runner.getBuffer());
-      }
-    }
+  /// Run render cycle.
+  void forceSyncCycle() {
+    runner.cycle();
+    renderBuffer.update(runner.getBuffer());
+    dataIdx++;
+    _particleCountStreamCtrl.add(renderBuffer.getParticleCounts());
   }
 
   /// Pause simulation.

@@ -23,6 +23,7 @@ part 'data_elements.dart';
 part 'data_entries.dart';
 part 'data_items.dart';
 part 'tabs.dart';
+part 'graph.dart';
 
 // ignore: non_constant_identifier_names
 Element $(String selectors) => document.querySelector(selectors);
@@ -73,6 +74,26 @@ class BromiumUi {
     tabs.add(domainTab);
     tabs.add(setupTab);
     tabs.select('Particles');
+
+    // Bind engine particle count stream.
+    engine.particleCountStream
+        .listen((List<Tuple2<Uint32List, Uint32List>> data) {
+      final membraneItems = membraneTab.items;
+      var dataIdx = 0;
+      for (var i = 0; i < membraneItems.length; i++) {
+        if (membraneItems[i].simulationIndex == dataIdx) {
+          membraneItems[i]
+              .graph
+              .addDataPoints(data[dataIdx].item1, data[dataIdx].item2);
+
+          // Proceed to next membrane.
+          dataIdx++;
+          if (dataIdx == data.length) {
+            break;
+          }
+        }
+      }
+    });
 
     // Bind events.
     btnSave.onClick.listen((_) {
@@ -150,7 +171,9 @@ class BromiumUi {
       // Get membranes.
       final membraneIndex = new Index<Membrane>();
       for (final item in membraneTab.items) {
-        membraneIndex[item.get('Label')] = item.createMembrane(particleIndex);
+        final label = item.get('Label');
+        membraneIndex[label] = item.createMembrane(particleIndex);
+        item.simulationIndex = membraneIndex[label];
       }
 
       // Get bind reactions.

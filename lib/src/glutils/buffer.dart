@@ -30,7 +30,7 @@ abstract class _GlBuffer<D extends List> {
   final int _target;
 
   /// All linked attributes
-  final List<AttribPointer> _attribs = new List<AttribPointer>();
+  final List<AttribPointer> _attribs = new List();
 
   /// Coordinates buffer
   final gl.Buffer buffer;

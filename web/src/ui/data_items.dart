@@ -8,8 +8,10 @@ part of bromium.ui;
 class Item extends CustomElement {
   DivElement node;
 
+  /// All data enties
   final List<DataEntry> entries;
 
+  /// Set to true if the item is removed.
   bool removed = false;
 
   Item(String title, Map<String, dynamic> data, this.entries) {
@@ -36,6 +38,7 @@ class Item extends CustomElement {
     node.append(table);
   }
 
+  /// Collect all entry data.
   Map<String, dynamic> collectData() {
     final map = new Map<String, dynamic>();
     for (final entry in entries) {
@@ -44,6 +47,7 @@ class Item extends CustomElement {
     return map;
   }
 
+  /// Get the data of a specified entry.
   dynamic get(String label) {
     for (final entry in entries) {
       if (entry.label == label) {
@@ -52,6 +56,9 @@ class Item extends CustomElement {
     }
     return null;
   }
+
+  /// Override this to get a trigger when the node is added to the DOM.
+  void addedToDom() {}
 }
 
 /// Data item for a single particle type
@@ -79,6 +86,10 @@ class PTypeItem extends Item {
 
 /// Data item for a single membrane
 class MembraneItem extends Item {
+  final ParticleGraph graph;
+
+  int simulationIndex = -1;
+
   MembraneItem(
       [Map<String, dynamic> data = const {
         'Label': '',
@@ -90,7 +101,8 @@ class MembraneItem extends Item {
         'Stick on enter': const [],
         'Stick on leave': const []
       }])
-      : super('Membrane', data, [
+      : graph = new ParticleGraph(),
+        super('Membrane', data, [
           new SimpleEntry('Label', new InputDataElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
@@ -119,7 +131,9 @@ class MembraneItem extends Item {
               new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
               new InputDataElement(type: 'text'),
               data)
-        ]);
+        ]) {
+    node.append(graph.node);
+  }
 
   /// Generate map from MultiSplitEntry tuples.
   static Map<String, double> _generateMap(List<Tuple2> list) {

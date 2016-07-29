@@ -51,10 +51,11 @@ class Simulation {
   final List<Membrane> membranes;
 
   /// Load simulation from loose data.
-  Simulation(this.particleTypes, List<BindReaction> bindReactions,
+  Simulation(List<ParticleType> particleTypes, List<BindReaction> bindReactions,
       List<UnbindReaction> unbindReactions)
-      : header =
-            new SimulationHeader(bindReactions.length, unbindReactions.length),
+      : header = new SimulationHeader(
+            particleTypes.length, bindReactions.length, unbindReactions.length),
+        particleTypes = particleTypes,
         bindReactions = bindReactions,
         unbindReactions = unbindReactions,
         particles = [],
@@ -161,7 +162,7 @@ Add membrane:
 
     // Decrement particle count in all entered membranes.
     for (final entered in particle.entered) {
-      membranes[entered].insideCount[particle.type]--;
+      membranes[entered].enteredCount[particle.type]--;
     }
 
     // Decrement sticked count if particle is sticked.
@@ -181,8 +182,8 @@ Add membrane:
 
     // Decrement particle count in all entered membranes.
     for (final entered in particle.entered) {
-      membranes[entered].insideCount[oldType]--;
-      membranes[entered].insideCount[newType]++;
+      membranes[entered].enteredCount[oldType]--;
+      membranes[entered].enteredCount[newType]++;
     }
 
     // Decrement sticked count if particle is sticked.
@@ -207,7 +208,7 @@ Add membrane:
         if (!particle.hasEntered(membrane)) {
           particle.pushEntered(membrane);
           particle.sticked = -1;
-          membranes[membrane].insideCount[particle.type]++;
+          membranes[membrane].enteredCount[particle.type]++;
         }
         break;
 
@@ -215,7 +216,7 @@ Add membrane:
         particle.sticked = -1;
         if (particle.hasEntered(membrane)) {
           particle.popEntered(membrane);
-          membranes[membrane].insideCount[particle.type]--;
+          membranes[membrane].enteredCount[particle.type]--;
         }
         break;
     }

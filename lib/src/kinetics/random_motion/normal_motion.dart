@@ -55,10 +55,10 @@ void particlesRandomMotionNormal(Simulation sim) {
             continue OUTER;
           } else if (enters) {
             particle.pushEntered(m);
-            membrane.insideCount[type]++;
+            membrane.enteredCount[type]++;
           } else if (leaves) {
             particle.popEntered(m);
-            membrane.insideCount[type]--;
+            membrane.enteredCount[type]--;
           }
         } else {
           // Go one step closer.

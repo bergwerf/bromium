@@ -29,7 +29,7 @@ class Membrane implements Transferrable {
   Float32List leaveStickP;
 
   /// Contained number of particles per type
-  Uint32List insideCount;
+  Uint32List enteredCount;
 
   /// Sticked number of particles per type
   Uint32List stickedCount;
@@ -45,7 +45,7 @@ class Membrane implements Transferrable {
 
   Membrane(this.domain, this.enterP, this.leaveP, this.enterStickP,
       this.leaveStickP, int particleCount)
-      : insideCount = new Uint32List(particleCount),
+      : enteredCount = new Uint32List(particleCount),
         stickedCount = new Uint32List(particleCount);
 
   /// Decide if the given particle type sticks.
@@ -71,7 +71,7 @@ class Membrane implements Transferrable {
       leaveP.lengthInBytes +
       enterStickP.lengthInBytes +
       leaveStickP.lengthInBytes +
-      insideCount.lengthInBytes +
+      enteredCount.lengthInBytes +
       stickedCount.lengthInBytes;
 
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
@@ -84,8 +84,8 @@ class Membrane implements Transferrable {
     offset += enterStickP.lengthInBytes;
     leaveStickP = transferFloat32List(buffer, offset, copy, leaveStickP);
     offset += leaveStickP.lengthInBytes;
-    insideCount = transferUint32List(buffer, offset, copy, insideCount);
-    offset += insideCount.lengthInBytes;
+    enteredCount = transferUint32List(buffer, offset, copy, enteredCount);
+    offset += enteredCount.lengthInBytes;
     stickedCount = transferUint32List(buffer, offset, copy, stickedCount);
     offset += stickedCount.lengthInBytes;
     return offset;

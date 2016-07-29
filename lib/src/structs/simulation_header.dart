@@ -14,15 +14,17 @@ class SimulationHeader implements Transferrable {
   Uint32List data;
 
   // Dimension data
-  static const _bindReactionCount = 0,
-      _unbindReactionCount = 1,
-      _particleCount = 2,
-      _membranesOffset = 3,
-      _membraneCount = 4,
-      length = 5;
+  static const _particleTypeCount = 0,
+      _bindReactionCount = 1,
+      _unbindReactionCount = 2,
+      _particleCount = 3,
+      _membranesOffset = 4,
+      _membraneCount = 5,
+      length = 6;
 
-  SimulationHeader(int bindReactionCount, int unbindReactionCount) {
+  SimulationHeader(int particleTypeCount, int bindReactionCount, int unbindReactionCount) {
     data = new Uint32List(length);
+    data[_particleTypeCount] = particleTypeCount;
     data[_bindReactionCount] = bindReactionCount;
     data[_unbindReactionCount] = unbindReactionCount;
   }
@@ -40,6 +42,7 @@ class SimulationHeader implements Transferrable {
     return offset + byteCount;
   }
 
+  int get particleTypeCount => data[_particleTypeCount];
   int get bindReactionCount => data[_bindReactionCount];
   int get unbindReactionCount => data[_unbindReactionCount];
   int get particleCount => data[_particleCount];

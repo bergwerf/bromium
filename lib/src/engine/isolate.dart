@@ -14,8 +14,11 @@ class SimulationIsolate {
   /// Show messages from within the isolate.
   static bool showIsolateLog = true;
 
-  /// Most recent render buffer from the isolate.
-  ByteBuffer lastBuffer;
+  /// Buffer data stream
+  Stream<ByteBuffer> bufferStream;
+
+  /// Stream controller for [bufferStream]
+  final StreamController<ByteBuffer> _bufferStreamCtrl = new StreamController();
 
   /// Info logger
   final Logger logger = new Logger('bromium.engine.SimulationIsolate');
@@ -55,6 +58,10 @@ class SimulationIsolate {
 
   /// Retrieve simulation completer
   Completer<Simulation> _simulationCompleter;
+
+  SimulationIsolate() {
+    bufferStream = _bufferStreamCtrl.stream;
+  }
 
   /// Find if there is an active isolate.
   bool get activeIsolate => _isolate != null;
@@ -169,7 +176,7 @@ class SimulationIsolate {
 
     // Prepare some render data untill the isolate has really started up.
     simulation.updateBufferHeader();
-    lastBuffer = simulation.buffer;
+    _bufferStreamCtrl.add(simulation.buffer);
 
     // Kill current isolate.
     if (activeIsolate) {
@@ -180,6 +187,9 @@ class SimulationIsolate {
     _receivePort = new ReceivePort();
     _receivePort.listen((dynamic msg) {
       if (msg is ByteBuffer) {
+        // Add data to stream.
+        _bufferStreamCtrl.add(msg);
+
         // Retrieved render data.
         _computedCycles++;
 
@@ -202,9 +212,6 @@ class SimulationIsolate {
             _pauser.complete(true);
           }
         }
-
-        // Replace old simulation buffer.
-        lastBuffer = msg;
       } else if (msg is Benchmark) {
         logger.info('Retrieved benchmarks.');
 

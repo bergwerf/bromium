@@ -27,6 +27,9 @@ class BromiumWebGLRenderer extends GlCanvas {
   /// Sphere shape for drawing ellipsoid membranes
   GlSphere sphereGeometry;
 
+  /// Current data index.
+  int dataIdx = -1;
+
   /// Constructor
   BromiumWebGLRenderer(this.engine, CanvasElement canvas) : super(canvas) {
     // Load shader extensions.
@@ -96,8 +99,12 @@ class BromiumWebGLRenderer extends GlCanvas {
   }
 
   void draw(num time, Matrix4 viewMatrix) {
-    if (engine.isRunning) {
-      engine.update();
+    if (engine.isRunning && !engine.inIsolate) {
+      engine.forceSyncCycle();
+    }
+
+    if (engine.dataIdx > dataIdx) {
+      dataIdx = engine.dataIdx;
       updateParticles();
     }
 
