@@ -19,7 +19,7 @@ void particlesRandomMotionNormal(Simulation sim) {
     } else {
       // Normal random motion is computed by scaling a normalized random vector
       // by a random value and the motion radius.
-      randomUnitVector3(rng, motion);
+      randomSphericalVector3(rng, motion);
       motion.scale(particle.speed);
       motion.add(particle.position);
 

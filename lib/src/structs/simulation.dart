@@ -147,47 +147,76 @@ Add membrane:
   }
 
   /// Remove particle.
-  /// TODO: update Membrane inside and sticked particle count.
   void removeParticle(int p) {
-    /// Swap particle p with the last particle unless p is the last particle.
-    if (p < particles.length - 1) {
-      /// Transfer the last particle to the byte buffer spot of particle p.
-      particles.last.transfer(buffer, particlesOffset + p * Particle.byteCount);
+    final particle = particles.removeLast();
 
-      /// Replace particle p with the last particle.
-      particles[p] = particles.removeLast();
-    } else {
-      particles.removeLast();
+    // Swap particle p with the last particle unless p is the last particle.
+    if (p < particles.length - 1) {
+      // Transfer the last particle to the byte buffer spot of particle p.
+      particle.transfer(buffer, particlesOffset + p * Particle.byteCount);
+
+      // Replace particle p with the last particle.
+      particles[p] = particle;
+    }
+
+    // Decrement particle count in all entered membranes.
+    for (final entered in particle.entered) {
+      membranes[entered].insideCount[particle.type]--;
+    }
+
+    // Decrement sticked count if particle is sticked.
+    if (particle.isSticked) {
+      membranes[particle.sticked].stickedCount[particle.type]--;
     }
   }
 
   /// Edit the given particle type.
-  /// TODO: update Membrane inside and sticked particle count.
-  void editParticleType(Particle particle, int type) {
-    final _type = particleTypes[type];
-    particle.type = type;
+  void editParticleType(Particle particle, int newType) {
+    final oldType = particle.type;
+    final _type = particleTypes[newType];
+    particle.type = newType;
     particle.setColor(_type.displayColor);
     particle.radius = _type.radius;
     particle.speed = _type.speed;
+
+    // Decrement particle count in all entered membranes.
+    for (final entered in particle.entered) {
+      membranes[entered].insideCount[oldType]--;
+      membranes[entered].insideCount[newType]++;
+    }
+
+    // Decrement sticked count if particle is sticked.
+    if (particle.isSticked) {
+      membranes[particle.sticked].stickedCount[oldType]--;
+      membranes[particle.sticked].stickedCount[newType]++;
+    }
   }
 
   /// Edit the given particle location relative to the given membrane.
-  /// TODO: update Membrane inside and sticked particle count.
   void editParticleLocation(Particle particle, int membrane, int location) {
     switch (location) {
       case Membrane.sticked:
-        particle.popEntered(membrane);
-        particle.stickTo(membrane, membranes[membrane].domain);
+        if (particle.sticked != membrane) {
+          particle.popEntered(membrane);
+          particle.stickTo(membrane, membranes[membrane].domain);
+          membranes[membrane].stickedCount[particle.type]++;
+        }
         break;
 
       case Membrane.inside:
-        particle.pushEntered(membrane);
-        particle.sticked = -1;
+        if (!particle.hasEntered(membrane)) {
+          particle.pushEntered(membrane);
+          particle.sticked = -1;
+          membranes[membrane].insideCount[particle.type]++;
+        }
         break;
 
       case Membrane.outside:
-        particle.popEntered(membrane);
         particle.sticked = -1;
+        if (particle.hasEntered(membrane)) {
+          particle.popEntered(membrane);
+          membranes[membrane].insideCount[particle.type]--;
+        }
         break;
     }
   }

@@ -139,7 +139,7 @@ class BromiumUi {
     // Pause engine.
     await engine.pause();
 
-    // TODO: do more validation and use a error messasing system.
+    // TODO: do more validation and use a error messaging system.
     try {
       // Get particle types.
       final particleIndex = new Index<ParticleType>();

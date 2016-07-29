@@ -16,7 +16,7 @@ Vector3 randomVector3(Random rng) {
 }
 
 /// Generate a random unit vector.
-void randomUnitVector3(Random rng, Vector3 dst) {
+void randomSphericalVector3(Random rng, Vector3 dst) {
   double x, y, z;
   do {
     x = rng.nextDouble() - .5;
