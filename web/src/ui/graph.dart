@@ -63,6 +63,7 @@ class ParticleGraph extends CustomElement {
           (defaultWidth / entered.length);
 
       // Draw grid.
+      ctx.save();
       ctx.lineWidth = 1;
       ctx.setStrokeColorRgb(85, 85, 85);
       for (var x = 0; x < defaultWidth; x += gridx) {
@@ -71,52 +72,60 @@ class ParticleGraph extends CustomElement {
         ctx.lineTo(x, defaultHeight);
         ctx.stroke();
       }
+      ctx.restore();
 
-      // Set stroke line width for all plotted lines.
+      // Draw all lines.
+      ctx.save();
       ctx.lineWidth = gridLineSize;
-
-      // Iterate through all particle types and draw their line.
-      for (var type = 0; type < colors.length; type++) {
-        // Set particle type color.
-        ctx.setStrokeColorRgb((colors[type].x * 255).round(),
-            (colors[type].y * 255).round(), (colors[type].z * 255).round());
-
-        // Start graph path.
-        ctx.beginPath();
-        for (var i = 0; i < entered.length; i += skip) {
-          final thisEntered = entered[i][type];
-
-          // Compute plot x and y.
-          final x = i * dX;
-          var y = defaultHeight - thisEntered * dY;
-
-          // Displace y if there are other lines on this coordinate.
-          //
-          // There is a nasty exception where two lines that go in a different
-          // direction cross each other. This case should be discarded.
-          if (entered.length > lineDeltaDistance && i > lineDeltaDistance) {
-            for (var t = type + 1; t < colors.length; t++) {
-              final delta =
-                  (entered[i][t] - entered[i - lineDeltaDistance][t]) -
-                      (thisEntered - entered[i - lineDeltaDistance][type]);
-              if ((entered[i][t] - thisEntered).abs() * dY < gridLineSize &&
-                  delta.abs() <= lineDeltaThreshold) {
-                y += gridLineSize;
-              }
-            }
-          }
-
-          if (i == 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
-      }
+      _drawGraphLines(dX, dY, skip, entered);
+      ctx.setLineDash([2, 2]);
+      _drawGraphLines(dX, dY, skip, sticked);
+      ctx.restore();
     }
 
     _scheduleFrame();
+  }
+
+  void _drawGraphLines(double dX, double dY, int skip, List<List<int>> data) {
+    // Iterate through all particle types and draw their line.
+    for (var type = 0; type < colors.length; type++) {
+      // Set particle type color.
+      ctx.setStrokeColorRgb((colors[type].x * 255).round(),
+          (colors[type].y * 255).round(), (colors[type].z * 255).round());
+
+      // Start graph path.
+      ctx.beginPath();
+      for (var i = 0; i < data.length; i += skip) {
+        final thisData = data[i][type];
+
+        // Compute plot x and y.
+        final x = i * dX;
+        var y = defaultHeight - thisData * dY;
+
+        // Displace y if there are other lines on this coordinate.
+        //
+        // There is a nasty exception where two lines that go in a different
+        // direction cross each other. This case should be discarded.
+        if (data.length > lineDeltaDistance && i > lineDeltaDistance) {
+          for (var t = type + 1; t < colors.length; t++) {
+            final delta =
+                (data[i][t] - data[i - lineDeltaDistance][t]) -
+                    (thisData - data[i - lineDeltaDistance][type]);
+            if ((data[i][t] - thisData).abs() * dY < gridLineSize &&
+                delta.abs() <= lineDeltaThreshold) {
+              y += gridLineSize;
+            }
+          }
+        }
+
+        if (i == 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+    }
   }
 
   /// Schedule a new render cycle.
