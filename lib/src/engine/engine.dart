@@ -28,10 +28,10 @@ class BromiumEngine {
   bool isRunning = false;
 
   /// Particle counting data stream
-  Stream<List<Tuple2<Uint32List, Uint32List>>> particleCountStream;
+  Stream<List<Tuple2<List<int>, List<int>>>> particleCountStream;
 
   /// Stream controller for [particleCountStream]
-  final StreamController<List<Tuple2<Uint32List, Uint32List>>>
+  final StreamController<List<Tuple2<List<int>, List<int>>>>
       _particleCountStreamCtrl = new StreamController();
 
   BromiumEngine({this.inIsolate: true}) {

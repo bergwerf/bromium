@@ -181,3 +181,7 @@ select {
   border: none;
   border-radius: 4px;
 }
+
+.particle-graph {
+  margin-top: 10px;
+}

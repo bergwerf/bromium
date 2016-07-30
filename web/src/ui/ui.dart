@@ -77,7 +77,7 @@ class BromiumUi {
 
     // Bind engine particle count stream.
     engine.particleCountStream
-        .listen((List<Tuple2<Uint32List, Uint32List>> data) {
+        .listen((List<Tuple2<List<int>, List<int>>> data) {
       final membraneItems = membraneTab.items;
       var dataIdx = 0;
       for (var i = 0; i < membraneItems.length; i++) {
@@ -163,14 +163,21 @@ class BromiumUi {
     // TODO: do more validation and use a error messaging system.
     try {
       // Get particle types.
+      final particleColors = new List<Vector3>();
       final particleIndex = new Index<ParticleType>();
       for (final item in pTypeTab.items) {
-        particleIndex[item.get('Label')] = item.data;
+        final particleType = item.data;
+        particleIndex[item.get('Label')] = particleType;
+        particleColors.add(particleType.displayColor);
       }
 
       // Get membranes.
       final membraneIndex = new Index<Membrane>();
       for (final item in membraneTab.items) {
+        // Update membrane particle graph colors.
+        item.graph.colors = particleColors;
+
+        // Store membrane in membrane index.
         final label = item.get('Label');
         membraneIndex[label] = item.createMembrane(particleIndex);
         item.simulationIndex = membraneIndex[label];

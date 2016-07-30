@@ -248,9 +248,14 @@ Add membrane:
         b.item2.compareTo(a.item2));
 
     // Updated entered membranes.
-    particle.entered.clear();
     for (final tuple in entered) {
-      particle.entered.add(tuple.item1);
+      final membrane = tuple.item1;
+
+      // If this membrane is already included in particle.entered, skip it.
+      if (!particle.hasEntered(membrane)) {
+        particle.pushEntered(membrane);
+        membranes[membrane].enteredCount[particle.type]++;
+      }
     }
   }
 
@@ -315,6 +320,7 @@ Add membrane:
   }
 
   /// Unbind particle into products
+  /// TODO: unbind reactions are messing the entered particle count up.
   void unbindParticle(int p, List<ReactionParticle> products) {
     /// If products.isNotEmpty, particle p can be replaced with products.first.
     if (products.isNotEmpty) {

@@ -4,10 +4,14 @@
 
 part of bromium.ui;
 
+/// Base [n] logarithm of [x]
+num logN(num n, num x) => log(x) / log(n);
+
+/// Particle count graph
 class ParticleGraph extends CustomElement {
   static const defaultWidth = 330;
   static const defaultHeight = 250;
-  static const maxDataPoints = 330;
+  static const gridMinSize = 30;
 
   /// Rendering canvas
   final CanvasElement node;
@@ -16,7 +20,7 @@ class ParticleGraph extends CustomElement {
   CanvasRenderingContext2D ctx;
 
   /// Line colors
-  final List<Vector3> colors = new List();
+  List<Vector3> colors = new List();
 
   /// Entered particle count
   final List<List<int>> entered = new List();
@@ -25,25 +29,77 @@ class ParticleGraph extends CustomElement {
   final List<List<int>> sticked = new List();
 
   ParticleGraph() : node = new CanvasElement() {
+    node.classes.add('particle-graph');
     node.width = defaultWidth;
     node.height = defaultHeight;
     ctx = node.getContext('2d');
+    _scheduleFrame();
   }
 
   /// Add data point
-  void addDataPoints(Uint32List _entered, Uint32List _sticked) {
-    entered.add(new List<int>.from(_entered));
-    sticked.add(new List<int>.from(_sticked));
-
-    if (node.clientWidth > 0) {
-      redraw();
-    }
+  void addDataPoints(List<int> _entered, List<int> _sticked) {
+    entered.add(_entered);
+    sticked.add(_sticked);
   }
 
   /// Redraw
   void redraw() {
-    ctx.rect(0, 0, defaultWidth, defaultHeight);
-    ctx.setFillColorRgb(85, 85, 85);
-    ctx.fill();
+    if (!(node.clientWidth == 0 || entered.isEmpty)) {
+      // Clear the canvas.
+      ctx.clearRect(0, 0, defaultWidth, defaultHeight);
+
+      // Get the largest data point.
+      final maxValue = entered.reduce(
+          (List<int> a, List<int> b) => [max(a.reduce(max), b.reduce(max))])[0];
+
+      final dX = defaultWidth / entered.length; // Delta X
+      final dY = defaultHeight / maxValue; // Delta Y
+      final skip = (entered.length / defaultWidth).ceil();
+      final gridx = pow(2,
+              logN(2, gridMinSize / (defaultWidth / entered.length)).ceil()) *
+          (defaultWidth / entered.length);
+
+      // Draw grid.
+      ctx.lineWidth = 1;
+      ctx.setStrokeColorRgb(85, 85, 85);
+      for (var x = 0; x < defaultWidth; x += gridx) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, defaultHeight);
+        ctx.stroke();
+      }
+
+      // Set stroke line width for all plotted lines.
+      ctx.lineWidth = 2;
+
+      // Iterate through all particle types and draw their line.
+      for (var type = 0; type < colors.length; type++) {
+        // Set particle type color.
+        ctx.setStrokeColorRgb((colors[type].x * 255).round(),
+            (colors[type].y * 255).round(), (colors[type].z * 255).round());
+
+        // Start graph path.
+        ctx.beginPath();
+        for (var i = 0; i < entered.length; i += skip) {
+          // Compute plot x and y.
+          final x = i * dX, y = defaultHeight - entered[i][type] * dY;
+          if (i == 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+    }
+
+    _scheduleFrame();
+  }
+
+  /// Schedule a new render cycle.
+  void _scheduleFrame() {
+    window.requestAnimationFrame((num time) {
+      redraw();
+    });
   }
 }

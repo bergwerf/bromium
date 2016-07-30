@@ -36,13 +36,13 @@ class RenderBuffer {
   }
 
   /// Get list of particle entered/sticked count data.
-  List<Tuple2<Uint32List, Uint32List>> getParticleCounts() {
-    var list = new List<Tuple2<Uint32List, Uint32List>>(header.membraneCount);
+  List<Tuple2<List<int>, List<int>>> getParticleCounts() {
+    var list = new List<Tuple2<List<int>, List<int>>>(header.membraneCount);
     var offset = header.membranesOffset;
     for (var i = 0; i < header.membraneCount; i++) {
       final domain = new Domain.fromBuffer(buffer, offset);
       offset += domain.sizeInBytes;
-      offset += 4 * header.particleTypeCount;
+      offset += 4 * 4 * header.particleTypeCount;
 
       // Get entered particle counting.
       final enteredCount =
@@ -54,7 +54,8 @@ class RenderBuffer {
           new Uint32List.view(buffer, offset, header.particleTypeCount);
       offset += stickedCount.lengthInBytes;
 
-      list[i] = new Tuple2<Uint32List, Uint32List>(enteredCount, stickedCount);
+      list[i] = new Tuple2<List<int>, List<int>>(
+          new List<int>.from(enteredCount), new List<int>.from(stickedCount));
     }
     return list;
   }
@@ -67,7 +68,7 @@ class RenderBuffer {
     for (var i = 0; i < header.membraneCount; i++) {
       list[i] = new Domain.fromBuffer(buffer, offset);
       offset += list[i].sizeInBytes;
-      offset += 6 * header.particleTypeCount;
+      offset += 6 * 4 * header.particleTypeCount;
     }
     return list;
   }
