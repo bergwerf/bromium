@@ -12,6 +12,9 @@ class ParticleGraph extends CustomElement {
   static const defaultWidth = 330;
   static const defaultHeight = 250;
   static const gridMinSize = 30;
+  static const gridLineSize = 2;
+  static const lineDeltaDistance = 100;
+  static const lineDeltaThreshold = 5;
 
   /// Rendering canvas
   final CanvasElement node;
@@ -70,7 +73,7 @@ class ParticleGraph extends CustomElement {
       }
 
       // Set stroke line width for all plotted lines.
-      ctx.lineWidth = 2;
+      ctx.lineWidth = gridLineSize;
 
       // Iterate through all particle types and draw their line.
       for (var type = 0; type < colors.length; type++) {
@@ -81,8 +84,28 @@ class ParticleGraph extends CustomElement {
         // Start graph path.
         ctx.beginPath();
         for (var i = 0; i < entered.length; i += skip) {
+          final thisEntered = entered[i][type];
+
           // Compute plot x and y.
-          final x = i * dX, y = defaultHeight - entered[i][type] * dY;
+          final x = i * dX;
+          var y = defaultHeight - thisEntered * dY;
+
+          // Displace y if there are other lines on this coordinate.
+          //
+          // There is a nasty exception where two lines that go in a different
+          // direction cross each other. This case should be discarded.
+          if (entered.length > lineDeltaDistance && i > lineDeltaDistance) {
+            for (var t = type + 1; t < colors.length; t++) {
+              final delta =
+                  (entered[i][t] - entered[i - lineDeltaDistance][t]) -
+                      (thisEntered - entered[i - lineDeltaDistance][type]);
+              if ((entered[i][t] - thisEntered).abs() * dY < gridLineSize &&
+                  delta.abs() <= lineDeltaThreshold) {
+                y += gridLineSize;
+              }
+            }
+          }
+
           if (i == 0) {
             ctx.moveTo(x, y);
           } else {

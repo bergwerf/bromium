@@ -32,6 +32,8 @@ class Membrane implements Transferrable {
   Uint32List enteredCount;
 
   /// Sticked number of particles per type
+  ///
+  /// Note that sticked particles should NOT be included in the entered count!
   Uint32List stickedCount;
 
   /// Membrane movement vector

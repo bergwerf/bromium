@@ -45,6 +45,7 @@ void particlesRandomMotionNormal(Simulation sim) {
           if (membrane.stick(type, enters, leaves)) {
             // Stick the particle.
             particle.stickTo(m, membrane.domain);
+            membrane.enteredCount[type]--;
             membrane.stickedCount[type]++;
           }
 

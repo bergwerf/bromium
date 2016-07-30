@@ -149,25 +149,29 @@ Add membrane:
 
   /// Remove particle.
   void removeParticle(int p) {
-    final particle = particles.removeLast();
+    // Get the particle to be removed.
+    final thisParticle = particles[p];
+
+    // Decrement particle count in all entered membranes.
+    for (final entered in thisParticle.entered) {
+      membranes[entered].enteredCount[thisParticle.type]--;
+    }
+
+    // Decrement sticked count if particle is sticked.
+    if (thisParticle.isSticked) {
+      membranes[thisParticle.sticked].stickedCount[thisParticle.type]--;
+    }
+
+    // Get the last particle.
+    final lastParticle = particles.removeLast();
 
     // Swap particle p with the last particle unless p is the last particle.
     if (p < particles.length - 1) {
       // Transfer the last particle to the byte buffer spot of particle p.
-      particle.transfer(buffer, particlesOffset + p * Particle.byteCount);
+      lastParticle.transfer(buffer, particlesOffset + p * Particle.byteCount);
 
       // Replace particle p with the last particle.
-      particles[p] = particle;
-    }
-
-    // Decrement particle count in all entered membranes.
-    for (final entered in particle.entered) {
-      membranes[entered].enteredCount[particle.type]--;
-    }
-
-    // Decrement sticked count if particle is sticked.
-    if (particle.isSticked) {
-      membranes[particle.sticked].stickedCount[particle.type]--;
+      particles[p] = lastParticle;
     }
   }
 
@@ -326,6 +330,7 @@ Add membrane:
     if (products.isNotEmpty) {
       // Resolve context membrane.
       final particle = particles[p];
+      final entered = new List<int>.from(particle.entered);
       var membrane = -1;
       if (particle.isSticked) {
         membrane = particle.sticked;
@@ -344,7 +349,7 @@ Add membrane:
       for (var i = 1; i < products.length; i++) {
         final product = products[i];
         editParticleLocation(
-            _easyAddParticle(product.type, particle.position, particle.entered),
+            _easyAddParticle(product.type, particle.position, entered),
             membrane,
             product.relativeLocation);
       }
