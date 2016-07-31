@@ -164,8 +164,8 @@ Add membrane:
     final thisParticle = particles[p];
 
     // Decrement particle count in all entered membranes.
-    while (thisParticle.entered.isNotEmpty) {
-      membranes[thisParticle.entered.first].decrementEntered(thisParticle.type);
+    for (final entered in thisParticle.entered) {
+      membranes[entered].decrementEntered(thisParticle.type);
     }
 
     // Decrement sticked count if particle is sticked.
