@@ -28,6 +28,7 @@ class BromiumEngine {
   bool isRunning = false;
 
   /// Particle counting data stream
+  /// TODO: flush stream when reloading.
   Stream<List<Tuple2<List<int>, List<int>>>> particleCountStream;
 
   /// Stream controller for [particleCountStream]
