@@ -43,6 +43,7 @@ class ParticleGraph extends CustomElement {
   }
 
   /// Generate CSV data.
+  /// TODO: increase performance.
   String generateCsv() {
     final data = new List<List<dynamic>>();
 
