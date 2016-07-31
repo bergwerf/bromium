@@ -86,8 +86,10 @@ class PTypeItem extends Item {
 
 /// Data item for a single membrane
 class MembraneItem extends Item {
+  /// Membrane particle counts graph
   final ParticleGraph graph;
 
+  /// Membrane index in the current simulation
   int simulationIndex = -1;
 
   MembraneItem(
@@ -132,6 +134,18 @@ class MembraneItem extends Item {
               new InputDataElement(type: 'text'),
               data)
         ]) {
+    node.append(new DivElement()
+      ..classes.add('particle-graph-titlebar')
+      ..append(new SpanElement()
+        ..text = 'Graph'
+        ..classes.add('particle-graph-title'))
+      ..append(new ButtonElement()
+        ..style.float = 'right'
+        ..innerHtml = '<i class="fa fa-download" aria-hidden="true"></i>'
+        ..onClick.listen((_) {
+          final data = new Blob(graph.generateCsv().split('\n'), 'text/csv');
+          saveAs(data, '${get('Label')}.csv');
+        })));
     node.append(graph.node);
   }
 

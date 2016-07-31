@@ -13,7 +13,7 @@ class ParticleGraph extends CustomElement {
   static const defaultHeight = 250;
   static const gridMinSize = 30;
   static const gridLineSize = 2;
-  static const lineDeltaDistance = 100;
+  static const lineDeltaDistance = 100; // TODO: try to eliminate this
   static const lineDeltaThreshold = 5;
 
   /// Rendering canvas
@@ -21,6 +21,9 @@ class ParticleGraph extends CustomElement {
 
   /// 2D rendering context
   CanvasRenderingContext2D ctx;
+
+  /// Particle type labels (for CSV export)
+  List<String> labels = new List<String>();
 
   /// Line colors
   List<Vector3> colors = new List();
@@ -39,6 +42,26 @@ class ParticleGraph extends CustomElement {
     _scheduleFrame();
   }
 
+  /// Generate CSV data.
+  String generateCsv() {
+    final data = new List<List<dynamic>>();
+
+    // Add table headers.
+    data.add(['Step']
+      ..addAll(new List<String>.generate(
+          labels.length, (int i) => '${labels[i]} (entered)'))
+      ..addAll(new List<String>.generate(
+          labels.length, (int i) => '${labels[i]} (sticked)')));
+
+    // Add all rows.
+    for (var i = 0; i < entered.length; i++) {
+      data.add([i]..addAll(entered[i])..addAll(sticked[i]));
+    }
+
+    // Generate CSV.
+    return const ListToCsvConverter().convert(data);
+  }
+
   /// Add data point
   void addDataPoints(List<int> _entered, List<int> _sticked) {
     entered.add(_entered);
@@ -46,17 +69,23 @@ class ParticleGraph extends CustomElement {
   }
 
   /// Redraw
+  /// TODO: line smoothing
+  /// TODO: grid line fade
+  /// TODO: draw sticked line using black dashes.
   void redraw() {
     if (!(node.clientWidth == 0 || entered.isEmpty)) {
       // Clear the canvas.
       ctx.clearRect(0, 0, defaultWidth, defaultHeight);
 
       // Get the largest data point.
-      final maxValue = entered.reduce(
-          (List<int> a, List<int> b) => [max(a.reduce(max), b.reduce(max))])[0];
+      final maxValue = max(
+          entered.fold(
+              0, (int prev, List<int> list) => max(prev, list.reduce(max))),
+          sticked.fold(
+              0, (int prev, List<int> list) => max(prev, list.reduce(max))));
 
       final dX = defaultWidth / entered.length; // Delta X
-      final dY = defaultHeight / maxValue; // Delta Y
+      final dY = (defaultHeight - gridLineSize) / maxValue; // Delta Y
       final skip = (entered.length / defaultWidth).ceil();
       final gridx = pow(2,
               logN(2, gridMinSize / (defaultWidth / entered.length)).ceil()) *
@@ -78,7 +107,7 @@ class ParticleGraph extends CustomElement {
       ctx.save();
       ctx.lineWidth = gridLineSize;
       _drawGraphLines(dX, dY, skip, entered);
-      ctx.setLineDash([2, 2]);
+      ctx.lineWidth = 1;
       _drawGraphLines(dX, dY, skip, sticked);
       ctx.restore();
     }
@@ -99,8 +128,11 @@ class ParticleGraph extends CustomElement {
         final thisData = data[i][type];
 
         // Compute plot x and y.
+        //
+        // Note that 1 is subtracted to y so that lines at y = 0 with
+        // line size = 2 are fully displayed.
         final x = i * dX;
-        var y = defaultHeight - thisData * dY;
+        var y = defaultHeight - thisData * dY - 1;
 
         // Displace y if there are other lines on this coordinate.
         //
@@ -108,12 +140,13 @@ class ParticleGraph extends CustomElement {
         // direction cross each other. This case should be discarded.
         if (data.length > lineDeltaDistance && i > lineDeltaDistance) {
           for (var t = type + 1; t < colors.length; t++) {
-            final delta =
-                (data[i][t] - data[i - lineDeltaDistance][t]) -
-                    (thisData - data[i - lineDeltaDistance][type]);
+            final delta = (data[i][t] - data[i - lineDeltaDistance][t]) -
+                (thisData - data[i - lineDeltaDistance][type]);
             if ((data[i][t] - thisData).abs() * dY < gridLineSize &&
                 delta.abs() <= lineDeltaThreshold) {
-              y += gridLineSize;
+              // Note that the line size is subtracted because of the 2D
+              // graphics coordinate system.
+              y -= gridLineSize;
             }
           }
         }

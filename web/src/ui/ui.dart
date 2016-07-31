@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:csv/csv.dart';
 import 'package:tuple/tuple.dart';
 import 'package:bromium/math.dart';
 import 'package:bromium/engine.dart';
@@ -162,19 +163,23 @@ class BromiumUi {
 
     // TODO: do more validation and use a error messaging system.
     try {
-      // Get particle types.
+      // Process particle types.
+      final particleLabels = new List<String>();
       final particleColors = new List<Vector3>();
       final particleIndex = new Index<ParticleType>();
       for (final item in pTypeTab.items) {
         final particleType = item.data;
-        particleIndex[item.get('Label')] = particleType;
+        final label = item.get('Label');
+        particleLabels.add(label);
         particleColors.add(particleType.displayColor);
+        particleIndex[label] = particleType;
       }
 
       // Get membranes.
       final membraneIndex = new Index<Membrane>();
       for (final item in membraneTab.items) {
-        // Update membrane particle graph colors.
+        // Update membrane particle graph labels and colors.
+        item.graph.labels = particleLabels;
         item.graph.colors = particleColors;
 
         // Store membrane in membrane index.
