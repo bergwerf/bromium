@@ -19,10 +19,10 @@ class Particle implements Transferrable {
   int type;
 
   /// Position
-  Vector3 position;
+  Vector3 _position;
 
   /// Display color
-  Vector3 color;
+  Vector3 _color;
 
   /// Speed
   double speed;
@@ -45,25 +45,27 @@ class Particle implements Transferrable {
   /// significantly speed up the simulations that were tested.
   final List<int> minSteps;
 
-  Particle(this.type, this.position, this.color, this.speed, double radius,
+  Particle(this.type, this._position, this._color, this.speed, double radius,
       int membraneCount)
       : _radius = new Float32View.value(radius),
         entered = new List<int>(),
         minSteps = new List<int>.filled(membraneCount, 0, growable: true);
 
-  Particle.raw(this.type, this.position, this.color, this.speed, this._radius,
+  Particle.raw(this.type, this._position, this._color, this.speed, this._radius,
       this.sticked, this.entered, int membraneCount)
       : minSteps = new List<int>.filled(membraneCount, 0, growable: true);
 
-  /// Copy the given position into the position view.
-  void setPosition(Vector3 _position) {
-    position.copyFromArray(_position.storage);
-  }
+  // Public read/write for position.
+  Vector3 get position => _position;
+  set position(Vector3 src) => _position.copyFromArray(src.storage);
 
-  /// Copy the given color into the color view.
-  void setColor(Vector3 _color) {
-    color.copyFromArray(_color.storage);
-  }
+  // Public read/write for position.
+  Vector3 get color => _color;
+  set color(Vector3 src) => _color.copyFromArray(src.storage);
+
+  // Public read/write for radius.
+  double get radius => _radius.get();
+  set radius(double value) => _radius.set(value);
 
   /// Check if the particle has entered the given membrane.
   bool hasEntered(int membrane) => entered.contains(membrane);
@@ -78,31 +80,33 @@ class Particle implements Transferrable {
   ///
   /// When the particle is sticked to a given `membrane` then
   /// `hasEntered(membrane)` returns false.
-  void stickTo(int index, Domain membrane) {
+  void stickTo(int index, Domain membrane, [bool doProjection = true]) {
     sticked = index;
-    popEntered(index);
 
-    // Project position on the membrane using a ray from the membrane center
-    // towards the particle.
-    final ray =
-        new Ray.originDirection(membrane.center, position - membrane.center);
-    final proj = membrane.computeRayIntersections(ray);
-    position.setFrom(ray.at(proj.reduce(max)));
+    if (doProjection) {
+      // Project position on the membrane using a ray from the membrane center
+      // towards the particle.
+      final ray =
+          new Ray.originDirection(membrane.center, position - membrane.center);
+      final proj = membrane.computeRayIntersections(ray);
+      position.setFrom(ray.at(proj.reduce(max)));
+    }
   }
-
-  // Interface for radius and speed.
-  double get radius => _radius.get();
-  set radius(double value) => _radius.set(value);
 
   /// Check if the particle is sticked to a membrane.
   bool get isSticked => sticked != -1;
 
+  // Get the closest membrane which is either the sticked membrane or the last
+  // entered membrane or -1 if none is available.
+  int getClosestMembrane() =>
+      isSticked ? sticked : (entered.isNotEmpty ? entered.last : -1);
+
   int get sizeInBytes => byteCount;
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    position = transferVector3(buffer, offset, copy, position);
-    offset += position.storage.lengthInBytes;
-    color = transferVector3(buffer, offset, copy, color);
-    offset += color.storage.lengthInBytes;
+    _position = transferVector3(buffer, offset, copy, _position);
+    offset += _position.storage.lengthInBytes;
+    _color = transferVector3(buffer, offset, copy, _color);
+    offset += _color.storage.lengthInBytes;
     offset = _radius.transfer(buffer, offset, copy);
     return offset;
   }

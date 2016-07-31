@@ -16,6 +16,9 @@ class Membrane implements Transferrable {
   /// Membrane volume
   final Domain domain;
 
+  /// Membrane index
+  int index;
+
   /// Enter probability per particle type
   Float32List enterP;
 
@@ -29,12 +32,12 @@ class Membrane implements Transferrable {
   Float32List leaveStickP;
 
   /// Contained number of particles per type
-  Uint32List enteredCount;
+  Uint32List _enteredCount;
 
   /// Sticked number of particles per type
   ///
   /// Note that sticked particles should NOT be included in the entered count!
-  Uint32List stickedCount;
+  Uint32List _stickedCount;
 
   /// Membrane movement vector
   ///
@@ -47,8 +50,12 @@ class Membrane implements Transferrable {
 
   Membrane(this.domain, this.enterP, this.leaveP, this.enterStickP,
       this.leaveStickP, int particleCount)
-      : enteredCount = new Uint32List(particleCount),
-        stickedCount = new Uint32List(particleCount);
+      : _enteredCount = new Uint32List(particleCount),
+        _stickedCount = new Uint32List(particleCount);
+
+  // Public read access for entered and sticked counts.
+  //get Uint32List enteredCount => _enteredCount;
+  //get Uint32List enteredCount => _enteredCount;
 
   /// Decide if the given particle type sticks.
   bool stick(int type, bool enters, bool leaves) {
@@ -67,14 +74,56 @@ class Membrane implements Transferrable {
   /// Decide if the given particle type may leave.
   bool mayLeave(int type) => leaveP[type] == 0 ? false : rand() < leaveP[type];
 
+  /// Decrement entered particle count at [type].
+  int decrementEntered(int type) => _enteredCount[type]--;
+
+  /// Decrement sticked particle count at [type].
+  int decrementSticked(int type) => _stickedCount[type]--;
+
+  /// Enter particle.
+  void enterParticleUnsafe(Particle particle) {
+    particle.pushEntered(index);
+    _enteredCount[particle.type]++;
+  }
+
+  /// Leave particle.
+  void leaveParticleUnsafe(Particle particle) {
+    particle.popEntered(index);
+    decrementEntered(particle.type);
+  }
+
+  /// Stick particle.
+  void stickParticleUnsafe(Particle particle, [bool doProjection = true]) {
+    particle.stickTo(index, domain, doProjection);
+    _stickedCount[particle.type]++;
+  }
+
+  /// Unstick particle.
+  void unstickParticleUnsafe(Particle particle) {
+    decrementSticked(particle.type);
+    particle.sticked = -1;
+  }
+
+  /// Update entered count after changing the type of an entered particle.
+  void changeEnteredType(int from, int to) {
+    _enteredCount[from]--;
+    _enteredCount[to]++;
+  }
+
+  /// Update entered count after changing the type of a sticked particle.
+  void changeStickedType(int from, int to) {
+    _stickedCount[from]--;
+    _stickedCount[to]++;
+  }
+
   int get sizeInBytes =>
       domain.sizeInBytes +
       enterP.lengthInBytes +
       leaveP.lengthInBytes +
       enterStickP.lengthInBytes +
       leaveStickP.lengthInBytes +
-      enteredCount.lengthInBytes +
-      stickedCount.lengthInBytes;
+      _enteredCount.lengthInBytes +
+      _stickedCount.lengthInBytes;
 
   int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
     offset = domain.transfer(buffer, offset, copy);
@@ -86,10 +135,10 @@ class Membrane implements Transferrable {
     offset += enterStickP.lengthInBytes;
     leaveStickP = transferFloat32List(buffer, offset, copy, leaveStickP);
     offset += leaveStickP.lengthInBytes;
-    enteredCount = transferUint32List(buffer, offset, copy, enteredCount);
-    offset += enteredCount.lengthInBytes;
-    stickedCount = transferUint32List(buffer, offset, copy, stickedCount);
-    offset += stickedCount.lengthInBytes;
+    _enteredCount = transferUint32List(buffer, offset, copy, _enteredCount);
+    offset += _enteredCount.lengthInBytes;
+    _stickedCount = transferUint32List(buffer, offset, copy, _stickedCount);
+    offset += _stickedCount.lengthInBytes;
     return offset;
   }
 }

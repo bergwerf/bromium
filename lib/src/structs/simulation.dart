@@ -4,6 +4,16 @@
 
 part of bromium.structs;
 
+/// Logical XOR
+bool xor(bool a, bool b) => a ? !b : b;
+
+/// Linear interpolation
+Vector3 interpolate(Vector3 a, num aWeight, Vector3 b, num bWeight) {
+  var result = new Vector3.zero();
+  Vector3.mix(a, b, bWeight / (aWeight + bWeight), result);
+  return result;
+}
+
 /// All information during a simulation. All data is final. All underlying
 /// dynamic data is backed by the [buffer].
 class Simulation {
@@ -35,19 +45,19 @@ class Simulation {
   /// be calculated from the [header].
   int particlesOffset = 0;
 
-  /// Particle types
+  /// Particle types (fixed order)
   final List<ParticleType> particleTypes;
 
-  /// Bind reactions
+  /// Bind reactions (fixed order)
   final List<BindReaction> bindReactions;
 
-  /// Unbind reactions
+  /// Unbind reactions (fixed order)
   final List<UnbindReaction> unbindReactions;
 
-  /// Particles
+  /// Particles (dynamic order)
   final List<Particle> particles;
 
-  /// Membranes
+  /// Membranes (fixed order)
   final List<Membrane> membranes;
 
   /// Load simulation from loose data.
@@ -131,6 +141,7 @@ Add membrane:
 
     _rescaleBuffer(0, membrane.sizeInBytes);
 
+    membrane.index = membranes.length;
     membrane.transfer(buffer, header.membranesOffset + allMembraneBytes);
     membranes.add(membrane);
 
@@ -153,20 +164,23 @@ Add membrane:
     final thisParticle = particles[p];
 
     // Decrement particle count in all entered membranes.
-    for (final entered in thisParticle.entered) {
-      membranes[entered].enteredCount[thisParticle.type]--;
+    while (thisParticle.entered.isNotEmpty) {
+      membranes[thisParticle.entered.first].decrementEntered(thisParticle.type);
     }
 
     // Decrement sticked count if particle is sticked.
     if (thisParticle.isSticked) {
-      membranes[thisParticle.sticked].stickedCount[thisParticle.type]--;
+      membranes[thisParticle.sticked].decrementSticked(thisParticle.type);
     }
 
-    // Get the last particle.
+    // Pick the last particle.
+    // Note that this also handles the removal of the particle from the list.
     final lastParticle = particles.removeLast();
 
     // Swap particle p with the last particle unless p is the last particle.
-    if (p < particles.length - 1) {
+    // Note that we removed a particle and that p == length if it was the last
+    // particle.
+    if (p < particles.length) {
       // Transfer the last particle to the byte buffer spot of particle p.
       lastParticle.transfer(buffer, particlesOffset + p * Particle.byteCount);
 
@@ -178,49 +192,65 @@ Add membrane:
   /// Edit the given particle type.
   void editParticleType(Particle particle, int newType) {
     final oldType = particle.type;
-    final _type = particleTypes[newType];
-    particle.type = newType;
-    particle.setColor(_type.displayColor);
-    particle.radius = _type.radius;
-    particle.speed = _type.speed;
 
-    // Decrement particle count in all entered membranes.
+    // Update particle metadata.
+    final typeInfo = particleTypes[newType];
+    particle.type = newType;
+    particle.color = typeInfo.displayColor;
+    particle.radius = typeInfo.radius;
+    particle.speed = typeInfo.speed;
+
+    // Update particle counting in all entered membranes.
     for (final entered in particle.entered) {
-      membranes[entered].enteredCount[oldType]--;
-      membranes[entered].enteredCount[newType]++;
+      membranes[entered].changeEnteredType(oldType, newType);
     }
 
-    // Decrement sticked count if particle is sticked.
+    // Update particle counting in sticked membrane.
     if (particle.isSticked) {
-      membranes[particle.sticked].stickedCount[oldType]--;
-      membranes[particle.sticked].stickedCount[newType]++;
+      membranes[particle.sticked].changeStickedType(oldType, newType);
     }
   }
 
   /// Edit the given particle location relative to the given membrane.
-  void editParticleLocation(Particle particle, int membrane, int location) {
+  void editParticleLocation(Particle particle, int ctxMembrane, int location,
+      [bool stickProjection = true]) {
     switch (location) {
       case Membrane.sticked:
-        if (particle.sticked != membrane) {
-          particle.popEntered(membrane);
-          particle.stickTo(membrane, membranes[membrane].domain);
-          membranes[membrane].stickedCount[particle.type]++;
+        // The context membrane cannot be -1.
+        if (ctxMembrane == -1) {
+          throw new ArgumentError(
+              'ctxMembrane cannot be -1 if location is sticked');
+        }
+
+        // If the particle is not yet sticked to this membrane, stick it.
+        if (particle.sticked != ctxMembrane) {
+          if (particle.hasEntered(ctxMembrane)) {
+            membranes[ctxMembrane].leaveParticleUnsafe(particle);
+          }
+          membranes[ctxMembrane].stickParticleUnsafe(particle, stickProjection);
         }
         break;
 
       case Membrane.inside:
-        if (!particle.hasEntered(membrane)) {
-          particle.pushEntered(membrane);
-          particle.sticked = -1;
-          membranes[membrane].enteredCount[particle.type]++;
+        // If the particle hasn't yet entered the membrane; enter it.
+        if (!particle.hasEntered(ctxMembrane)) {
+          // If the particle is currently sticked; unstick first.
+          if (particle.sticked == ctxMembrane) {
+            membranes[ctxMembrane].unstickParticleUnsafe(particle);
+          }
+          membranes[ctxMembrane].enterParticleUnsafe(particle);
         }
         break;
 
       case Membrane.outside:
-        particle.sticked = -1;
-        if (particle.hasEntered(membrane)) {
-          particle.popEntered(membrane);
-          membranes[membrane].enteredCount[particle.type]--;
+        // If there is a specific membrane and the particle has entered it,
+        // leave and unstick the membrane.
+        if (ctxMembrane != -1) {
+          if (particle.hasEntered(ctxMembrane)) {
+            membranes[ctxMembrane].leaveParticleUnsafe(particle);
+          } else if (particle.sticked == ctxMembrane) {
+            membranes[particle.sticked].unstickParticleUnsafe(particle);
+          }
         }
         break;
     }
@@ -257,8 +287,7 @@ Add membrane:
 
       // If this membrane is already included in particle.entered, skip it.
       if (!particle.hasEntered(membrane)) {
-        particle.pushEntered(membrane);
-        membranes[membrane].enteredCount[particle.type]++;
+        membranes[membrane].enterParticleUnsafe(particle);
       }
     }
   }
@@ -276,30 +305,26 @@ Add membrane:
     // Set particle a to the new type.
     editParticleType(particleA, particleC.type);
 
-    // If particle C is sticked and particle A and B are also sticked, the
-    // position must be interpolated and the sticked property is already set.
-    //
-    // If particle C is sticked but only particle A or B is sticked, the
-    // position and sticked property of particle C must be set to the same
-    // values as the initially sticked particle.
+    // Resolve position.
     if (particleC.sticked &&
-        !(bindReactions[r].particleA.sticked &&
+        xor(bindReactions[r].particleA.sticked,
             bindReactions[r].particleB.sticked)) {
-      // If particle A is sticked the position and sticked property are already
-      // set correctly.
+      // If particle A is sticked, the position is already set correctly. Else
+      // particle B must be the sticked particle and we use its position.
       if (!particleA.isSticked) {
-        particleA.sticked = particleB.sticked;
-        particleA.setPosition(particleB.position);
+        particleA.position = particleB.position;
       }
     } else {
-      // Linearly interpolate between the two particles using their radius as
-      // weights.
-      var result = new Vector3.zero();
-      final weight = particleA.radius + particleB.radius;
-      Vector3.mix(particleA.position, particleB.position,
-          1 / weight * particleB.radius, result);
-      particleA.setPosition(result);
+      // Linearly interpolate between the particles using radius as weights.
+      particleA.position = interpolate(particleA.position, particleA.radius,
+          particleB.position, particleB.radius);
     }
+
+    // Set relative location.
+    int contextMembrane =
+        max(particleA.getClosestMembrane(), particleB.getClosestMembrane());
+    editParticleLocation(
+        particleA, contextMembrane, particleC.relativeLocation, false);
 
     // Remove particle b.
     removeParticle(b);
@@ -315,32 +340,33 @@ Add membrane:
     }
 
     // Sort reactions in descending order using b.
+    //
+    // Note that `b` is removed and will change all indices of the particles
+    // after `b`. Therefore you should handle the reactions with the largest `b`
+    // first. It is not possible for later reactions to be in the range after
+    // `b` since all their `b` indices are smaller and all a indices are smaller
+    // than the `b` indices.
     rxns.sort((BindRxnItem a, BindRxnItem b) => b.b - a.b);
 
-    // Apply reactions
+    // Apply reactions.
     for (final rxn in rxns) {
       bindParticles(rxn.a, rxn.b, rxn.r);
     }
   }
 
   /// Unbind particle into products
-  /// TODO: unbind reactions are messing the entered particle count up.
   void unbindParticle(int p, List<ReactionParticle> products) {
     /// If products.isNotEmpty, particle p can be replaced with products.first.
     if (products.isNotEmpty) {
       // Resolve context membrane.
       final particle = particles[p];
       final entered = new List<int>.from(particle.entered);
-      var membrane = -1;
-      if (particle.isSticked) {
-        membrane = particle.sticked;
-      } else if (particle.entered.isNotEmpty) {
-        membrane = particle.entered.last;
-      }
+      final ctxMembrane = particle.getClosestMembrane();
 
       // Add first product.
       editParticleType(particle, products.first.type);
-      editParticleLocation(particle, membrane, products.first.relativeLocation);
+      editParticleLocation(
+          particle, ctxMembrane, products.first.relativeLocation);
 
       // Add other reaction products.
       _rescaleBuffer(products.length - 1, 0);
@@ -350,7 +376,7 @@ Add membrane:
         final product = products[i];
         editParticleLocation(
             _easyAddParticle(product.type, particle.position, entered),
-            membrane,
+            ctxMembrane,
             product.relativeLocation);
       }
     } else {

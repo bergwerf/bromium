@@ -28,7 +28,7 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
           } else {
             // Inner particle has illegally moved outward: project back inside.
             var proj = _innerProj(particle.position, newDomain);
-            particle.setPosition(proj);
+            particle.position = proj;
           }
         }
       } else if (newDomain.contains(particle.position)) {
@@ -38,7 +38,7 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
         } else {
           // Outer particle has illegally moved inward: project back outside.
           var proj = _outerProj(particle.position, oldDomain, newDomain);
-          particle.setPosition(proj);
+          particle.position = proj;
         }
       }
     }

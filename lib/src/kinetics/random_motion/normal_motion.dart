@@ -43,23 +43,20 @@ void particlesRandomMotionNormal(Simulation sim) {
 
           // If the particle sticks: stick it and continue to the next particle.
           if (membrane.stick(type, enters, leaves)) {
-            // Stick the particle.
-            particle.stickTo(m, membrane.domain);
-            membrane.enteredCount[type]--;
-            membrane.stickedCount[type]++;
+            membrane.leaveParticleUnsafe(particle);
+            membrane.stickParticleUnsafe(particle);
+            continue OUTER;
           }
 
-          // Note: boolean conditions are resolved sequentially, this allows some
-          // optimizations in this code (e.g. check enters/leaves first).
+          // Note: boolean conditions are resolved sequentially, this allows
+          // some optimizations in this code (e.g. check enters/leaves first).
           if ((enters && !membrane.mayEnter(type)) ||
               (leaves && !membrane.mayLeave(type))) {
             continue OUTER;
           } else if (enters) {
-            particle.pushEntered(m);
-            membrane.enteredCount[type]++;
+            membrane.enterParticleUnsafe(particle);
           } else if (leaves) {
-            particle.popEntered(m);
-            membrane.enteredCount[type]--;
+            membrane.leaveParticleUnsafe(particle);
           }
         } else {
           // Go one step closer.

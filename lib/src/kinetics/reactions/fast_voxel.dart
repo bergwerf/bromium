@@ -89,17 +89,29 @@ void reactionsBindVoxelFast(Simulation sim) {
       }
 
       // Check if the next b voxel is equal to the current a voxel.
-      // If so randomly decide to proceed the reaction.
+      // If this is the case, randomly decide to proceed the reaction.
+      //
+      // TODO: try to bind with other b particles in the same voxel if this
+      // reaction does not proceed.
       final ap = sim.particles[list[a][ai].i];
       final bp = sim.particles[list[b][bi].i];
       if (list[b][bi].n == vn && r.tryReaction(ab ? ap : bp, ab ? bp : ap)) {
         // Queue bind reaction.
         reactionQueue.add(new BindRxnItem(list[a][ai].i, list[b][bi].i, ridx));
 
-        // Move bi forward.
-        bi++;
+        // Remove `ai` and `bi` particles from the lists since they are queued.
+        // This prevents duplicate reactions from being queued.
+        list[a].removeAt(ai);
+        list[b].removeAt(bi);
 
-        // If bi is larger than the b list, we can quit this reaction.
+        // Note that we do not have to increment `bi` since we removed the
+        // element at `bi` so the next element is at `bi`.
+
+        // Decrement `ai` so that `ai++` in the next iteration will give the
+        // current `ai` (which is the next element index).
+        ai--;
+
+        // If `bi` is larger than the `b` list, we can quit this reaction.
         if (bi == list[b].length) {
           break REACTION;
         }
