@@ -104,7 +104,10 @@ class Simulation {
 
     // Set entered membranes.
     if (entered != null) {
-      particle.entered.insertAll(0, entered);
+      for (final membrane in entered) {
+        membranes[membrane].enterParticleUnsafe(particle);
+      }
+
     } else {
       // Compute entered membranes using ray projection.
       updateParticleEntered(particle);
@@ -314,11 +317,21 @@ Add membrane:
       if (!particleA.isSticked) {
         particleA.position = particleB.position;
       }
-    } else {
+    }
+
+    // Interpolation is funny but disabling it is a lightweight solution for
+    // fixing the unbinding problem: when particle unbind and move apart there
+    // is an increased probability they will bind again (due to highly
+    // inaccurate Bromium physics). If the binding interpolates they will
+    // roughly end up at the same place they unbinded and the cycle starts over
+    // again. If one of the two positions is picked you will avoid the emergence
+    // of these 'clusters'.
+
+    /* else {
       // Linearly interpolate between the particles using radius as weights.
       particleA.position = interpolate(particleA.position, particleA.radius,
           particleB.position, particleB.radius);
-    }
+    } */
 
     // Set relative location.
     int contextMembrane =

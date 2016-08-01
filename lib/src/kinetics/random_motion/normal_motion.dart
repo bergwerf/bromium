@@ -5,6 +5,9 @@
 part of bromium.kinetics;
 
 /// Normal particle random motion algorithm.
+/// 
+/// TODO: implement semi-random approach by generating 1k random vectors and
+/// looping those.
 void particlesRandomMotionNormal(Simulation sim) {
   var rng = new Random();
 

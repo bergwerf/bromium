@@ -5,7 +5,7 @@
 part of bromium.kinetics;
 
 /// Voxels per unit when using the fast voxel reaction algorithm.
-const fastVoxelReactionVPU = 10;
+const fastVoxelReactionVPU = 50;
 
 class Voxel {
   final int i, n;
@@ -14,7 +14,8 @@ class Voxel {
 
   /// Compute a voxel number for the given vector. The vector is multiplied by
   /// the given [vpu] and truncated. The voxel space number fits inside the
-  /// ECMA max int (2^53 - 1). The voxel space size is 2^17.
+  /// ECMA max int (2^53 - 1). The voxel space size is 2^17. Semi-axis size is
+  /// 2^16 = 65536.
   static int computeNumber(Vector3 vec, int vpu) {
     final x = (vec.x * vpu).truncate() + 65536;
     final y = (vec.y * vpu).truncate() + 65536;
@@ -38,6 +39,9 @@ class Voxel {
 /// turns out that caching the two dimensional voxel list takes too many extra
 /// operations to really speed things up. Parallel sorting might be a more
 /// efficient optimization.
+///
+/// TODO: use direction vector to compute secondary collision probability
+/// factor.
 void reactionsBindVoxelFast(Simulation sim) {
   final list = new List<List<Voxel>>(sim.particleTypes.length);
   final vpu = fastVoxelReactionVPU;
