@@ -161,7 +161,8 @@ class BromiumUi {
     // Pause engine.
     await engine.pause();
 
-    // TODO: do more validation and use a error messaging system.
+    // TODO: do more validation and use a error messaging (with notifications in
+    // the user interface).
     try {
       // Process particle types.
       final particleLabels = new List<String>();
@@ -215,7 +216,8 @@ class BromiumUi {
       }
 
       // Load membranes.
-      // TODO: batch load membranes.
+      // TODO: batch load membranes (more efficient to compute particle entered
+      // list at once).
       for (final membrane in membraneIndex.data) {
         simulation.addMembrane(membrane);
       }

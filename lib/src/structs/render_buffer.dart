@@ -61,7 +61,7 @@ class RenderBuffer {
   }
 
   /// Get list of membrane domains.
-  /// TODO: check with multiple membranes (eliminate stride issues).
+  /// TODO: test with multiple membranes (fix stride issues).
   List<Domain> generateMembraneDomains() {
     var list = new List<Domain>(header.membraneCount);
     var offset = header.membranesOffset;

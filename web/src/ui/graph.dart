@@ -13,7 +13,11 @@ class ParticleGraph extends CustomElement {
   static const defaultHeight = 250;
   static const gridMinSize = 30;
   static const gridLineSize = 2;
-  static const lineDeltaDistance = 100; // TODO: try to eliminate this
+
+  // Number of datapoints to determine line delta.
+  static const lineDeltaDistance = 100;
+
+  // Delta threshold untill lines are stacked.
   static const lineDeltaThreshold = 5;
 
   /// Rendering canvas
