@@ -10,5 +10,5 @@ git init
 git add .
 git commit -m "Initial commit"
 git branch -m gh-pages
-git remote add origin https://github.com/molview/bromium-deploy.git
+git remote add origin https://github.com/hermanbergwerf/bromium-deploy.git
 git push -u origin gh-pages --force
