@@ -12,5 +12,5 @@ abstract class Transferrable {
 
   /// Transfers the data to the [buffer] at [offset], copy the old data into the
   /// new buffer if [copy] is true. Returns the new offset.
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]);
+  int transfer(ByteBuffer buffer, int offset, {bool copy: true});
 }

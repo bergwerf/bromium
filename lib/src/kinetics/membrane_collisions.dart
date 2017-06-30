@@ -12,7 +12,7 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
   // position and the updated membrane dimensions.
 
   // Loop through all updated membranes.
-  updatedMembranes.forEach((int m, Domain newDomain) {
+  updatedMembranes.forEach((m, newDomain) {
     final membrane = sim.membranes[m];
     final oldDomain = membrane.domain;
 
@@ -27,7 +27,7 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
             particle.entered.remove(m);
           } else {
             // Inner particle has illegally moved outward: project back inside.
-            var proj = _innerProj(particle.position, newDomain);
+            final proj = _innerProj(particle.position, newDomain);
             particle.position = proj;
           }
         }
@@ -37,7 +37,7 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
           particle.entered.add(m);
         } else {
           // Outer particle has illegally moved inward: project back outside.
-          var proj = _outerProj(particle.position, oldDomain, newDomain);
+          final proj = _outerProj(particle.position, oldDomain, newDomain);
           particle.position = proj;
         }
       }
@@ -48,12 +48,11 @@ void fixMembraneCollisions(Simulation sim, Map<int, Domain> updatedMembranes) {
 /// Project the given [particle] on the inside of the [membrane] surface.
 Vector3 _innerProj(Vector3 particle, Domain membrane) {
   // Translate particle to relative domain at (0, 0, 0).
-  particle -= membrane.center;
+  final relP = particle - membrane.center;
 
   // Construct ray from the particle towards the domain center at (0, 0, 0).
   // Note that we use a unit direction vector so we can apply the offset later.
-  final ray =
-      new Ray.originDirection(particle, (particle * -1.0) / particle.length);
+  final ray = new Ray.originDirection(relP, (relP * -1.0) / relP.length);
 
   // Compute projection.
   final proj = membrane.computeRayIntersections(ray);
@@ -70,17 +69,17 @@ Vector3 _innerProj(Vector3 particle, Domain membrane) {
 /// Project the given [particle] on the outside of the [newMembrane] surface.
 Vector3 _outerProj(Vector3 particle, Domain oldMembrane, Domain newMembrane) {
   // Translate particle to relative membrane at (0, 0, 0).
-  particle -= newMembrane.center;
+  final relP = particle - newMembrane.center;
 
   // Construct ray from the old membrane center towards the particle.
   final relativeOldMembrane = oldMembrane.center - newMembrane.center;
-  final direction = particle - relativeOldMembrane;
+  final direction = relP - relativeOldMembrane;
   final ray = new Ray.originDirection(relativeOldMembrane, direction);
 
   // Compute projection.
   final proj = newMembrane.computeRayIntersections(ray);
   if (proj.isEmpty) {
-    return particle + newMembrane.center;
+    return relP + newMembrane.center;
   }
 
   // Compute the largest positive t (particle collide with the first ellipsoid

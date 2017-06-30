@@ -40,8 +40,8 @@ class BromiumEngine {
     particleCountStream = _particleCountStreamCtrl.stream;
 
     // Setup isolate stream listener.
-    isolate.bufferStream.listen((ByteBuffer data) {
-      renderBuffer.update(data);
+    isolate.bufferStream.listen((byteBuffer) {
+      renderBuffer.update(byteBuffer);
       dataIdx++;
       _particleCountStreamCtrl.add(renderBuffer.getParticleCounts());
     });
@@ -58,7 +58,7 @@ class BromiumEngine {
     if (inIsolate) {
       result = await isolate.loadSimulation(sim);
     } else {
-      runner.loadSimulation(sim);
+      runner.data = sim;
       result = true;
     }
 
@@ -120,11 +120,11 @@ class BromiumEngine {
       await pause();
 
       // Get simulation data.
-      var simulation = runner.data;
+      final simulation = runner.data;
 
       // Load simulation and return.
       inIsolate = true;
-      var result = await loadSimulation(simulation);
+      final result = await loadSimulation(simulation);
       log.groupEnd();
       return result;
     } else {
@@ -144,11 +144,11 @@ class BromiumEngine {
       await pause();
 
       // Get simulation data.
-      var simulation = await isolate.retrieveSimulation();
+      final simulation = await isolate.retrieveSimulation();
 
       // Load simulation and return.
       inIsolate = false;
-      var result = await loadSimulation(simulation);
+      final result = await loadSimulation(simulation);
       log.groupEnd();
       return result;
     } else {
@@ -162,7 +162,7 @@ class BromiumEngine {
   void printBenchmarks() {
     if (inIsolate) {
       logger.info('Retrieving benchmarks from isolate...');
-      isolate.retrieveBenchmarks().then((Benchmark benchmark) {
+      isolate.retrieveBenchmarks().then((benchmark) {
         logger.info('Retrieved benchmarks.');
         benchmark.printAllMeasurements();
       });

@@ -43,7 +43,7 @@ List<double> computeRayEllipsoidIntersection(Ray ray, EllipsoidDomain e) {
   if (D < 0) {
     return null;
   } else {
-    var dRoot = sqrt(D);
+    final dRoot = sqrt(D);
     return [(-B + dRoot) / (2 * A), (-B - dRoot) / (2 * A)];
   }
 }
@@ -83,7 +83,7 @@ List<double> computeRaySphereIntersection(Ray ray, Sphere sphere) {
   if (D < 0) {
     return null;
   } else {
-    var dRoot = sqrt(D);
+    final dRoot = sqrt(D);
     return [(-B + dRoot) / (2 * A), (-B - dRoot) / (2 * A)];
   }
 }

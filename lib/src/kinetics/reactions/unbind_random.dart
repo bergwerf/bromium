@@ -6,7 +6,7 @@ part of bromium.kinetics;
 
 void reactionsUnbindRandom(Simulation sim) {
   // Build convenient unbind list.
-  var unbind = new Map<int, List<Tuple2<int, double>>>();
+  final unbind = new Map<int, List<Tuple2<int, double>>>();
   for (var i = 0; i < sim.unbindReactions.length; i++) {
     final r = sim.unbindReactions[i];
     unbind.putIfAbsent(r.particleA.type, () => new List<Tuple2<int, double>>());
@@ -14,7 +14,7 @@ void reactionsUnbindRandom(Simulation sim) {
   }
 
   // Iterate through all particles.
-  var rng = new Random();
+  final rng = new Random();
   for (var i = 0; i < sim.particles.length; i++) {
     final type = sim.particles[i].type;
     if (unbind.containsKey(type)) {

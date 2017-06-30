@@ -21,6 +21,7 @@ class ParticleGraph extends CustomElement {
   static const lineDeltaThreshold = 5;
 
   /// Rendering canvas
+  @override
   final CanvasElement node;
 
   /// 2D rendering context

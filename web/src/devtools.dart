@@ -25,7 +25,7 @@ void println(String message, {String color: null}) {
 
 /// A possible setup to connect logging to the devtools.
 void setupLogging() {
-  var logColor = {
+  final logColor = {
     Level.FINEST.value: 'black',
     Level.FINER.value: 'black',
     Level.FINE.value: 'black',
@@ -35,7 +35,7 @@ void setupLogging() {
     Level.SEVERE.value: 'orangered',
     Level.SHOUT.value: 'red'
   };
-  var groupStack = [];
+  final groupStack = [];
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((LogRecord rec) {

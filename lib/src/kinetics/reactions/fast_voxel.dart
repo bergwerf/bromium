@@ -59,12 +59,12 @@ void reactionsBindVoxelFast(Simulation sim) {
   // Sort all lists.
   for (var i = 0; i < list.length; i++) {
     if (list[i] != null) {
-      list[i].sort((Voxel a, Voxel b) => a.n - b.n);
+      list[i].sort((a, b) => a.n - b.n);
     }
   }
 
   // Iterate through reactions.
-  var reactionQueue = new List<BindRxnItem>();
+  final reactionQueue = new List<BindRxnItem>();
   for (var ridx = 0; ridx < sim.bindReactions.length; ridx++) {
     final r = sim.bindReactions[ridx];
 
@@ -79,7 +79,8 @@ void reactionsBindVoxelFast(Simulation sim) {
     final b = ab ? r.particleB.type : r.particleA.type;
 
     // Iterate through reactant a and b simultaneously.
-    REACTION: for (var ai = 0, bi = 0; ai < list[a].length; ai++) {
+    REACTION:
+    for (var ai = 0, bi = 0; ai < list[a].length; ai++) {
       final vn = list[a][ai].n;
 
       // Find first b voxel that is equal or larger than the current a voxel.

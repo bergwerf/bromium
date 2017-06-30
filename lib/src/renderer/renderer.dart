@@ -98,6 +98,7 @@ class BromiumWebGLRenderer extends GlCanvas {
     particleData.update(engine.renderBuffer.getParticleData());
   }
 
+  @override
   void draw(num time, Matrix4 viewMatrix) {
     if (engine.isRunning && !engine.inIsolate) {
       engine.forceSyncCycle();
@@ -124,7 +125,7 @@ class BromiumWebGLRenderer extends GlCanvas {
         {'aParticlePosition': 1, 'aParticleColor': 1, 'aParticleRadius': 1});
 
     // Draw all membranes.
-    var membranes = engine.renderBuffer.generateMembraneDomains();
+    final membranes = engine.renderBuffer.generateMembraneDomains();
     for (final membrane in membranes) {
       var geometry;
       if (membrane is AabbDomain) {

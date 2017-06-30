@@ -10,10 +10,11 @@ const _jsonClassKey = '__dartClass';
 double float32To64(double value) {
   final digits = value.floor().toString().length;
   final factor = pow(10, 8 - digits);
-  value = value * factor;
-  value = value.roundToDouble();
-  value = value / factor;
-  return value;
+  var v = value;
+  v = v * factor;
+  v = v.roundToDouble();
+  v = v / factor;
+  return v;
 }
 
 List<double> _from32To64FloatList(Float32List src) =>
@@ -22,10 +23,10 @@ List<double> _from32To64FloatList(Float32List src) =>
 List<double> _fromJsonToFloat32List(List<num> src) =>
     new List<double>.generate(src.length, (int i) => src[i].toDouble());
 
-dynamic toJsonExtra(dynamic object) {
+dynamic toJsonExtra(object) {
   if (object is Map) {
     return new Map.fromIterable(object.keys,
-        value: (dynamic key) => toJsonExtra(object[key]));
+        value: (key) => toJsonExtra(object[key]));
   } else if (object is List) {
     return new List.generate(object.length, (int i) => toJsonExtra(object[i]));
   } else {
@@ -33,7 +34,7 @@ dynamic toJsonExtra(dynamic object) {
   }
 }
 
-dynamic _dartClassToJson(dynamic object) {
+dynamic _dartClassToJson(object) {
   if (object is Tuple2) {
     return {
       _jsonClassKey: 'Tuple2',
@@ -60,7 +61,7 @@ dynamic _dartClassToJson(dynamic object) {
   }
 }
 
-dynamic _jsonToDartClass(dynamic object) {
+dynamic _jsonToDartClass(object) {
   switch (object[_jsonClassKey]) {
     case 'Tuple2':
       return new Tuple2(
@@ -68,28 +69,28 @@ dynamic _jsonToDartClass(dynamic object) {
 
     case 'Vector2':
       return new Vector2.array(
-          _fromJsonToFloat32List(object['storage'] as List<num>));
+          _fromJsonToFloat32List(new List<num>.from(object['storage'])));
 
     case 'Vector3':
       return new Vector3.array(
-          _fromJsonToFloat32List(object['storage'] as List<num>));
+          _fromJsonToFloat32List(new List<num>.from(object['storage'])));
 
     case 'Vector4':
       return new Vector4.array(
-          _fromJsonToFloat32List(object['storage'] as List<num>));
+          _fromJsonToFloat32List(new List<num>.from(object['storage'])));
 
     default:
       return null;
   }
 }
 
-dynamic fromJsonExtra(dynamic object) {
+dynamic fromJsonExtra(object) {
   if (object is Map) {
     if (object.containsKey(_jsonClassKey)) {
       return _jsonToDartClass(object);
     }
     return new Map.fromIterable(object.keys,
-        value: (dynamic key) => fromJsonExtra(object[key]));
+        value: (key) => fromJsonExtra(object[key]));
   } else if (object is List) {
     return new List.generate(
         object.length, (int i) => fromJsonExtra(object[i]));

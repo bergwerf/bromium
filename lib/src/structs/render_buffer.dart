@@ -37,7 +37,7 @@ class RenderBuffer {
 
   /// Get list of particle entered/sticked count data.
   List<Tuple2<List<int>, List<int>>> getParticleCounts() {
-    var list = new List<Tuple2<List<int>, List<int>>>(header.membraneCount);
+    final list = new List<Tuple2<List<int>, List<int>>>(header.membraneCount);
     var offset = header.membranesOffset;
     for (var i = 0; i < header.membraneCount; i++) {
       final domain = new Domain.fromBuffer(buffer, offset);
@@ -63,7 +63,7 @@ class RenderBuffer {
   /// Get list of membrane domains.
   /// TODO: test with multiple membranes (fix stride issues).
   List<Domain> generateMembraneDomains() {
-    var list = new List<Domain>(header.membraneCount);
+    final list = new List<Domain>(header.membraneCount);
     var offset = header.membranesOffset;
     for (var i = 0; i < header.membraneCount; i++) {
       list[i] = new Domain.fromBuffer(buffer, offset);

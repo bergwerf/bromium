@@ -17,8 +17,8 @@ abstract class Domain implements Transferrable {
   /// Create [Domain] from the data in [buffer] at [offset].
   factory Domain.fromBuffer(ByteBuffer buffer, int offset) {
     // Resolve the domain type.
-    var typeView = new Uint32View(buffer, offset);
-    var type = DomainType.values[typeView.get()];
+    final typeView = new Uint32View(buffer, offset);
+    final type = DomainType.values[typeView.get()];
     offset += Uint32View.byteCount;
 
     // Construct the specific domain.
@@ -43,14 +43,14 @@ abstract class Domain implements Transferrable {
   /// Compute a random point within the domain.
   /// The default implementation uses [computeBoundingBox] and [contains].
   Vector3 computeRandomPoint({Random rng, List<Domain> cavities: const []}) {
-    rng = rng == null ? new Random() : rng;
+    final _rng = rng ?? new Random();
     var point = new Vector3.zero();
-    var bbox = computeBoundingBox();
-    var diagonal = bbox.max - bbox.min;
-    bool containsPoint = false;
+    final bbox = computeBoundingBox();
+    final diagonal = bbox.max - bbox.min;
+    var containsPoint = false;
 
     do {
-      point = bbox.min + (randomVector3(rng)..multiply(diagonal));
+      point = bbox.min + (randomVector3(_rng)..multiply(diagonal));
 
       // Check if the domain contains the point and exclude cavities.
       containsPoint = contains(point);
@@ -79,11 +79,13 @@ abstract class Domain implements Transferrable {
   List<double> computeRayIntersections(Ray ray);
 
   /// General getter for the byte size
+  @override
   int get sizeInBytes => Uint32View.byteCount + _sizeInBytes;
 
   /// General method for transferring the domain data
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    var typeView = new Uint32View(buffer, offset);
+  @override
+  int transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
+    final typeView = new Uint32View(buffer, offset);
     if (copy) {
       // Copy the domain type into a Uint32.
       typeView.set(type.index);
@@ -98,5 +100,5 @@ abstract class Domain implements Transferrable {
   int get _sizeInBytes;
 
   /// Membrane specific transfer method
-  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]);
+  int _transfer(ByteBuffer buffer, int offset, {bool copy: true});
 }

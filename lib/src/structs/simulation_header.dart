@@ -22,7 +22,8 @@ class SimulationHeader implements Transferrable {
       _membraneCount = 5,
       length = 6;
 
-  SimulationHeader(int particleTypeCount, int bindReactionCount, int unbindReactionCount) {
+  SimulationHeader(
+      int particleTypeCount, int bindReactionCount, int unbindReactionCount) {
     data = new Uint32List(length);
     data[_particleTypeCount] = particleTypeCount;
     data[_bindReactionCount] = bindReactionCount;
@@ -31,11 +32,14 @@ class SimulationHeader implements Transferrable {
 
   /// Creates empty header and transfer to the given buffer.
   SimulationHeader.fromBuffer(ByteBuffer buffer, int offset) {
-    transfer(buffer, offset, false);
+    transfer(buffer, offset, copy: false);
   }
 
+  @override
   int get sizeInBytes => byteCount;
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+
+  @override
+  int transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
     data = copy
         ? (new Uint32List.view(buffer, offset, length)..setAll(0, data))
         : new Uint32List.view(buffer, offset, length);

@@ -58,7 +58,7 @@ class BromiumUi {
         btnAdd = $('#btn-add'),
         btnPauseRun = $('#btn-pause-run'),
         viewPanel = $('#view-panel'),
-        canvas = $('#bromium-canvas') as CanvasElement,
+        canvas = $('#bromium-canvas'),
         engine = new BromiumEngine(inIsolate: true) {
     renderer = new BromiumWebGLRenderer(engine, canvas);
 
@@ -76,8 +76,7 @@ class BromiumUi {
     tabs.select('Particles');
 
     // Bind engine particle count stream.
-    engine.particleCountStream
-        .listen((List<Tuple2<List<int>, List<int>>> data) {
+    engine.particleCountStream.listen((data) {
       final membraneItems = membraneTab.items;
       var dataIdx = 0;
       for (var i = 0; i < membraneItems.length; i++) {
@@ -119,16 +118,14 @@ class BromiumUi {
   }
 
   /// Export configuration as JSON string.
-  String generateJsonConfig() {
-    return JSON.encode({
-      'Particles': toJsonExtra(pTypeTab.collectData()),
-      'Membranes': toJsonExtra(membraneTab.collectData()),
-      'BindReactions': toJsonExtra(bindRxnTab.collectData()),
-      'UnbindReactions': toJsonExtra(unbindRxnTab.collectData()),
-      'Domains': toJsonExtra(domainTab.collectData()),
-      'Setup': toJsonExtra(setupTab.collectData())
-    });
-  }
+  String generateJsonConfig() => JSON.encode({
+        'Particles': toJsonExtra(pTypeTab.collectData()),
+        'Membranes': toJsonExtra(membraneTab.collectData()),
+        'BindReactions': toJsonExtra(bindRxnTab.collectData()),
+        'UnbindReactions': toJsonExtra(unbindRxnTab.collectData()),
+        'Domains': toJsonExtra(domainTab.collectData()),
+        'Setup': toJsonExtra(setupTab.collectData())
+      });
 
   /// Load configuration from JSON string.
   void loadJsonConfig(String json) {
@@ -142,12 +139,12 @@ class BromiumUi {
 
     // Load new data.
     final data = fromJsonExtra(JSON.decode(json));
-    pTypeTab.loadItems(data['Particles'] as List);
-    membraneTab.loadItems(data['Membranes'] as List);
-    bindRxnTab.loadItems(data['BindReactions'] as List);
-    unbindRxnTab.loadItems(data['UnbindReactions'] as List);
-    domainTab.loadItems(data['Domains'] as List);
-    setupTab.loadItems(data['Setup'] as List);
+    pTypeTab.loadItems(new List.from(data['Particles']));
+    membraneTab.loadItems(new List.from(data['Membranes']));
+    bindRxnTab.loadItems(new List.from(data['BindReactions']));
+    unbindRxnTab.loadItems(new List.from(data['UnbindReactions']));
+    domainTab.loadItems(new List.from(data['Domains']));
+    setupTab.loadItems(new List.from(data['Setup']));
   }
 
   /// Update the simulation.
@@ -217,22 +214,18 @@ class BromiumUi {
       // Load membranes.
       // TODO: batch load membranes (more efficient to compute particle entered
       // list at once).
-      for (final membrane in membraneIndex.data) {
-        simulation.addMembrane(membrane);
-      }
+      membraneIndex.data.forEach(simulation.addMembrane);
 
       // Load the simulation.
-      var bbox = simulation.particlesBoundingBox();
+      final bbox = simulation.particlesBoundingBox();
       await engine.loadSimulation(simulation);
       renderer.trackball.resetRotation();
       renderer.focus(bbox);
       renderer.start();
-    } catch (e) {
-      // When there is an error, just terminate the updating and make the
+    } on Exception catch (e) {
+      // When there is an exception, just terminate the updating and make the
       // refresh icon red.
       btnUpdate.children.first.style.color = '#a00';
-
-      // Print error.
       print(e);
     }
 
@@ -254,7 +247,7 @@ class BromiumUi {
       btnPauseRun.text = 'Run';
       btnPauseRun.classes.remove('disabled');
     } else {
-      await engine.resume();
+      engine.resume();
       btnPauseRun.text = 'Pause';
     }
   }

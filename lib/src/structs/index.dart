@@ -10,7 +10,7 @@ class Index<E> {
   List<E> data = new List<E>();
 
   /// Element indices mapped to a string label.
-  Map<String, int> _index = new Map<String, int>();
+  final _index = new Map<String, int>();
 
   /// Add new element.
   void operator []=(String label, E element) {
@@ -32,8 +32,8 @@ class Index<E> {
 
   /// Fill list with the values that are assigned to the index labels.
   List mappedList(Map<String, dynamic> map) {
-    var list = new List(data.length);
-    map.forEach((String label, value) {
+    final list = new List(data.length);
+    map.forEach((label, value) {
       list[_index[label]] = value;
     });
     return list;
@@ -41,8 +41,8 @@ class Index<E> {
 
   /// Same as [mappedList] but specifically to produce a [Float32List].
   Float32List mappedFloat32List(Map<String, double> map) {
-    var list = new Float32List(data.length);
-    map.forEach((String label, value) {
+    final list = new Float32List(data.length);
+    map.forEach((label, value) {
       list[_index[label]] = value;
     });
     return list;

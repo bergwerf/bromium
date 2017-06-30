@@ -25,7 +25,8 @@ Uint32List transferUint32List(
 }
 
 /// Transfer Vector3
-Vector3 transferVector3(ByteBuffer buffer, int offset, bool copy, Vector3 src) {
+Vector3 transferVector3(ByteBuffer buffer, int offset, Vector3 src,
+    {bool copy}) {
   final dst = new Vector3.fromBuffer(buffer, offset);
   if (copy) {
     dst.copyFromArray(src.storage);

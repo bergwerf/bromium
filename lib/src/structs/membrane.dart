@@ -58,7 +58,7 @@ class Membrane implements Transferrable {
   //get Uint32List enteredCount => _enteredCount;
 
   /// Decide if the given particle type sticks.
-  bool stick(int type, bool enters, bool leaves) {
+  bool stick(int type, {bool enters, bool leaves}) {
     if (enters) {
       return enterStickP[type] == 0 ? false : rand() < enterStickP[type];
     } else if (leaves) {
@@ -93,8 +93,8 @@ class Membrane implements Transferrable {
   }
 
   /// Stick particle.
-  void stickParticleUnsafe(Particle particle, [bool doProjection = true]) {
-    particle.stickTo(index, domain, doProjection);
+  void stickParticleUnsafe(Particle particle, {bool doProjection: true}) {
+    particle.stickTo(index, domain, doProjection: doProjection);
     _stickedCount[particle.type]++;
   }
 
@@ -116,6 +116,7 @@ class Membrane implements Transferrable {
     _stickedCount[to]++;
   }
 
+  @override
   int get sizeInBytes =>
       domain.sizeInBytes +
       enterP.lengthInBytes +
@@ -125,20 +126,21 @@ class Membrane implements Transferrable {
       _enteredCount.lengthInBytes +
       _stickedCount.lengthInBytes;
 
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    offset = domain.transfer(buffer, offset, copy);
-    enterP = transferFloat32List(buffer, offset, copy, enterP);
-    offset += enterP.lengthInBytes;
-    leaveP = transferFloat32List(buffer, offset, copy, leaveP);
-    offset += leaveP.lengthInBytes;
-    enterStickP = transferFloat32List(buffer, offset, copy, enterStickP);
-    offset += enterStickP.lengthInBytes;
-    leaveStickP = transferFloat32List(buffer, offset, copy, leaveStickP);
-    offset += leaveStickP.lengthInBytes;
-    _enteredCount = transferUint32List(buffer, offset, copy, _enteredCount);
-    offset += _enteredCount.lengthInBytes;
-    _stickedCount = transferUint32List(buffer, offset, copy, _stickedCount);
-    offset += _stickedCount.lengthInBytes;
-    return offset;
+  @override
+  int transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
+    var _offset = domain.transfer(buffer, offset, copy: copy);
+    enterP = transferFloat32List(buffer, _offset, copy, enterP);
+    _offset += enterP.lengthInBytes;
+    leaveP = transferFloat32List(buffer, _offset, copy, leaveP);
+    _offset += leaveP.lengthInBytes;
+    enterStickP = transferFloat32List(buffer, _offset, copy, enterStickP);
+    _offset += enterStickP.lengthInBytes;
+    leaveStickP = transferFloat32List(buffer, _offset, copy, leaveStickP);
+    _offset += leaveStickP.lengthInBytes;
+    _enteredCount = transferUint32List(buffer, _offset, copy, _enteredCount);
+    _offset += _enteredCount.lengthInBytes;
+    _stickedCount = transferUint32List(buffer, _offset, copy, _stickedCount);
+    _offset += _stickedCount.lengthInBytes;
+    return _offset;
   }
 }

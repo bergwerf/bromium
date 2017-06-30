@@ -6,12 +6,13 @@ part of bromium.kinetics;
 
 /// Normal particle random motion algorithm.
 void particlesRandomMotionNormal(Simulation sim) {
-  var rng = new Random();
+  final rng = new Random();
 
   // We reuse this variable as much as possible to save allocation time.
   final motion = new Vector3.zero();
 
-  OUTER: for (final particle in sim.particles) {
+  OUTER:
+  for (final particle in sim.particles) {
     if (particle.isSticked) {
       // Sticked particles are displaced by computing a surface normal and
       // projecting the displacement.
@@ -42,7 +43,7 @@ void particlesRandomMotionNormal(Simulation sim) {
           final leaves = before && !after;
 
           // If the particle sticks: stick it and continue to the next particle.
-          if (membrane.stick(type, enters, leaves)) {
+          if (membrane.stick(type, enters: enters, leaves: leaves)) {
             membrane.leaveParticleUnsafe(particle);
             membrane.stickParticleUnsafe(particle);
             continue OUTER;

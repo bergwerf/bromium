@@ -6,6 +6,7 @@ part of bromium.ui;
 
 /// Base class for data items (basically a group of data entries)
 class Item extends CustomElement {
+  @override
   DivElement node;
 
   /// All data enties
@@ -175,7 +176,7 @@ class MembraneItem extends Item {
       case 'Ellipsoid':
         // In the special case all semi-axes are the same, we create a sphere
         // domain.
-        final semiAxes = data['Semi-axes'] as Vector3;
+        final Vector3 semiAxes = data['Semi-axes'];
         if (semiAxes.x == semiAxes.y && semiAxes.y == semiAxes.z) {
           domain = new SphereDomain(data['Center'], semiAxes.x);
         } else {
@@ -187,14 +188,10 @@ class MembraneItem extends Item {
     // Create membrane.
     return new Membrane(
         domain,
-        particleIndex.mappedFloat32List(
-            _generateMap(data['Enter'] as List<Tuple2<double, String>>)),
-        particleIndex.mappedFloat32List(
-            _generateMap(data['Leave'] as List<Tuple2<double, String>>)),
-        particleIndex.mappedFloat32List(_generateMap(
-            data['Stick on enter'] as List<Tuple2<double, String>>)),
-        particleIndex.mappedFloat32List(_generateMap(
-            data['Stick on leave'] as List<Tuple2<double, String>>)),
+        particleIndex.mappedFloat32List(_generateMap(data['Enter'])),
+        particleIndex.mappedFloat32List(_generateMap(data['Leave'])),
+        particleIndex.mappedFloat32List(_generateMap(data['Stick on enter'])),
+        particleIndex.mappedFloat32List(_generateMap(data['Stick on leave'])),
         particleIndex.length);
   }
 }
@@ -272,7 +269,8 @@ class UnbindRxnItem extends Item {
     final data = collectData();
 
     // Parse products.
-    final productsData = data['Products'] as List<Tuple2<String, String>>;
+    final productsData =
+        new List<Tuple2<String, String>>.from(data['Products']);
     final products = new List<ReactionParticle>.generate(
         productsData.length,
         (int i) => new ReactionParticle(particleIndex[productsData[i].item2],
@@ -362,7 +360,7 @@ class SetupItem extends Item {
     final domain = _resolveDomain(data['Domain'], membraneIndex, domainIndex);
 
     // Resolve cavities.
-    final cavityLabels = (data['Cavities'] as String).split(',');
+    final cavityLabels = data['Cavities'].split(',');
     final cavities = new List<Domain>();
     for (final cavity in cavityLabels) {
       if (cavity.isNotEmpty) {

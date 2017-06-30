@@ -6,8 +6,8 @@ part of bromium.math;
 
 /// Compute ray/AABB intersection.
 List<double> computeRayAabbIntersections(Ray ray, Aabb3 aabb) {
-  var intersections = new List<double>();
-  var dims = [
+  final intersections = new List<double>();
+  final dims = [
     aabb.min.x,
     aabb.max.x,
     aabb.min.y,
@@ -15,7 +15,7 @@ List<double> computeRayAabbIntersections(Ray ray, Aabb3 aabb) {
     aabb.min.z,
     aabb.max.z
   ];
-  var rarray = [
+  final rarray = [
     ray.origin.x,
     ray.direction.x,
     ray.origin.y,
@@ -32,15 +32,15 @@ List<double> computeRayAabbIntersections(Ray ray, Aabb3 aabb) {
 
     for (var f = 0; f < 2; f++) {
       // Compute intersection point.
-      var t = (dims[d * 2 + f] - rarray[d * 2]) / rarray[d * 2 + 1];
+      final t = (dims[d * 2 + f] - rarray[d * 2]) / rarray[d * 2 + 1];
 
       // Compute index of other dimensions.
-      var a = (d + 1) % 3;
-      var b = (d + 2) % 3;
+      final a = (d + 1) % 3;
+      final b = (d + 2) % 3;
 
       // Compute other dimensions.
-      var av = rarray[a * 2] + t * rarray[a * 2 + 1];
-      var bv = rarray[b * 2] + t * rarray[b * 2 + 1];
+      final av = rarray[a * 2] + t * rarray[a * 2 + 1];
+      final bv = rarray[b * 2] + t * rarray[b * 2 + 1];
 
       // Check if the intersection lies within a face.
       if (av > dims[a * 2] &&

@@ -20,9 +20,12 @@ class Reaction implements Transferrable {
   double get probability => _probability.get();
   set probability(double value) => _probability.set(value);
 
+  @override
   int get sizeInBytes => byteCount;
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) =>
-      _probability.transfer(buffer, offset, copy);
+
+  @override
+  int transfer(ByteBuffer buffer, int offset, {bool copy: true}) =>
+      _probability.transfer(buffer, offset, copy: copy);
 }
 
 /// Reaction particle
@@ -72,7 +75,7 @@ class BindReaction extends Reaction {
     // Proceed based on a random number and the reaction probability.
     if (probability == 1 || rand() < probability) {
       // Resolve context membrane.
-      int membrane = -1;
+      var membrane = -1;
       switch (particleA.relativeLocation) {
         case Membrane.inside:
           if (a.entered.isEmpty) {

@@ -11,9 +11,8 @@ class AabbDomain extends Domain {
 
   AabbDomain(this.data) : super(DomainType.aabb);
 
-  factory AabbDomain.fromBuffer(ByteBuffer buffer, int offset) {
-    return new AabbDomain(new Aabb3.fromBuffer(buffer, offset));
-  }
+  factory AabbDomain.fromBuffer(ByteBuffer buffer, int offset) =>
+      new AabbDomain(new Aabb3.fromBuffer(buffer, offset));
 
   /// Construct AABB domain that contains all the given domains.
   factory AabbDomain.enclose(List<Domain> domains) {
@@ -21,8 +20,8 @@ class AabbDomain extends Domain {
       throw new ArgumentError.value(domains, 'domains', 'cannot be empty');
     } else {
       var aabb = domains.first.computeBoundingBox();
-      var min = aabb.min;
-      var max = aabb.max;
+      final min = aabb.min;
+      final max = aabb.max;
       for (var i = 1; i < domains.length; i++) {
         aabb = domains[i].computeBoundingBox();
         Vector3.min(aabb.min, min, min);
@@ -32,13 +31,16 @@ class AabbDomain extends Domain {
     }
   }
 
+  @override
   String toString() =>
       'AABB domain {min: ${data.min.toString()}, max: ${data.max.toString()}}';
 
+  @override
   int get _sizeInBytes =>
       data.min.storage.lengthInBytes + data.max.storage.lengthInBytes;
 
-  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
+  @override
+  int _transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
     data = copy
         ? (new Aabb3.fromBuffer(buffer, offset)..copyFrom(data))
         : new Aabb3.fromBuffer(buffer, offset);
@@ -47,10 +49,13 @@ class AabbDomain extends Domain {
         data.max.storage.lengthInBytes;
   }
 
+  @override
   Aabb3 computeBoundingBox() => data;
 
+  @override
   bool contains(Vector3 point) => data.containsVector3(point);
 
+  @override
   double minSurfaceToPoint(Vector3 point) {
     return [
       (data.min.x - point.x).abs(),
@@ -62,6 +67,7 @@ class AabbDomain extends Domain {
     ].reduce(min);
   }
 
+  @override
   List<double> computeRayIntersections(Ray ray) =>
       computeRayAabbIntersections(ray, data);
 }

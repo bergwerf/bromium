@@ -5,11 +5,12 @@
 part of bromium.structs;
 
 /// Logical XOR
-bool xor(bool a, bool b) => a ? !b : b;
+// ignore: avoid_positional_boolean_parameters
+bool logicalXor(bool a, bool b) => a ? !b : b;
 
 /// Linear interpolation
 Vector3 interpolate(Vector3 a, num aWeight, Vector3 b, num bWeight) {
-  var result = new Vector3.zero();
+  final result = new Vector3.zero();
   Vector3.mix(a, b, bWeight / (aWeight + bWeight), result);
   return result;
 }
@@ -61,13 +62,9 @@ class Simulation {
   final List<Membrane> membranes;
 
   /// Load simulation from loose data.
-  Simulation(List<ParticleType> particleTypes, List<BindReaction> bindReactions,
-      List<UnbindReaction> unbindReactions)
+  Simulation(this.particleTypes, this.bindReactions, this.unbindReactions)
       : header = new SimulationHeader(
             particleTypes.length, bindReactions.length, unbindReactions.length),
-        particleTypes = particleTypes,
-        bindReactions = bindReactions,
-        unbindReactions = unbindReactions,
         particles = [],
         membranes = [] {
     log.group(logger, 'Simulation');
@@ -107,7 +104,6 @@ class Simulation {
       for (final membrane in entered) {
         membranes[membrane].enterParticleUnsafe(particle);
       }
-
     } else {
       // Compute entered membranes using ray projection.
       updateParticleEntered(particle);
@@ -128,7 +124,7 @@ Add $n particles:
     _rescaleBuffer(n, 0);
 
     // Generate particles.
-    for (; n > 0; n--) {
+    for (var i = 0; i < n; i++) {
       _easyAddParticle(type, domain.computeRandomPoint(cavities: cavities));
     }
 
@@ -216,7 +212,7 @@ Add membrane:
 
   /// Edit the given particle location relative to the given membrane.
   void editParticleLocation(Particle particle, int ctxMembrane, int location,
-      [bool stickProjection = true]) {
+      {bool stickProjection = true}) {
     switch (location) {
       case Membrane.sticked:
         // The context membrane cannot be -1.
@@ -230,7 +226,8 @@ Add membrane:
           if (particle.hasEntered(ctxMembrane)) {
             membranes[ctxMembrane].leaveParticleUnsafe(particle);
           }
-          membranes[ctxMembrane].stickParticleUnsafe(particle, stickProjection);
+          membranes[ctxMembrane]
+              .stickParticleUnsafe(particle, doProjection: stickProjection);
         }
         break;
 
@@ -267,15 +264,15 @@ Add membrane:
     }
 
     // Construct ray.
-    var ray =
+    final ray =
         new Ray.originDirection(particle.position, new Vector3(1.0, .0, .0));
 
     // Compute all ray intersections.
-    var entered = new List<Tuple2<int, double>>();
+    final entered = new List<Tuple2<int, double>>();
     for (var m = 0; m < membranes.length; m++) {
       final domain = membranes[m].domain;
       if (domain.contains(particle.position)) {
-        var proj = domain.computeRayIntersections(ray);
+        final proj = domain.computeRayIntersections(ray);
         entered.add(new Tuple2<int, double>(m, proj.reduce(max)));
       }
     }
@@ -310,7 +307,7 @@ Add membrane:
 
     // Resolve position.
     if (particleC.sticked &&
-        xor(bindReactions[r].particleA.sticked,
+        logicalXor(bindReactions[r].particleA.sticked,
             bindReactions[r].particleB.sticked)) {
       // If particle A is sticked, the position is already set correctly. Else
       // particle B must be the sticked particle and we use its position.
@@ -334,10 +331,10 @@ Add membrane:
     } */
 
     // Set relative location.
-    int contextMembrane =
+    final contextMembrane =
         max(particleA.getClosestMembrane(), particleB.getClosestMembrane());
-    editParticleLocation(
-        particleA, contextMembrane, particleC.relativeLocation, false);
+    editParticleLocation(particleA, contextMembrane, particleC.relativeLocation,
+        stickProjection: false);
 
     // Remove particle b.
     removeParticle(b);
@@ -401,8 +398,8 @@ Add membrane:
   /// Compute bounding box that encloses all particles.
   Aabb3 particlesBoundingBox() {
     if (particles.isNotEmpty) {
-      var _min = particles[0].position.clone();
-      var _max = particles[0].position.clone();
+      final _min = particles[0].position.clone();
+      final _max = particles[0].position.clone();
 
       for (var p = 1; p < particles.length; p++) {
         Vector3.min(_min, particles[p].position, _min);
@@ -480,7 +477,7 @@ Transfer to a larger buffer:
   /// Get the number of bytes in the render buffer that are allocated by
   /// membranes.
   int get allMembraneBytes {
-    int count = 0;
+    var count = 0;
     for (final membrane in membranes) {
       count += membrane.sizeInBytes;
     }
@@ -492,27 +489,30 @@ Transfer to a larger buffer:
     // Check if enough buffer space is available and tranfer data to a larger
     // buffer if neccesary.
 
+    var _addParticles = addParticles;
+    var _addMembraneBytes = addMembraneBytes;
+
     if (addParticles > 0) {
-      var finalParticlesOffset = particlesOffset +
+      final finalParticlesOffset = particlesOffset +
           Particle.byteCount * (particles.length + addParticles);
       if (finalParticlesOffset < header.membranesOffset) {
-        addParticles = 0;
+        _addParticles = 0;
       }
     }
     if (addMembraneBytes > 0) {
-      var finalMembranesOffset =
+      final finalMembranesOffset =
           header.membranesOffset + allMembraneBytes + addMembraneBytes;
       if (finalMembranesOffset <= buffer.lengthInBytes) {
-        addMembraneBytes = 0;
+        _addMembraneBytes = 0;
       }
     }
 
-    if (addParticles != 0 || addMembraneBytes != 0) {
-      transfer(addParticles, addMembraneBytes);
+    if (_addParticles != 0 || _addMembraneBytes != 0) {
+      transfer(_addParticles, _addMembraneBytes);
     }
   }
 
-  /// Update the [bufferHeader] values.
+  /// Update the [header] values.
   void updateBufferHeader() {
     header.particleCount = particles.length;
     header.membraneCount = membranes.length;

@@ -18,14 +18,6 @@ class SimulationRunner {
     return data.buffer;
   }
 
-  /// Set the loaded simulation
-  void loadSimulation(Simulation sim) {
-    // Replace data.
-    data = sim;
-
-    // Reset caches.
-  }
-
   /// Run a single simulation cycle.
   void cycle() {
     // Apply random motion to particles. If there are no membranes we can use

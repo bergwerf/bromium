@@ -180,7 +180,7 @@ class SimulationIsolate {
 
     // Completer for this method. loadSimulation completes when the send port
     // has been retrieved.
-    var loadingCompleter = new Completer<bool>();
+    final loadingCompleter = new Completer<bool>();
 
     // Prepare some render data untill the isolate has really started up.
     simulation.updateBufferHeader();
@@ -193,7 +193,7 @@ class SimulationIsolate {
 
     // Setup receive port for the new isolate.
     _receivePort = new ReceivePort();
-    _receivePort.listen((dynamic msg) {
+    _receivePort.listen((msg) {
       if (msg is ByteBuffer) {
         // Add data to stream.
         _bufferStreamCtrl.add(msg);
@@ -251,7 +251,7 @@ class SimulationIsolate {
           _isolateRunner,
           new IsolateInitData(
               _receivePort.sendPort, new SimulationZ(simulation)));
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       // Log error and return false.
       logger.severe('Failed to spawn isolate!', e, stackTrace);
       log.groupEnd();
@@ -272,7 +272,7 @@ class SimulationIsolate {
 
     final sendPort = d.port;
     final runner = new SimulationRunner();
-    runner.loadSimulation(simulation);
+    runner.data = simulation;
 
     // Batch computation mechanism
     final triggerPort = new ReceivePort();

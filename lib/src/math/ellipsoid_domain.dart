@@ -7,6 +7,7 @@ part of bromium.math;
 /// Ellipsoid domain
 class EllipsoidDomain extends Domain {
   /// Center
+  @override
   Vector3 center;
 
   /// Semi-axis sizes
@@ -35,23 +36,29 @@ class EllipsoidDomain extends Domain {
     _semiAxisMax = _semiAxes.storage.reduce(max);
   }
 
+  @override
   String toString() =>
       'ellipsoid domain {center: ${center.toString()}, semiAxes: ${semiAxes.toString()}}';
 
+  @override
   int get _sizeInBytes =>
       center.storage.lengthInBytes + semiAxes.storage.lengthInBytes;
 
-  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    center = transferVector3(buffer, offset, copy, center);
-    offset += center.storage.lengthInBytes;
-    semiAxes = transferVector3(buffer, offset, copy, semiAxes);
-    offset += semiAxes.storage.lengthInBytes;
-    return offset;
+  @override
+  int _transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
+    var _offset = offset;
+    center = transferVector3(buffer, _offset, center, copy: copy);
+    _offset += center.storage.lengthInBytes;
+    semiAxes = transferVector3(buffer, _offset, semiAxes, copy: copy);
+    _offset += semiAxes.storage.lengthInBytes;
+    return _offset;
   }
 
+  @override
   Aabb3 computeBoundingBox() =>
       new Aabb3.minMax(center - semiAxes, center + semiAxes);
 
+  @override
   bool contains(Vector3 point) {
     final p = point - center;
     return p.x * p.x / (semiAxes.x * semiAxes.x) +
@@ -60,6 +67,7 @@ class EllipsoidDomain extends Domain {
         1;
   }
 
+  @override
   double minSurfaceToPoint(Vector3 point) {
     final distance = (point - center).length;
     return distance > _semiAxisMax
@@ -67,6 +75,7 @@ class EllipsoidDomain extends Domain {
         : (distance < _semiAxisMin ? _semiAxisMin - distance : 0);
   }
 
+  @override
   List<double> computeRayIntersections(Ray ray) =>
       computeRayEllipsoidIntersection(ray, this);
 }

@@ -11,10 +11,10 @@ class Benchmark {
   Stopwatch time = new Stopwatch();
 
   /// Number of elapsed microseconds at [start]
-  Map<String, int> startMicro = new Map<String, int>();
+  final startMicro = new Map<String, int>();
 
   /// All measurements as Map<activity label, list of intervals (us)>
-  Map<String, List<num>> measurements = new Map<String, List<num>>();
+  final measurements = new Map<String, List<num>>();
 
   /// Constuctor
   Benchmark() {
@@ -34,17 +34,15 @@ class Benchmark {
 
   /// Print measurements of all activities.
   void printAllMeasurements() {
-    measurements.keys.forEach((String label) {
-      printMeasurements(label);
-    });
+    measurements.keys.forEach(printMeasurements);
   }
 
   /// Print measurements of one activity.
   void printMeasurements(String label) {
-    var m = measurements[label];
+    final m = measurements[label];
 
     // Compute average number of micro seconds.
-    var avg = m.reduce((num prev, num elm) => prev + elm) / m.length;
+    final avg = m.reduce((prev, elm) => prev + elm) / m.length;
 
     // Compute standard deviation in micro seconds.
     var stddev = 0.0;

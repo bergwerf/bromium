@@ -73,7 +73,7 @@ class Tab<I extends Item> {
   List<Map<String, dynamic>> collectData() {
     final acviteItems = items;
     return new List<Map<String, dynamic>>.generate(
-        acviteItems.length, (int i) => acviteItems[i].collectData());
+        acviteItems.length, (i) => acviteItems[i].collectData());
   }
 }
 

@@ -8,8 +8,8 @@ var types = new Uint32List.fromList(new List<int>.filled(1000000, 0));
 
 /// Faster algorithm for particle random motion when there are no membranes.
 void particlesRandomMotionFast(Simulation sim) {
-  var rng = new Random();
-  var view = new Float32List.view(sim.buffer, sim.particlesOffset,
+  final rng = new Random();
+  final view = new Float32List.view(sim.buffer, sim.particlesOffset,
       sim.particles.length * Particle.floatCount);
 
   final motion = new Vector3.zero();

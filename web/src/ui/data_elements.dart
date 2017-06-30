@@ -24,6 +24,7 @@ abstract class DataElement<T> extends CustomElement {
 
 /// Data element for an html select widget
 class ChoiceDataElement extends DataElement<String> {
+  @override
   SelectElement node;
 
   /// All choice options
@@ -41,28 +42,38 @@ class ChoiceDataElement extends DataElement<String> {
     }
   }
 
+  @override
   ChoiceDataElement clone() => new ChoiceDataElement(options);
 
+  @override
   String get value => node.value;
+
+  @override
   set value(String value) => node.selectedIndex = options.indexOf(value);
 }
 
 /// Data element for an html input element
 class TextInputElement extends DataElement<String> {
+  @override
   InputElement node;
 
   TextInputElement({String type: 'text'}) {
     node = new InputElement(type: type);
   }
 
+  @override
   TextInputElement clone() => new TextInputElement(type: node.type);
 
+  @override
   String get value => node.value;
+
+  @override
   set value(String value) => node.value = value;
 }
 
 /// Data element for numeric data input
 abstract class _NumericDataElement<T> extends DataElement<T> {
+  @override
   InputElement node;
 
   /// Numeric input step size, and min/max value
@@ -86,10 +97,14 @@ class IntDataElement extends _NumericDataElement<int> {
   IntDataElement({int step: 1, int min: null, int max: null, num value: 0})
       : super(step: step, min: min, max: max);
 
+  @override
   IntDataElement clone() =>
       new IntDataElement(step: step, min: this.min, max: this.max);
 
+  @override
   int get value => int.parse(node.value);
+
+  @override
   set value(int value) => node.value = value.toString();
 }
 
@@ -99,23 +114,30 @@ class FloatDataElement extends _NumericDataElement<double> {
       {double step: 1.0, double min: null, double max: null, num value: 0})
       : super(step: step, min: min, max: max);
 
+  @override
   FloatDataElement clone() =>
       new FloatDataElement(step: step, min: this.min, max: this.max);
 
+  @override
   double get value => double.parse(node.value);
+
+  @override
   set value(double value) => node.value = value.toString();
 }
 
 /// Data element for Vector3 input
 class Vector3DataElement extends DataElement<Vector3> {
+  @override
   InputElement node;
 
   Vector3DataElement() {
     node = new InputElement(type: 'text');
   }
 
+  @override
   Vector3DataElement clone() => new Vector3DataElement();
 
+  @override
   Vector3 get value {
     final vector = new Vector3.zero();
     final values = node.value.split(',');
@@ -128,11 +150,11 @@ class Vector3DataElement extends DataElement<Vector3> {
       for (var i = 0, j = 0; i < 3 && i < values.length; i++) {
         if (values[i].isNotEmpty) {
           try {
-            var value = double.parse(values[i]);
+            final value = double.parse(values[i]);
 
             vector.storage[j] = value;
             j++;
-          } catch (e) {
+          } on Exception {
             continue;
           }
         }
@@ -141,12 +163,14 @@ class Vector3DataElement extends DataElement<Vector3> {
     }
   }
 
+  @override
   set value(Vector3 value) => node.value =
       '${float32To64(value.x)}, ${float32To64(value.y)}, ${float32To64(value.z)}';
 }
 
 /// Data element for hex color input
 class ColorDataElement extends DataElement<Vector4> {
+  @override
   InputElement node;
 
   ColorDataElement() {
@@ -157,6 +181,7 @@ class ColorDataElement extends DataElement<Vector4> {
     node.onChange.listen((_) => updateColors());
   }
 
+  @override
   ColorDataElement clone() => new ColorDataElement();
 
   /// Update the input background and foreground using the entered color.
@@ -167,18 +192,20 @@ class ColorDataElement extends DataElement<Vector4> {
     node.style.color = grayscale.x < .5 ? '#eee' : '#111';
   }
 
+  @override
   Vector4 get value {
-    var result = new Vector4.zero();
+    final result = new Vector4.zero();
     try {
       Colors.fromHexString(node.value, result);
-    } catch (e) {
+    } on Exception {
       return new Vector4(0.0, 0.0, 0.0, 1.0);
     }
     return result;
   }
 
+  @override
   set value(Vector4 value) {
-    var hexString = Colors.toHexString(value).padLeft(6, '0');
+    final hexString = Colors.toHexString(value).padLeft(6, '0');
     node.value = '#$hexString';
     updateColors();
   }

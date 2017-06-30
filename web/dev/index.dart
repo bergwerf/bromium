@@ -17,13 +17,13 @@ void main() {
   console.setupLogging();
 
   // Create engine.
-  var engine = new BromiumEngine(inIsolate: true);
+  final engine = new BromiumEngine(inIsolate: true);
 
   // Setup WebGL renderer.
-  var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
+  final CanvasElement canvas = document.querySelector('#bromium-canvas');
   canvas.width = document.body.clientWidth;
   canvas.height = (canvas.width / 5 * 2).round();
-  var renderer = new BromiumWebGLRenderer(engine, canvas);
+  final renderer = new BromiumWebGLRenderer(engine, canvas);
 
   // Bind events.
   final SelectElement simulationSelector =
@@ -51,7 +51,7 @@ void main() {
     }
 
     if (simulation != null) {
-      var bbox = simulation.particlesBoundingBox();
+      final bbox = simulation.particlesBoundingBox();
       await engine.loadSimulation(simulation);
       renderer.focus(bbox);
       renderer.start();
@@ -66,9 +66,9 @@ void main() {
   });
   document.querySelector('#toggle-isolates').onClick.listen((_) async {
     if (engine.inIsolate) {
-      engine.switchToMainThread();
+      await engine.switchToMainThread();
     } else {
-      engine.switchToIsolate();
+      await engine.switchToIsolate();
     }
   });
   document.querySelector('#print-benchmark').onClick.listen((_) {

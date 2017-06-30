@@ -7,6 +7,7 @@ part of bromium.math;
 /// Sphere domain
 class SphereDomain extends Domain {
   /// Center
+  @override
   Vector3 center;
 
   /// Sphere radius
@@ -19,38 +20,46 @@ class SphereDomain extends Domain {
         buffer.asFloat32List(offset + 12, 1).first);
   }
 
+  @override
   String toString() =>
       'spherical domain {center: ${center.toString()}, radius: $radius}';
 
+  @override
   int get _sizeInBytes => center.storage.lengthInBytes + 4;
 
-  int _transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    center = transferVector3(buffer, offset, copy, center);
-    offset += center.storage.lengthInBytes;
+  @override
+  int _transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
+    var _offset = offset;
+    center = transferVector3(buffer, _offset, center, copy: copy);
+    _offset += center.storage.lengthInBytes;
 
-    final radiusView = new Float32View(buffer, offset);
+    final radiusView = new Float32View(buffer, _offset);
     if (copy) {
       radiusView.set(radius);
     } else {
       radius = radiusView.get();
     }
 
-    offset += radiusView.sizeInBytes;
-    return offset;
+    _offset += radiusView.sizeInBytes;
+    return _offset;
   }
 
+  @override
   Aabb3 computeBoundingBox() => new Aabb3.minMax(
       new Vector3.all(-radius)..add(center),
       new Vector3.all(radius)..add(center));
 
+  @override
   bool contains(Vector3 point) {
     return (point - center).length < radius;
   }
 
+  @override
   double minSurfaceToPoint(Vector3 point) {
     return ((point - center).length - radius).abs();
   }
 
+  @override
   List<double> computeRayIntersections(Ray ray) => computeRaySphereIntersection(
       ray, new Sphere.centerRadius(center, radius));
 }

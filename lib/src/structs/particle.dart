@@ -80,7 +80,7 @@ class Particle implements Transferrable {
   ///
   /// When the particle is sticked to a given `membrane` then
   /// `hasEntered(membrane)` returns false.
-  void stickTo(int index, Domain membrane, [bool doProjection = true]) {
+  void stickTo(int index, Domain membrane, {bool doProjection: true}) {
     sticked = index;
 
     if (doProjection) {
@@ -101,13 +101,16 @@ class Particle implements Transferrable {
   int getClosestMembrane() =>
       isSticked ? sticked : (entered.isNotEmpty ? entered.last : -1);
 
+  @override
   int get sizeInBytes => byteCount;
-  int transfer(ByteBuffer buffer, int offset, [bool copy = true]) {
-    _position = transferVector3(buffer, offset, copy, _position);
-    offset += _position.storage.lengthInBytes;
-    _color = transferVector3(buffer, offset, copy, _color);
-    offset += _color.storage.lengthInBytes;
-    offset = _radius.transfer(buffer, offset, copy);
-    return offset;
+
+  @override
+  int transfer(ByteBuffer buffer, int offset, {bool copy: true}) {
+    var _offset = offset;
+    _position = transferVector3(buffer, _offset, _position, copy: copy);
+    _offset += _position.storage.lengthInBytes;
+    _color = transferVector3(buffer, _offset, _color, copy: copy);
+    _offset += _color.storage.lengthInBytes;
+    return _radius.transfer(buffer, _offset, copy: copy);
   }
 }
