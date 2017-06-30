@@ -59,8 +59,7 @@ class BromiumUi {
         btnPauseRun = $('#btn-pause-run'),
         viewPanel = $('#view-panel'),
         canvas = $('#bromium-canvas') as CanvasElement,
-        engine = new BromiumEngine(
-            inIsolate: !window.navigator.userAgent.contains('Dart')) {
+        engine = new BromiumEngine(inIsolate: true) {
     renderer = new BromiumWebGLRenderer(engine, canvas);
 
     // Auto-fit canvas.

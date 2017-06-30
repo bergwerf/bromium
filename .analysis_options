@@ -25,7 +25,7 @@ linter:
   - sort_unnamed_constructors_first
   - super_goes_last
   - type_init_formals
-  - unnecessary_brace_in_string_interp
+  - unnecessary_brace_in_string_interps
   - unnecessary_getters_setters
 
   # Pub rules

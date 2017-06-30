@@ -10,7 +10,7 @@ import 'dart:web_gl' as gl;
 
 import 'package:bromium/math.dart';
 import 'package:bromium/engine.dart';
-import 'package:bromium/glutils.dart';
+import 'package:glutils/glutils.dart';
 import 'package:vector_math/vector_math.dart';
 
 part 'src/renderer/renderer.dart';

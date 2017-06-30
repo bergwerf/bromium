@@ -4,6 +4,14 @@
 
 part of bromium.engine;
 
+/// We previously used [Tuple2] but this causes issues in dart2js for unknown
+/// reasons.
+class IsolateInitData {
+  final SendPort port;
+  final SimulationZ simz;
+  IsolateInitData(this.port, this.simz);
+}
+
 /// Isolate controller for running a [SimulationRunner] inside a Dart isolate.
 class SimulationIsolate {
   // Isolate trigger flags.
@@ -241,7 +249,7 @@ class SimulationIsolate {
       logger.info('Spawning isolate...');
       _isolate = await Isolate.spawn(
           _isolateRunner,
-          new Tuple2<SendPort, SimulationZ>(
+          new IsolateInitData(
               _receivePort.sendPort, new SimulationZ(simulation)));
     } catch (e, stackTrace) {
       // Log error and return false.
@@ -256,13 +264,13 @@ class SimulationIsolate {
   }
 
   /// Isolate simulation runner
-  static void _isolateRunner(Tuple2<SendPort, SimulationZ> setup) {
+  static void _isolateRunner(IsolateInitData d) {
     isolateLog('Started isolate.');
     isolateLog('Unpacking simulation...');
-    final simulation = setup.item2.unpack();
+    final simulation = d.simz.unpack();
     isolateLog('Finished unpacking the simulation.');
 
-    final sendPort = setup.item1;
+    final sendPort = d.port;
     final runner = new SimulationRunner();
     runner.loadSimulation(simulation);
 

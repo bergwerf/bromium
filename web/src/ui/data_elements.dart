@@ -11,19 +11,19 @@ abstract class CustomElement {
 }
 
 /// Base class for all custom data input elements
-abstract class DataElement extends CustomElement {
+abstract class DataElement<T> extends CustomElement {
   /// Entered value
-  dynamic get value;
+  T get value;
 
   /// Set the node value
-  set value(dynamic value);
+  set value(T value);
 
   /// Create new HTML node that is equal to this one
   DataElement clone();
 }
 
 /// Data element for an html select widget
-class ChoiceDataElement extends DataElement {
+class ChoiceDataElement extends DataElement<String> {
   SelectElement node;
 
   /// All choice options
@@ -48,30 +48,29 @@ class ChoiceDataElement extends DataElement {
 }
 
 /// Data element for an html input element
-class InputDataElement extends DataElement {
+class TextInputElement extends DataElement<String> {
   InputElement node;
 
-  InputDataElement({String type: 'text'}) {
+  TextInputElement({String type: 'text'}) {
     node = new InputElement(type: type);
   }
 
-  InputDataElement clone() => new InputDataElement(type: node.type);
+  TextInputElement clone() => new TextInputElement(type: node.type);
 
-  dynamic get value {
-    return node.value;
-  }
-
-  set value(dynamic value) => node.value = value;
+  String get value => node.value;
+  set value(String value) => node.value = value;
 }
 
 /// Data element for numeric data input
-class _NumericDataElement extends InputDataElement {
+abstract class _NumericDataElement<T> extends DataElement<T> {
+  InputElement node;
+
   /// Numeric input step size, and min/max value
   final num step, min, max;
 
   _NumericDataElement(
-      {this.step: 1, this.min: null, this.max: null, num value: 0})
-      : super(type: 'number') {
+      {this.step: 1, this.min: null, this.max: null, num value: 0}) {
+    node = new InputElement(type: 'number');
     node.step = step.toString();
     if (min != null) {
       node.min = min.toString();
@@ -83,7 +82,7 @@ class _NumericDataElement extends InputDataElement {
 }
 
 /// Data element for integer input
-class IntDataElement extends _NumericDataElement {
+class IntDataElement extends _NumericDataElement<int> {
   IntDataElement({int step: 1, int min: null, int max: null, num value: 0})
       : super(step: step, min: min, max: max);
 
@@ -95,7 +94,7 @@ class IntDataElement extends _NumericDataElement {
 }
 
 /// Data element for floating point input
-class FloatDataElement extends _NumericDataElement {
+class FloatDataElement extends _NumericDataElement<double> {
   FloatDataElement(
       {double step: 1.0, double min: null, double max: null, num value: 0})
       : super(step: step, min: min, max: max);
@@ -108,8 +107,12 @@ class FloatDataElement extends _NumericDataElement {
 }
 
 /// Data element for Vector3 input
-class Vector3DataElement extends InputDataElement {
-  Vector3DataElement() : super(type: 'text');
+class Vector3DataElement extends DataElement<Vector3> {
+  InputElement node;
+
+  Vector3DataElement() {
+    node = new InputElement(type: 'text');
+  }
 
   Vector3DataElement clone() => new Vector3DataElement();
 
@@ -143,8 +146,11 @@ class Vector3DataElement extends InputDataElement {
 }
 
 /// Data element for hex color input
-class ColorDataElement extends InputDataElement {
-  ColorDataElement() : super(type: 'text') {
+class ColorDataElement extends DataElement<Vector4> {
+  InputElement node;
+
+  ColorDataElement() {
+    node = new InputElement(type: 'text');
     node.spellcheck = false;
 
     // Update the background to the entered color.

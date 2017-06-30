@@ -71,7 +71,7 @@ class PTypeItem extends Item {
         'Color': null
       }])
       : super('Particle type', data, [
-          new SimpleEntry('Label', new InputDataElement(type: 'text')),
+          new SimpleEntry('Label', new TextInputElement(type: 'text')),
           new SimpleEntry('Speed', new FloatDataElement(step: 0.001, min: 0.0)),
           new SimpleEntry(
               'Radius', new FloatDataElement(step: 0.001, min: 0.0)),
@@ -105,7 +105,7 @@ class MembraneItem extends Item {
       }])
       : graph = new ParticleGraph(),
         super('Membrane', data, [
-          new SimpleEntry('Label', new InputDataElement(type: 'text')),
+          new SimpleEntry('Label', new TextInputElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
           new SimpleEntry('Semi-axes', new Vector3DataElement()),
@@ -113,25 +113,25 @@ class MembraneItem extends Item {
               'Enter',
               100,
               new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
-              new InputDataElement(type: 'text'),
+              new TextInputElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Leave',
               100,
               new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
-              new InputDataElement(type: 'text'),
+              new TextInputElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Stick on enter',
               100,
               new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
-              new InputDataElement(type: 'text'),
+              new TextInputElement(type: 'text'),
               data),
           new MultiSplitEntry(
               'Stick on leave',
               100,
               new FloatDataElement(step: 0.01, min: 0.0, max: 1.0),
-              new InputDataElement(type: 'text'),
+              new TextInputElement(type: 'text'),
               data)
         ]) {
     node.append(new DivElement()
@@ -219,13 +219,13 @@ class BindRxnItem extends Item {
         'Probability': 1
       }])
       : super('Bind reaction', data, [
-          new SimpleEntry('Particle A', new InputDataElement(type: 'text')),
+          new SimpleEntry('Particle A', new TextInputElement(type: 'text')),
           new SimpleEntry('A location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
-          new SimpleEntry('Particle B', new InputDataElement(type: 'text')),
+          new SimpleEntry('Particle B', new TextInputElement(type: 'text')),
           new SimpleEntry('B location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
-          new SimpleEntry('Particle C', new InputDataElement(type: 'text')),
+          new SimpleEntry('Particle C', new TextInputElement(type: 'text')),
           new SimpleEntry('C location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
           new SimpleEntry('Probability',
@@ -255,14 +255,14 @@ class UnbindRxnItem extends Item {
         'Probability': 1
       }])
       : super('Unbind reaction', data, [
-          new SimpleEntry('Particle', new InputDataElement(type: 'text')),
+          new SimpleEntry('Particle', new TextInputElement(type: 'text')),
           new SimpleEntry('Location',
               new ChoiceDataElement(['inside', 'sticked', 'outside'])),
           new MultiSplitEntry(
               'Products',
               100,
               new ChoiceDataElement(['inside', 'sticked', 'outside']),
-              new InputDataElement(type: 'text'),
+              new TextInputElement(type: 'text'),
               data),
           new SimpleEntry('Probability',
               new FloatDataElement(step: 0.01, min: 0.0, max: 1.0))
@@ -297,7 +297,7 @@ class DomainItem extends Item {
         'Semi-axes': null
       }])
       : super('Domain', data, [
-          new SimpleEntry('Label', new InputDataElement(type: 'text')),
+          new SimpleEntry('Label', new TextInputElement(type: 'text')),
           new SimpleEntry('Type', new ChoiceDataElement(['AABB', 'Ellipsoid'])),
           new SimpleEntry('Center', new Vector3DataElement()),
           new SimpleEntry('Semi-axes', new Vector3DataElement())
@@ -331,10 +331,10 @@ class SetupItem extends Item {
         'Cavities': ''
       }])
       : super('Fill particles', data, [
-          new SimpleEntry('Particle', new InputDataElement(type: 'text')),
+          new SimpleEntry('Particle', new TextInputElement(type: 'text')),
           new SimpleEntry('Number', new IntDataElement(min: 1)),
-          new SimpleEntry('Domain', new InputDataElement(type: 'text')),
-          new SimpleEntry('Cavities', new InputDataElement(type: 'text'))
+          new SimpleEntry('Domain', new TextInputElement(type: 'text')),
+          new SimpleEntry('Cavities', new TextInputElement(type: 'text'))
         ]);
 
   Domain _resolveDomain(

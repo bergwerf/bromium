@@ -17,8 +17,7 @@ void main() {
   console.setupLogging();
 
   // Create engine.
-  var engine = new BromiumEngine(
-      inIsolate: !window.navigator.userAgent.contains('Dart'));
+  var engine = new BromiumEngine(inIsolate: true);
 
   // Setup WebGL renderer.
   var canvas = document.querySelector('#bromium-canvas') as CanvasElement;
