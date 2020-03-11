@@ -2,7 +2,7 @@
 
 Bromium
 =======
-Fast Brownian motion particle movement simulator.
+Brownian motion particles with reactions and membranes simulator. To try it out go to https://www.hermanbergwerf.com/bromium-deploy/ and press the refresh button (third from the top-left).
 
 Sub-libraries
 -------------
